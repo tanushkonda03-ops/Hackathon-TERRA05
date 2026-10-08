@@ -1,0 +1,16 @@
+{
+  "flood_original": 937,
+  "flood_active_after_delete_filter": 332,
+  "drain_features": 34711,
+  "grid_cells": 84666,
+  "positive_flood_cells": 2426,
+  "flood_positive_rate": 0.02865,
+  "drain_total_length_km": 1250.31,
+  "median_distance_to_drain_m": 705.14,
+  "p95_distance_to_drain_m": 7819.88,
+  "median_drain_density_m_per_km2": 0.0,
+  "crs": "EPSG:32643",
+  "grid_resolution_m": 100,
+  "p95_drain_density_m_per_km2": 11077.8,
+  "cells_with_drain": 11232
+}

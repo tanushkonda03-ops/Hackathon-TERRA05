@@ -1,0 +1,5 @@
+tide_scenario,tide_factor,description
+LOW,0.25,Low coastal water level; relatively favorable drainage outfall
+NORMAL,0.5,Normal coastal water level
+HIGH,0.75,High coastal water level; reduced drainage outfall efficiency
+VERY_HIGH,1.0,Very high coastal water level; strongly restricted drainage outfall

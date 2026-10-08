@@ -1,0 +1,120 @@
+{
+  "project": "Mumbai Urban Stormwater Flood Prediction",
+  "supplied_files": {
+    "flooding_spots.geojson": {
+      "original_features": 937,
+      "records_marked_delete": 602,
+      "active_before_dedup": 335,
+      "duplicate_active_records_by_FEATUREID": 2,
+      "clean_features": 333,
+      "role": "flood labels / historical validation"
+    },
+    "storm_water_drains.geojson": {
+      "features": 34711,
+      "role": "drainage predictors; derive distance, density and capacity proxy"
+    }
+  },
+  "recommended_ml_features": [
+    "elevation",
+    "slope",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "distance_to_water",
+    "distance_to_drain",
+    "drain_density",
+    "drain_capacity_proxy",
+    "building_density",
+    "rainfall_1h",
+    "rainfall_3h",
+    "rainfall_24h",
+    "tide_condition"
+  ],
+  "do_not_use_as_direct_ml_features": [
+    "AFFECT_POPULATION",
+    "AFFECT_ROAD",
+    "AFFECT_RAIL",
+    "AFFECTED_HUT",
+    "NO_DE_WATER_PUMP"
+  ],
+  "reason": "These are better treated as impact/exposure information or consequences of flooding; using them as predictors risks leakage.",
+  "derived_from_supplied_data": [
+    "distance_to_drain",
+    "drain_density",
+    "drain_capacity_proxy = conduit_width_m * conduit_height_m",
+    "clean_active_flood_labels"
+  ],
+  "additional_data_to_import": [
+    {
+      "dataset": "Mumbai boundary / ward polygons",
+      "priority": "MUST HAVE",
+      "source": "BMC GIS",
+      "role": "clip all rasters/vectors and perform spatial train/validation splits"
+    },
+    {
+      "dataset": "DEM",
+      "priority": "MUST HAVE",
+      "source": "NASA SRTM / NASADEM",
+      "role": "elevation and derived slope"
+    },
+    {
+      "dataset": "Land cover",
+      "priority": "MUST HAVE",
+      "source": "ESA WorldCover",
+      "role": "built-up and vegetation fractions"
+    },
+    {
+      "dataset": "Water bodies / hydro lines / coast",
+      "priority": "MUST HAVE",
+      "source": "BMC GIS",
+      "role": "distance to water and coastal/tidal context"
+    },
+    {
+      "dataset": "Buildings",
+      "priority": "HIGH",
+      "source": "BMC GIS",
+      "role": "building density and exposure"
+    },
+    {
+      "dataset": "Roads",
+      "priority": "HIGH",
+      "source": "BMC GIS or OpenStreetMap",
+      "role": "road density and exposed-road impact"
+    },
+    {
+      "dataset": "Rainfall",
+      "priority": "MUST HAVE",
+      "source": "IMD",
+      "role": "dynamic 1h/3h/24h rainfall scenario"
+    },
+    {
+      "dataset": "Tide",
+      "priority": "MEDIUM",
+      "source": "INCOIS",
+      "role": "tidal/backflow scenario modifier"
+    },
+    {
+      "dataset": "Population",
+      "priority": "HIGH",
+      "source": "Census / WorldPop",
+      "role": "people exposed, not primary flood predictor"
+    },
+    {
+      "dataset": "Hospitals / Police / Fire / Shelters",
+      "priority": "MEDIUM",
+      "source": "BMC GIS",
+      "role": "response and impact dashboard"
+    },
+    {
+      "dataset": "Vulnerable settlements",
+      "priority": "MEDIUM",
+      "source": "BMC GIS",
+      "role": "vulnerability-weighted priority score"
+    },
+    {
+      "dataset": "Sentinel-1 flood mask for a historical event",
+      "priority": "BONUS",
+      "source": "Copernicus / Google Earth Engine",
+      "role": "independent validation, not primary model input"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "dataset_package": "Mumbai Urban Stormwater Flood Prediction System",
+  "spatial_resolution": "100m x 100m grid cells",
+  "total_cells": 47758,
+  "crs": "EPSG:32643 (UTM Zone 43N)",
+  "flood_spots_positive_cells": 1953,
+  "flood_spots_positive_rate": 0.0409,
+  "sample_area_pilot": {
+    "ward": "L",
+    "description": "Kurla / Kalina / Mithi River Basin (most flood-prone urban basin in Mumbai)",
+    "cells": 1516,
+    "flood_positive_cells": 280,
+    "flood_positive_pct": "18.47%"
+  },
+  "warning_levels": [
+    {
+      "code": 0,
+      "name": "Normal / Green",
+      "threshold": "Rain < 15 mm/h",
+      "action": "Normal drainage monitoring"
+    },
+    {
+      "code": 1,
+      "name": "Advisory / Yellow",
+      "threshold": "Rain 15-35 mm/h",
+      "action": "Alert ward control rooms; clear surface grates"
+    },
+    {
+      "code": 2,
+      "name": "Watch / Orange",
+      "threshold": "Rain 35-65 mm/h",
+      "action": "Stage portable dewatering pumps; caution low-lying roads"
+    },
+    {
+      "code": 3,
+      "name": "Warning / Red",
+      "threshold": "Rain > 65 mm/h",
+      "action": "Deploy NDRF/BMC emergency teams; divert road & rail traffic"
+    },
+    {
+      "code": 4,
+      "name": "Severe / Emergency",
+      "threshold": "Extreme storm / Cloudburst",
+      "action": "Mass evacuation of vulnerable basements and riverbanks"
+    }
+  ],
+  "spatial_cv_folds": {
+    "fold_0": "Island City South (Wards A, B, C, D, E)",
+    "fold_1": "Island City North (Wards F/N, F/S, G/N, G/S)",
+    "fold_2": "Eastern Suburbs South (Wards L, M/E, M/W)",
+    "fold_3": "Eastern Suburbs North (Wards N, S, T)",
+    "fold_4": "Western Suburbs (Wards H, K, P, R)"
+  }
+}
