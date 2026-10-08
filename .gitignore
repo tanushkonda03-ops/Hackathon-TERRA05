@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.env
+venv/
+env/
+
+# Large Raw GIS Files (>100MB blocked by GitHub)
+data/raw/bmc/buildings.geojson
+data/raw/external/worldcover_N18E072.tif
+*.zip
+*.hgt
+
+# Temp & System
+.DS_Store
+Thumbs.db
+scripts/data/
