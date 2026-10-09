@@ -76,13 +76,13 @@ export const DataLayersView: React.FC = () => {
             <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-bold">
               DATA PIPELINE
             </span>
-            <span className="text-xs font-mono text-slate-400">INGESTION MATRIX</span>
+            <span className="text-xs font-mono text-slate-400">WHAT THE MAP USES</span>
           </div>
           <h1 className="text-xl font-tech font-bold text-white mt-1">
-            Geospatial & Telemetry Ingestion Layers
+            Information used by the map
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Status of municipal infrastructure catalogs, raster elevation models, and radar datasets integrated into TERRA05.
+            These are the sources that help the app estimate where flood water may collect.
           </p>
         </div>
 

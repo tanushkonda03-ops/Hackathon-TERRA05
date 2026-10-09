@@ -6,6 +6,7 @@ import { MapLayersControl } from './components/MapLayersControl';
 import { HistoricalValidationView } from './components/HistoricalValidationView';
 import { DataLayersView } from './components/DataLayersView';
 import { ArchitectureView } from './components/ArchitectureView';
+import { HowItWorksModal } from './components/HowItWorksModal';
 import { MUMBAI_GEO_LOCATIONS, MumbaiLocation, getTimelineImpactMetrics } from './data/locations';
 import { 
   getSystemStatus, 
@@ -45,6 +46,8 @@ export const App: React.FC = () => {
   const [backendScenarios, setBackendScenarios] = useState<ScenarioResponse[]>([]);
   const [backendStatus, setBackendStatus] = useState<'CONNECTING' | 'READY' | 'DEGRADED' | 'OFFLINE'>('CONNECTING');
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('DESIGN_RED_100MM');
+  const [customDurationHours, setCustomDurationHours] = useState<number>(24);
+  const [customTotalDepthMm, setCustomTotalDepthMm] = useState<number>(100);
 
   // Live 2D Hydraulic/Runoff Simulation Data
   const [simulationData, setSimulationData] = useState<SimulationResponse | null>(null);
@@ -72,6 +75,7 @@ export const App: React.FC = () => {
   });
   const [showDevDiagnostics, setShowDevDiagnostics] = useState<boolean>(false);
   const [showDisclaimer, setShowDisclaimer] = useState<boolean>(false);
+  const [showHowItWorks, setShowHowItWorks] = useState<boolean>(false);
 
   // Structured GIS layer states
   const [layers, setLayers] = useState({
@@ -126,10 +130,20 @@ export const App: React.FC = () => {
       try {
         const rawWard = selectedLocation?.ward || 'L';
         const cleanWard = rawWard.replace(' Ward', '').trim();
-        const reqPayload: { scenario_id: string; ward: string; max_timesteps?: number } = {
+        const reqPayload: {
+          scenario_id: string;
+          ward: string;
+          max_timesteps?: number;
+          custom_duration_hours?: number;
+          custom_total_depth_mm?: number;
+        } = {
           scenario_id: selectedScenarioId,
           ward: cleanWard,
         };
+        if (selectedScenarioId === 'CUSTOM') {
+          reqPayload.custom_duration_hours = customDurationHours;
+          reqPayload.custom_total_depth_mm = customTotalDepthMm;
+        }
         // For long multi-day storm (TS_2005_JULY26), request 48 intervals (12h) to capture peak downpour
         if (selectedScenarioId === 'TS_2005_JULY26') {
           reqPayload.max_timesteps = 48;
@@ -164,7 +178,7 @@ export const App: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedScenarioId, selectedLocation?.id, selectedLocation?.ward]);
+  }, [selectedScenarioId, selectedLocation?.id, selectedLocation?.ward, customDurationHours, customTotalDepthMm]);
 
   const maxSteps = simulationData?.timesteps?.length ? simulationData.timesteps.length - 1 : 6;
 
@@ -250,7 +264,7 @@ export const App: React.FC = () => {
 
           <div className="flex items-center space-x-1.5 text-xs">
             <MapPin className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-            <span className="text-[11px] font-bold text-slate-700 hidden md:inline">HOTSPOT:</span>
+            <span className="text-[11px] font-bold text-slate-700 hidden md:inline">AREA TO CHECK:</span>
             <select
               value={selectedLocation?.id || ""}
               onChange={(e) => {
@@ -311,6 +325,14 @@ export const App: React.FC = () => {
             </span>
           </div>
 
+          <button
+            onClick={() => setShowHowItWorks(true)}
+            className="flex items-center space-x-1 text-xs font-semibold text-sky-800 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1 rounded transition-colors"
+          >
+            <Info className="w-3 h-3" />
+            <span className="hidden md:inline">HOW TO USE</span>
+          </button>
+
           {/* Dev Diagnostics Toggle */}
           <button
             onClick={() => setShowDevDiagnostics(!showDevDiagnostics)}
@@ -318,7 +340,7 @@ export const App: React.FC = () => {
             title="Toggle Developer Diagnostics Panel"
           >
             <Terminal className="w-3 h-3 text-slate-400" />
-            <span className="hidden lg:inline text-[11px]">DIAGNOSTICS</span>
+            <span className="hidden lg:inline text-[11px]">TECH DETAILS</span>
           </button>
 
           {/* Prototype Notice Modal Trigger */}
@@ -327,7 +349,7 @@ export const App: React.FC = () => {
             className="flex items-center space-x-1 text-xs font-mono text-slate-600 bg-slate-50 hover:bg-slate-100 border border-gis-border px-2 py-0.5 rounded transition-colors"
           >
             <Info className="w-3 h-3 text-slate-400" />
-            <span className="hidden md:inline text-[11px]">DEMO NOTICE</span>
+            <span className="hidden md:inline text-[11px]">ABOUT THIS DEMO</span>
           </button>
         </div>
       </header>
@@ -456,7 +478,7 @@ export const App: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-3 text-[10px] text-slate-500 font-mono">
                           <span>
-                            Inundated: <strong className="text-slate-800">
+                            Flooded area: <strong className="text-slate-800">
                               {currentSimStepMetrics
                                 ? `${currentSimStepMetrics.inundated_area_km2.toFixed(2)} km²`
                                 : `${timelineMetrics.floodedAreaKm2} km²`}
@@ -464,12 +486,12 @@ export const App: React.FC = () => {
                           </span>
                           {currentSimStepMetrics && (
                             <span>
-                              Max Depth: <strong className="text-sky-800">{currentSimStepMetrics.max_water_depth_m.toFixed(2)}m</strong>
+                              Deepest water: <strong className="text-sky-800">{currentSimStepMetrics.max_water_depth_m.toFixed(2)}m</strong>
                             </span>
                           )}
                           {currentSimStepMetrics && (
                             <span className="hidden sm:inline">
-                              Storage: <strong className="text-slate-700">{Math.round(currentSimStepMetrics.surface_storage_volume_m3).toLocaleString()} m³</strong>
+                              Water held: <strong className="text-slate-700">{Math.round(currentSimStepMetrics.surface_storage_volume_m3).toLocaleString()} m³</strong>
                             </span>
                           )}
                         </div>
@@ -500,7 +522,50 @@ export const App: React.FC = () => {
                             </button>
                           );
                         })}
+                        <button
+                          onClick={() => setSelectedScenarioId('CUSTOM')}
+                          className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all ${
+                            selectedScenarioId === 'CUSTOM'
+                              ? 'bg-sky-700 text-white shadow-xs'
+                              : 'text-sky-700 hover:bg-sky-50'
+                          }`}
+                        >
+                          CUSTOM
+                        </button>
                       </div>
+                      {selectedScenarioId === 'CUSTOM' && (
+                        <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                          <label className="flex items-center gap-1">
+                            Duration
+                            <input
+                              type="number"
+                              min="0.25"
+                              max="168"
+                              step="0.25"
+                              value={customDurationHours}
+                              onChange={(event) => setCustomDurationHours(Number(event.target.value))}
+                              className="w-16 rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900"
+                            />
+                            hours
+                          </label>
+                          <label className="flex items-center gap-1">
+                            Total rain
+                            <input
+                              type="number"
+                              min="0.1"
+                              max="5000"
+                              step="0.1"
+                              value={customTotalDepthMm}
+                              onChange={(event) => setCustomTotalDepthMm(Number(event.target.value))}
+                              className="w-20 rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900"
+                            />
+                            mm
+                          </label>
+                          <span className="text-slate-500">
+                            ({(customTotalDepthMm / customDurationHours).toFixed(2)} mm/hr average)
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Play / Pause / Reset Controls */}
@@ -558,7 +623,7 @@ export const App: React.FC = () => {
                       )}
                     </div>
                     <span className="text-slate-400 italic">
-                      * 2D surface accumulation prototype; ML susceptibility is static historical exposure.
+                      Water estimate for this demo; click a map area for details.
                     </span>
                   </div>
                 </div>
@@ -699,6 +764,8 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {showHowItWorks && <HowItWorksModal onClose={() => setShowHowItWorks(false)} />}
     </div>
   );
 };

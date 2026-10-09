@@ -149,7 +149,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
         <div>
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-gis-muted font-bold">
-              FOCUS AREA INTELLIGENCE
+              SELECTED AREA
             </span>
             <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
               {prediction?.ward ? `Ward ${prediction.ward}` : location.ward}
@@ -193,7 +193,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
             <div className="flex items-center space-x-1.5">
               <Cpu className="w-3.5 h-3.5 text-sky-700" />
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-700">
-                ML SUSCEPTIBILITY
+                FLOOD RISK ESTIMATE
               </span>
             </div>
             {predictionLoading ? (
@@ -203,7 +203,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
               </span>
             ) : prediction ? (
               <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                MODEL LIVE
+                ESTIMATE READY
               </span>
             ) : predictionError ? (
               <button

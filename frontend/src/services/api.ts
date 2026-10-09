@@ -110,6 +110,8 @@ export interface SimulationRequest {
   routing_enabled?: boolean;
   drainage_capacity_mm_hr?: number;
   max_timesteps?: number | null;
+  custom_duration_hours?: number | null;
+  custom_total_depth_mm?: number | null;
 }
 
 export interface SimulationTimestepMetrics {
@@ -380,3 +382,8 @@ export async function runSimulation(
   });
 }
 
+export async function getDrainageNetwork(
+  signal?: AbortSignal
+): Promise<GeoJSON.FeatureCollection> {
+  return fetchJson<GeoJSON.FeatureCollection>('/api/v1/drainage-network', { signal });
+}

@@ -24,12 +24,12 @@ export const NavigationRail: React.FC<NavigationRailProps> = ({
   const items: { id: NavTabId; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'overview', label: 'Flood Map', icon: Map },
     { id: 'simulation', label: 'Simulate', icon: Activity },
-    { id: 'risk', label: 'Hotspots', icon: Layers },
-    { id: 'validation', label: '2005 Event', icon: History },
-    { id: 'drainage', label: 'Drains', icon: Compass },
+    { id: 'risk', label: 'Risk Areas', icon: Layers },
+    { id: 'validation', label: 'Past Floods', icon: History },
+    { id: 'drainage', label: 'Drainage', icon: Compass },
     { id: 'uncertainty', label: 'Confidence', icon: GitFork },
-    { id: 'data', label: 'Data Layers', icon: FileText },
-    { id: 'architecture', label: 'How It Works', icon: Workflow },
+    { id: 'data', label: 'Data Used', icon: FileText },
+    { id: 'architecture', label: 'Technical Flow', icon: Workflow },
   ];
 
   return (

@@ -14,7 +14,7 @@ import {
   HISTORICAL_2019_GEOJSON, 
   getRealisticFloodPolygonsGeoJSON 
 } from '../data/mumbaiGeojson';
-import { getRiskMap, transformRiskMapToGeoJSON4326, SimulationResponse, simulationDataToGeoJSON } from '../services/api';
+import { getDrainageNetwork, getRiskMap, transformRiskMapToGeoJSON4326, SimulationResponse, simulationDataToGeoJSON } from '../services/api';
 import { ChevronDown } from 'lucide-react';
 
 // Configure MapLibre Web Worker for Vite
@@ -731,6 +731,26 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       console.error('[TERRA05][SIMULATION UPDATE ERROR]', updateErr);
     }
   }, [rainfall, timelineStep, layers.uncertainty, timelineMetrics, mapLoaded]);
+
+  // Replace the small demo drainage sketch with the full municipal network when the API is available.
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const source = mapRef.current.getSource('bmc-drainage-src') as GeoJSONSource | undefined;
+    if (!source) return;
+
+    const controller = new AbortController();
+    getDrainageNetwork(controller.signal)
+      .then((network) => {
+        if (network.features?.length) source.setData(network);
+      })
+      .catch((error: unknown) => {
+        if ((error as { name?: string })?.name !== 'AbortError') {
+          console.warn('[TERRA05][DRAINAGE] Full network unavailable; using demo network:', error);
+        }
+      });
+
+    return () => controller.abort();
+  }, [mapLoaded]);
 
   // 3B. Update 2D Computational Hydrodynamic Simulation Water Layer GeoJSON
   useEffect(() => {

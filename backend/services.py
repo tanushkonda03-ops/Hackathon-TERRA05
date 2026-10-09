@@ -32,6 +32,11 @@ class BackendDataService:
     def rainfall_metadata(self) -> dict[str, Any]:
         return json.loads(self.settings.rainfall_metadata_path.read_text(encoding="utf-8"))
 
+    @cached_property
+    def drainage_network(self) -> dict[str, Any]:
+        drainage_path = self.settings.root / "data" / "processed" / "bmc_storm_water_drains_working.geojson"
+        return json.loads(drainage_path.read_text(encoding="utf-8"))
+
     def scenarios(self) -> list[dict[str, Any]]:
         metadata = self.rainfall_metadata
         grouped: dict[str, list[dict[str, Any]]] = {}
@@ -187,18 +192,41 @@ class BackendDataService:
         routing_enabled: bool = True,
         drainage_capacity_mm_hr: float = 25.0,
         max_timesteps: int | None = None,
+        custom_duration_hours: float | None = None,
+        custom_total_depth_mm: float | None = None,
     ) -> dict[str, Any]:
         from .simulation import SurfaceRunoffEngine
 
         metadata = self.rainfall_metadata
-        if scenario_id not in metadata.get("scenarios", {}):
+        if scenario_id == "CUSTOM":
+            if custom_duration_hours is None or custom_total_depth_mm is None:
+                raise ValueError("Custom rainfall requires duration and total depth")
+            interval_minutes = int(metadata.get("interval_minutes", 15))
+            interval_count = round(custom_duration_hours * 60 / interval_minutes)
+            if interval_count < 1 or interval_count > 672:
+                raise ValueError("Custom rainfall duration must produce between 1 and 672 intervals")
+            interval_depth_mm = custom_total_depth_mm / interval_count
+            intervals = [
+                {
+                    "timeseries_id": "CUSTOM",
+                    "datetime": f"T+{index * interval_minutes}m",
+                    "rainfall_15min_mm": interval_depth_mm,
+                    "intensity_mm_per_hr": interval_depth_mm * 60 / interval_minutes,
+                }
+                for index in range(interval_count)
+            ]
+            scenario_info = {
+                "family": "custom",
+                "classification": "user-entered evenly distributed rainfall",
+            }
+        elif scenario_id not in metadata.get("scenarios", {}):
             valid_ids = list(metadata.get("scenarios", {}).keys())
             raise LookupError(f"Scenario '{scenario_id}' not found in catalogue. Valid scenarios: {valid_ids}")
-
-        scenario_info = metadata["scenarios"][scenario_id]
-        intervals = [row for row in self.rainfall_rows if row["timeseries_id"] == scenario_id]
-        if not intervals:
-            raise LookupError(f"No rainfall intervals found for scenario '{scenario_id}'")
+        else:
+            scenario_info = metadata["scenarios"][scenario_id]
+            intervals = [row for row in self.rainfall_rows if row["timeseries_id"] == scenario_id]
+            if not intervals:
+                raise LookupError(f"No rainfall intervals found for scenario '{scenario_id}'")
 
         def _normalize_ward(w: str) -> str:
             w_clean = w.strip().upper().replace(" WARD", "").replace("WARD ", "").replace("WARD", "")
@@ -258,4 +286,3 @@ class BackendDataService:
             max_timesteps=max_timesteps,
         )
         return engine.run()
-

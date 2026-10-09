@@ -71,12 +71,25 @@ class SystemStatusResponse(BaseModel):
 class SimulationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    scenario_id: str = Field(description="Rainfall scenario timeseries ID from catalogue (e.g. DESIGN_RED_100MM, TS_2005_JULY26)")
+    scenario_id: str = Field(default="DESIGN_RED_100MM", description="Rainfall scenario timeseries ID from catalogue, or CUSTOM for user-entered rainfall")
     ward: str | None = Field(default=None, description="Optional ward filter (e.g. 'L' for Kurla/Mithi corridor)")
     bbox: tuple[float, float, float, float] | None = Field(default=None, description="Optional bounding box (minx, miny, maxx, maxy) in EPSG:32643")
     routing_enabled: bool = Field(default=True, description="Enable 2D terrain diffusive overland routing between adjacent cells")
     drainage_capacity_mm_hr: float = Field(default=25.0, ge=0.0, le=200.0, description="Base municipal stormwater drainage extraction rate (mm/hr)")
     max_timesteps: int | None = Field(default=None, gt=0, le=200, description="Optional cap on number of timesteps")
+    custom_duration_hours: float | None = Field(default=None, gt=0, le=168, description="Custom rainfall duration in hours")
+    custom_total_depth_mm: float | None = Field(default=None, gt=0, le=5000, description="Total custom rainfall depth in millimetres")
+
+    @model_validator(mode="after")
+    def validate_custom_rainfall(self) -> "SimulationRequest":
+        custom_values = (self.custom_duration_hours, self.custom_total_depth_mm)
+        if any(value is not None for value in custom_values) and not all(value is not None for value in custom_values):
+            raise ValueError("Provide both custom_duration_hours and custom_total_depth_mm")
+        if self.scenario_id == "CUSTOM" and not all(value is not None for value in custom_values):
+            raise ValueError("CUSTOM rainfall requires duration and total depth")
+        if self.scenario_id != "CUSTOM" and any(value is not None for value in custom_values):
+            raise ValueError("Custom rainfall values can only be used with scenario_id CUSTOM")
+        return self
 
 
 class SimulationTimestepMetrics(BaseModel):
@@ -173,4 +186,3 @@ class SwmmRunResponse(BaseModel):
     subcatchments: dict[str, Any]
     snapshots: list[dict[str, Any]]
     limitations: list[str]
-

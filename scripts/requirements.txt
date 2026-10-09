@@ -10,4 +10,4 @@ fiona
 fastapi
 uvicorn
 joblib
-scikit-learn
+scikit-learn==1.9.1

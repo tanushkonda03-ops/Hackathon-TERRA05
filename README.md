@@ -163,7 +163,7 @@ source .venv/bin/activate
 
 # 3. Upgrade pip and install backend dependencies
 pip install --upgrade pip
-pip install fastapi uvicorn pydantic numpy scipy pandas scikit-learn joblib shapely pyproj tifffile pyswmm swmm-toolkit httpx
+pip install fastapi uvicorn pydantic numpy scipy pandas scikit-learn==1.9.1 joblib shapely pyproj tifffile pyswmm swmm-toolkit httpx
 ```
 
 To verify that PySWMM and EPA-SWMM are operational:

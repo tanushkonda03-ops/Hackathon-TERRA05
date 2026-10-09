@@ -133,6 +133,8 @@ def run_simulation(request: SimulationRequest) -> dict:
             routing_enabled=request.routing_enabled,
             drainage_capacity_mm_hr=request.drainage_capacity_mm_hr,
             max_timesteps=request.max_timesteps,
+            custom_duration_hours=request.custom_duration_hours,
+            custom_total_depth_mm=request.custom_total_depth_mm,
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail={"error": "simulation_input_not_found", "message": str(exc)}) from exc
@@ -140,6 +142,14 @@ def run_simulation(request: SimulationRequest) -> dict:
         raise HTTPException(status_code=422, detail={"error": "invalid_simulation_parameter", "message": str(exc)}) from exc
     except (OSError, RuntimeError) as exc:
         raise unavailable("simulation_engine", exc) from exc
+
+
+@app.get("/api/v1/drainage-network")
+def get_drainage_network() -> dict:
+    try:
+        return service.drainage_network
+    except (OSError, ValueError, KeyError) as exc:
+        raise unavailable("drainage_data", exc) from exc
 
 
 @app.get("/api/v1/swmm/status", response_model=SwmmStatusResponse)
@@ -167,5 +177,3 @@ def post_swmm_sample_run(request: SwmmRunRequest | None = None) -> dict:
         raise HTTPException(status_code=503, detail={"error": "swmm_engine_unavailable", "message": str(exc)}) from exc
     except Exception as exc:
         raise unavailable("swmm_runner", exc) from exc
-
-
