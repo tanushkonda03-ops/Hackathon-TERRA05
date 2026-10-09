@@ -124,9 +124,11 @@ export const App: React.FC = () => {
       setIsSimulationLoading(true);
       setSimulationError(null);
       try {
+        const rawWard = selectedLocation?.ward || 'L';
+        const cleanWard = rawWard.replace(' Ward', '').trim();
         const reqPayload: { scenario_id: string; ward: string; max_timesteps?: number } = {
           scenario_id: selectedScenarioId,
-          ward: 'L',
+          ward: cleanWard,
         };
         // For long multi-day storm (TS_2005_JULY26), request 48 intervals (12h) to capture peak downpour
         if (selectedScenarioId === 'TS_2005_JULY26') {
@@ -162,7 +164,7 @@ export const App: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedScenarioId]);
+  }, [selectedScenarioId, selectedLocation?.id, selectedLocation?.ward]);
 
   const maxSteps = simulationData?.timesteps?.length ? simulationData.timesteps.length - 1 : 6;
 

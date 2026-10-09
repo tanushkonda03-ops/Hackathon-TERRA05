@@ -136,25 +136,37 @@ class SurfaceRunoffEngine:
             cy = float(sum(c[1] for c in coords[:4]) / 4.0)
             lat, lon = utm43_to_wgs84(cx, cy)
 
-            soil_class = props.get("soil_class", "LOAM")
-            clay_pct = float(props.get("clay_percent", 20.0))
-            infil_proxy = float(props.get("infiltration_proxy", 0.4))
+            def _s_float(val, default):
+                if val is None or val == "":
+                    return float(default)
+                try:
+                    return float(val)
+                except (ValueError, TypeError):
+                    return float(default)
+
+            soil_class = str(props.get("soil_class") or "LOAM")
+            clay_pct = _s_float(props.get("clay_percent"), 20.0)
+            infil_proxy = _s_float(props.get("infiltration_proxy"), 0.4)
             horton = SoilHydrologyAssigner.get_params_for_cell(
                 soil_class=soil_class,
                 clay_pct=clay_pct,
                 infiltration_proxy=infil_proxy,
             )
 
+            elev = _s_float(props.get("elevation_mean") if props.get("elevation_mean") is not None else props.get("elevation"), 5.0)
+            built = _s_float(props.get("built_up_fraction"), 0.8)
+            drain = _s_float(props.get("drain_density") if props.get("drain_density") is not None else props.get("conduit_density_m_per_ha"), 0.0)
+
             self.cells.append({
-                "grid_id": int(props.get("grid_id", 0)),
-                "ward": str(props.get("ward", "Unknown")),
+                "grid_id": int(props.get("grid_id") or 0),
+                "ward": str(props.get("ward") or "Unknown"),
                 "cx": cx,
                 "cy": cy,
                 "lat": lat,
                 "lon": lon,
-                "elevation": float(props.get("elevation_mean", props.get("elevation", 5.0))),
-                "built_up": float(props.get("built_up_fraction", 0.8)),
-                "drain_density": float(props.get("drain_density", props.get("conduit_density_m_per_ha", 0.0))),
+                "elevation": elev,
+                "built_up": built,
+                "drain_density": drain,
                 "soil_class": soil_class,
                 "horton_f0": horton.f0_mm_hr,
                 "horton_fc": horton.fc_mm_hr,

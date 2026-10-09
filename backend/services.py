@@ -200,9 +200,35 @@ class BackendDataService:
         if not intervals:
             raise LookupError(f"No rainfall intervals found for scenario '{scenario_id}'")
 
+        def _normalize_ward(w: str) -> str:
+            w_clean = w.strip().upper().replace(" WARD", "").replace("WARD ", "").replace("WARD", "")
+            mapping = {
+                "F-SOUTH": "F/S", "F SOUTH": "F/S", "FS": "F/S", "DADAR": "F/S", "HINDMATA": "F/S",
+                "F-NORTH": "F/N", "F NORTH": "F/N", "FN": "F/N", "SION": "F/N", "MATUNGA": "F/N",
+                "G-NORTH": "G/N", "G NORTH": "G/N", "GN": "G/N", "DHARAVI": "G/N", "MAHIM": "G/N",
+                "G-SOUTH": "G/S", "G SOUTH": "G/S", "GS": "G/S", "WORLI": "G/S", "LOWER PAREL": "G/S",
+                "H-WEST": "H/W", "H WEST": "H/W", "HW": "H/W", "BANDRA WEST": "H/W", "KHAR": "H/W", "SANTACRUZ WEST": "H/W", "MILAN SUBWAY": "H/W",
+                "H-EAST": "H/E", "H EAST": "H/E", "HE": "H/E", "BKC": "H/E", "BANDRA EAST": "H/E", "KALANAGAR": "H/E",
+                "K-WEST": "K/W", "K WEST": "K/W", "KW": "K/W", "ANDHERI WEST": "K/W", "ANDHERI SUBWAY": "K/W", "JUHU": "K/W", "VERSOVA": "K/W",
+                "K-EAST": "K/E", "K EAST": "K/E", "KE": "K/E", "ANDHERI EAST": "K/E", "SAKI NAKA": "K/E",
+                "M-WEST": "M/W", "M WEST": "M/W", "MW": "M/W", "CHEMBUR": "M/W", "AMAR MAHAL": "M/W",
+                "M-EAST": "M/E", "M EAST": "M/E", "ME": "M/E", "GOVANDI": "M/E", "MANKHURD": "M/E",
+                "P-NORTH": "P/N", "P NORTH": "P/N", "PN": "P/N", "MALAD": "P/N", "MALAD SUBWAY": "P/N",
+                "P-SOUTH": "P/S", "P SOUTH": "P/S", "PS": "P/S", "GOREGAON": "P/S",
+                "R-NORTH": "R/N", "R NORTH": "R/N", "RN": "R/N", "DAHISAR": "R/N",
+                "R-SOUTH": "R/S", "R SOUTH": "R/S", "RS": "R/S", "KANDIVALI": "R/S",
+                "R-CENTRAL": "R/C", "R CENTRAL": "R/C", "RC": "R/C", "BORIVALI": "R/C",
+                "L": "L", "KURLA": "L", "KALINA": "L",
+                "N": "N", "GHATKOPAR": "N",
+                "S": "S", "BHANDUP": "S", "POWAI": "S",
+                "T": "T", "MULUND": "T",
+            }
+            return mapping.get(w_clean, w_clean)
+
         features = self.risk_geojson.get("features", [])
         if ward:
-            features = [f for f in features if str(f.get("properties", {}).get("ward", "")).upper() == ward.upper()]
+            norm_ward = _normalize_ward(ward)
+            features = [f for f in features if str(f.get("properties", {}).get("ward", "")).upper() == norm_ward.upper()]
         elif bbox:
             minx, miny, maxx, maxy = bbox
             features = [
