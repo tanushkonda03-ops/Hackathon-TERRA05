@@ -1,0 +1,35 @@
+swmm_id,source_node_id,source_conduit_id,component_id,basis,split_reason
+N_2173077305_8b4ff9c,2173077305,18721,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+B_2173077305_18722_44aa90b,2173077305,18722,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+N_2174064701_1c0e380,2174064701,21885,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2174064803_0cc77b7,2174064803,21864,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2174064805_a506297,2174064805,21865,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+B_2174064805_21889_98742e6,2174064805,21889,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+N_2174064903_3cac65e,2174064903,21895,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2174071601_6974c5a,2174071601,22174,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2175084101_b4b5d69,2175084101,24860,0,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2175086503_f360a45,2175086503,24872,3,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2175087701_307a8c8,2175087701,24878,4,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176047501_f0a8210,2176047501,26436,1,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176100501_68ba9bb,2176100501,26863,6,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176101102_5f7c28b,2176101102,26864,5,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176105901_8e4a718,2176105901,26890,7,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176106801_bf8d0f2,2176106801,26914,8,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176118001_39083b9,2176118001,26972,9,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176118501_30ef276,2176118501,26975,10,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2176138203_88f3c46,2176138203,27068,2,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2177097806_caa1d43,2177097806,28231,11,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2177097806_51c2a6a,2177097806!,28230,12,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2177105016_eb627b3,2177105016,28402,11,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2177105016_1390709,2177105016!,28400,12,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2177120801_2c22465,2177120801,28606,13,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2178134809_50e5d42,2178134809,29682,15,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2178135403_c4ee85a,2178135403,29685,16,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2178137603_2aa84df,2178137603,29697,15,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+B_2178137603_29700_aaa625c,2178137603,29700,15,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+N_2178142104_fff4fcd,2178142104,29707,17,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2178143001_58242ba,2178143001,29716,18,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2178146205_d4a0388,2178146205,29748,15,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified
+N_2179105001_f9bc8c5,2179105001,30076,14,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+B_2179105001_30077_d46d12c,2179105001,30077,14,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,colocated per-incoming-link boundaries; SWMM outfall accepts one inlet
+N_2179111206_18125e0,2179111206,30145,19,PILOT_BOUNDARY; source-directed terminal; physical receiving water unverified,single incoming-link terminal; physical outfall unverified

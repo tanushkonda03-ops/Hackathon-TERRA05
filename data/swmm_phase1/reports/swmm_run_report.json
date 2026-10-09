@@ -1,0 +1,17 @@
+{
+  "success": true,
+  "command": [
+    "C:\\Program Files\\EPA SWMM 5.2.4 (64-bit)\\runswmm.exe",
+    "C:\\Agnitia\\Hackathon-TERRA05\\data\\swmm_phase1\\models\\terra05_wardL_2005.inp",
+    "C:\\Agnitia\\Hackathon-TERRA05\\data\\swmm_phase1\\runs\\2005\\terra05_wardL_2005.rpt",
+    "C:\\Agnitia\\Hackathon-TERRA05\\data\\swmm_phase1\\runs\\2005\\terra05_wardL_2005.out"
+  ],
+  "return_code": 0,
+  "runtime_seconds": 210.92458120000083,
+  "stdout": "\n o  Retrieving project data\n o  Simulating day: 0     hour:  0\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 1 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 2 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 3 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 4 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 5 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 6 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 7 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 8 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 9 \b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 10\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 11\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 12\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 13\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 14\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 15\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 16\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 17\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 18\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 19\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 20\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 21\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 22\b\b\b\b\b\b\b\b\b\b\b\b\b\b0     hour: 23\b\b\b\b\b\b\b\b\b\b\b\b\b\b1     hour: 0 \b\b\b\b\b\b\b\b\b\b\b\b\b\b1     hour: 1 \b\b\b\b\b\b\b\b\b\b\b\b\b\b1     hour: 2 \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\bSimulation complete           \n... EPA SWMM 5.2 (Build 5.2.4)\n\n\n... EPA SWMM completed in 211.00 seconds. There are warnings.\n",
+  "stderr": "",
+  "report_path": "data\\swmm_phase1\\runs\\2005\\terra05_wardL_2005.rpt",
+  "output_path": "data\\swmm_phase1\\runs\\2005\\terra05_wardL_2005.out",
+  "errors": [],
+  "swmm_version_line": "... EPA SWMM 5.2 (Build 5.2.4)"
+}

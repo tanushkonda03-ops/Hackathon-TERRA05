@@ -1,0 +1,294 @@
+{
+  "job": {
+    "simulation_id": "scn_4c10123bda0c7e4b2f91",
+    "scenario_id": "custom_ac2e4ee7d435",
+    "mode": "custom",
+    "status": "COMPLETE",
+    "cache_hit": false,
+    "created_at": "2026-10-09T15:17:52.503514+00:00",
+    "updated_at": "2026-10-09T15:18:01.455413+00:00",
+    "rainfall_source": "user-defined scenario",
+    "rainfall_hash": "ac2e4ee7d435d0d730a334319c7731e9105dfc803c175b1d8a45de6fbc908bf7",
+    "rainfall_total_mm": 150.0,
+    "duration_minutes": 360,
+    "physics_supported": true,
+    "prediction_mode": "MIXED_PHYSICS_AND_GIS_FALLBACK",
+    "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+    "progress": 100,
+    "error": null,
+    "result_path": "C:\\Agnitia\\Hackathon-TERRA05\\data\\ml_phase4\\predictions\\scenario_predictions\\scn_4c10123bda0c7e4b2f91_risk_map.json",
+    "risk_summary": {
+      "grid_cells": 47758,
+      "peak_risk_score": 0.971501886844635,
+      "high_or_very_high_cells": 8872,
+      "critical_asset_cells": 14576
+    },
+    "performance": {
+      "physics_cache": "reused or computed by SWMM job",
+      "ml_inference_seconds": 5.554912,
+      "prediction_cells": 47758,
+      "swmm_runtime_seconds": 93.46899999992456,
+      "swmm_cache_hit": true,
+      "end_to_end_seconds": 8.95
+    },
+    "physics_simulation_id": "sim_36e166c7627bc70db1de",
+    "physics_cache_hit": true,
+    "physics_supported_cells": 1516,
+    "elapsed_seconds": 8.95
+  },
+  "end_to_end_elapsed_seconds": 9.982,
+  "scenario_label": "Synthetic user-defined scenario; not an observed event",
+  "temporal_profile_mm_per_15min": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    5.0,
+    5.0,
+    5.0,
+    5.0,
+    5.0,
+    5.0,
+    5.0,
+    5.0,
+    13.75,
+    13.75,
+    13.75,
+    13.75,
+    13.75,
+    13.75,
+    13.75,
+    13.75
+  ],
+  "result": {
+    "scenario_id": "custom_ac2e4ee7d435",
+    "risk_summary": {
+      "grid_cells": 47758,
+      "peak_risk_score": 0.971501886844635,
+      "high_or_very_high_cells": 8872,
+      "critical_asset_cells": 14576
+    },
+    "physics_supported_cells": 1516,
+    "prediction_mode_counts": {
+      "physics_informed_extrapolation": 1516,
+      "gis_only_fallback": 46242
+    },
+    "top_risk_cells": [
+      {
+        "grid_id": 23538,
+        "ward": "L",
+        "risk_score": 0.971501886844635,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 23249,
+        "ward": "L",
+        "risk_score": 0.968907356262207,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 26895,
+        "ward": "L",
+        "risk_score": 0.9655840396881104,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 1.0128889083862305
+      },
+      {
+        "grid_id": 23539,
+        "ward": "L",
+        "risk_score": 0.9642643332481384,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 23250,
+        "ward": "L",
+        "risk_score": 0.9576447606086731,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 25799,
+        "ward": "L",
+        "risk_score": 0.9476070404052734,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 0.2521337866783142
+      },
+      {
+        "grid_id": 23248,
+        "ward": "L",
+        "risk_score": 0.9330338835716248,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 3.502129077911377
+      },
+      {
+        "grid_id": 25801,
+        "ward": "L",
+        "risk_score": 0.9154027700424194,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 0.2521337866783142
+      },
+      {
+        "grid_id": 25802,
+        "ward": "L",
+        "risk_score": 0.912451446056366,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 0.2521337866783142
+      },
+      {
+        "grid_id": 31319,
+        "ward": "M/W",
+        "risk_score": 0.9111388921737671,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": false,
+        "prediction_mode": "GIS_ONLY_FALLBACK",
+        "predicted_label": null,
+        "hydraulic_depth_proxy_m": null
+      }
+    ],
+    "critical_assets": [
+      {
+        "grid_id": 23538,
+        "ward": "L",
+        "risk_score": 0.971501886844635,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 23249,
+        "ward": "L",
+        "risk_score": 0.968907356262207,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 26895,
+        "ward": "L",
+        "risk_score": 0.9655840396881104,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 1.0128889083862305
+      },
+      {
+        "grid_id": 23539,
+        "ward": "L",
+        "risk_score": 0.9642643332481384,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 23250,
+        "ward": "L",
+        "risk_score": 0.9576447606086731,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      },
+      {
+        "grid_id": 23248,
+        "ward": "L",
+        "risk_score": 0.9330338835716248,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 3.502129077911377
+      },
+      {
+        "grid_id": 25801,
+        "ward": "L",
+        "risk_score": 0.9154027700424194,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 0.2521337866783142
+      },
+      {
+        "grid_id": 25802,
+        "ward": "L",
+        "risk_score": 0.912451446056366,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 0.2521337866783142
+      },
+      {
+        "grid_id": 31319,
+        "ward": "M/W",
+        "risk_score": 0.9111388921737671,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": false,
+        "prediction_mode": "GIS_ONLY_FALLBACK",
+        "predicted_label": null,
+        "hydraulic_depth_proxy_m": null
+      },
+      {
+        "grid_id": 23826,
+        "ward": "L",
+        "risk_score": 0.9104160666465759,
+        "risk_level": "VERY_HIGH",
+        "physics_supported": true,
+        "prediction_mode": "PHYSICS_INFORMED_EXTRAPOLATION",
+        "predicted_label": 1,
+        "hydraulic_depth_proxy_m": 5.529600143432617
+      }
+    ],
+    "decision_support": [
+      "Prioritize field review of the highest ranked risk cells and exposed critical-asset cells.",
+      "Scores are uncalibrated scenario rankings; confirm against current observations before operational action."
+    ],
+    "performance": {
+      "physics_cache": "reused or computed by SWMM job",
+      "ml_inference_seconds": 5.554912,
+      "prediction_cells": 47758
+    }
+  }
+}

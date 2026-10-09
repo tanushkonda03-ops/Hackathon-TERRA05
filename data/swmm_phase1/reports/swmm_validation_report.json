@@ -1,0 +1,305 @@
+{
+  "node_max_depth_m": 23.27560043334961,
+  "max_abs_conduit_velocity_m_s": 14.977828025817871,
+  "max_abs_flow_cms": 159.80816650390625,
+  "flooding_loss_rate_observed": true,
+  "all_subcatchment_runoff_zero": false,
+  "continuity_errors_percent": [
+    -0.009,
+    -0.05
+  ],
+  "warnings": [
+    "WARNING 04: minimum elevation drop used for Conduit C_22003",
+    "WARNING 04: minimum elevation drop used for Conduit C_22395",
+    "WARNING 04: minimum elevation drop used for Conduit C_24635",
+    "WARNING 04: minimum elevation drop used for Conduit C_24648",
+    "WARNING 04: minimum elevation drop used for Conduit C_24680",
+    "WARNING 04: minimum elevation drop used for Conduit C_24697",
+    "WARNING 04: minimum elevation drop used for Conduit C_26786",
+    "WARNING 04: minimum elevation drop used for Conduit C_28076",
+    "WARNING 04: minimum elevation drop used for Conduit C_28143",
+    "WARNING 04: minimum elevation drop used for Conduit C_28153",
+    "WARNING 04: minimum elevation drop used for Conduit C_28207",
+    "WARNING 04: minimum elevation drop used for Conduit C_28222",
+    "WARNING 04: minimum elevation drop used for Conduit C_28223",
+    "WARNING 04: minimum elevation drop used for Conduit C_28228",
+    "WARNING 04: minimum elevation drop used for Conduit C_28229",
+    "WARNING 04: minimum elevation drop used for Conduit C_28244",
+    "WARNING 04: minimum elevation drop used for Conduit C_28245",
+    "WARNING 04: minimum elevation drop used for Conduit C_28255",
+    "WARNING 04: minimum elevation drop used for Conduit C_28276",
+    "WARNING 04: minimum elevation drop used for Conduit C_28280",
+    "WARNING 04: minimum elevation drop used for Conduit C_28929",
+    "WARNING 04: minimum elevation drop used for Conduit C_28961",
+    "WARNING 04: minimum elevation drop used for Conduit C_28979",
+    "WARNING 04: minimum elevation drop used for Conduit C_28998",
+    "WARNING 04: minimum elevation drop used for Conduit C_29131",
+    "WARNING 04: minimum elevation drop used for Conduit C_29146",
+    "WARNING 04: minimum elevation drop used for Conduit C_29478",
+    "WARNING 04: minimum elevation drop used for Conduit C_29479",
+    "WARNING 04: minimum elevation drop used for Conduit C_29495",
+    "WARNING 04: minimum elevation drop used for Conduit C_29536",
+    "WARNING 04: minimum elevation drop used for Conduit C_29537",
+    "WARNING 04: minimum elevation drop used for Conduit C_29548",
+    "WARNING 04: minimum elevation drop used for Conduit C_29549",
+    "WARNING 04: minimum elevation drop used for Conduit C_30068",
+    "WARNING 04: minimum elevation drop used for Conduit C_30255",
+    "WARNING 04: minimum elevation drop used for Conduit C_30284",
+    "WARNING 02: maximum depth increased for Node N_2176045803_1e8de10",
+    "WARNING 02: maximum depth increased for Node N_2176069803_fb5d07d"
+  ],
+  "errors": [],
+  "warning_counts": {
+    "04": 36,
+    "02": 2
+  },
+  "zero_flow_conduit_count": 1292,
+  "outfalls": [
+    {
+      "outfall_id": "N_2173077305_8b4ff9c",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "B_2173077305_18722_44aa90b",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "N_2174064701_1c0e380",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "N_2174064803_0cc77b7",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "N_2174064805_a506297",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "B_2174064805_21889_98742e6",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "N_2174064903_3cac65e",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "N_2174071601_6974c5a",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "N_2175084101_b4b5d69",
+      "frequency_pct": 99.84,
+      "average_flow_cms": 0.935,
+      "max_flow_cms": 3.934,
+      "total_volume_million_liters": 70.694
+    },
+    {
+      "outfall_id": "N_2175086503_f360a45",
+      "frequency_pct": 99.4,
+      "average_flow_cms": 1.544,
+      "max_flow_cms": 9.894,
+      "total_volume_million_liters": 116.088
+    },
+    {
+      "outfall_id": "N_2175087701_307a8c8",
+      "frequency_pct": 99.94,
+      "average_flow_cms": 3.594,
+      "max_flow_cms": 23.517,
+      "total_volume_million_liters": 271.58
+    },
+    {
+      "outfall_id": "N_2176047501_f0a8210",
+      "frequency_pct": 79.36,
+      "average_flow_cms": 45.193,
+      "max_flow_cms": 137.621,
+      "total_volume_million_liters": 2712.202
+    },
+    {
+      "outfall_id": "N_2176100501_68ba9bb",
+      "frequency_pct": 99.15,
+      "average_flow_cms": 0.862,
+      "max_flow_cms": 5.358,
+      "total_volume_million_liters": 64.77
+    },
+    {
+      "outfall_id": "N_2176101102_5f7c28b",
+      "frequency_pct": 99.95,
+      "average_flow_cms": 3.56,
+      "max_flow_cms": 22.854,
+      "total_volume_million_liters": 269.222
+    },
+    {
+      "outfall_id": "N_2176105901_8e4a718",
+      "frequency_pct": 97.51,
+      "average_flow_cms": 0.242,
+      "max_flow_cms": 1.523,
+      "total_volume_million_liters": 17.853
+    },
+    {
+      "outfall_id": "N_2176106801_bf8d0f2",
+      "frequency_pct": 99.74,
+      "average_flow_cms": 5.778,
+      "max_flow_cms": 35.998,
+      "total_volume_million_liters": 436.298
+    },
+    {
+      "outfall_id": "N_2176118001_39083b9",
+      "frequency_pct": 99.96,
+      "average_flow_cms": 8.355,
+      "max_flow_cms": 37.641,
+      "total_volume_million_liters": 632.904
+    },
+    {
+      "outfall_id": "N_2176118501_30ef276",
+      "frequency_pct": 99.78,
+      "average_flow_cms": 6.004,
+      "max_flow_cms": 26.237,
+      "total_volume_million_liters": 453.629
+    },
+    {
+      "outfall_id": "N_2176138203_88f3c46",
+      "frequency_pct": 99.91,
+      "average_flow_cms": 6.282,
+      "max_flow_cms": 39.694,
+      "total_volume_million_liters": 474.487
+    },
+    {
+      "outfall_id": "N_2177097806_caa1d43",
+      "frequency_pct": 90.42,
+      "average_flow_cms": 0.473,
+      "max_flow_cms": 3.147,
+      "total_volume_million_liters": 32.31
+    },
+    {
+      "outfall_id": "N_2177097806_51c2a6a",
+      "frequency_pct": 99.13,
+      "average_flow_cms": 0.272,
+      "max_flow_cms": 2.23,
+      "total_volume_million_liters": 20.373
+    },
+    {
+      "outfall_id": "N_2177105016_eb627b3",
+      "frequency_pct": 99.3,
+      "average_flow_cms": 9.739,
+      "max_flow_cms": 82.513,
+      "total_volume_million_liters": 731.066
+    },
+    {
+      "outfall_id": "N_2177105016_1390709",
+      "frequency_pct": 98.04,
+      "average_flow_cms": 8.524,
+      "max_flow_cms": 63.47,
+      "total_volume_million_liters": 631.583
+    },
+    {
+      "outfall_id": "N_2177120801_2c22465",
+      "frequency_pct": 99.96,
+      "average_flow_cms": 27.729,
+      "max_flow_cms": 179.969,
+      "total_volume_million_liters": 2096.822
+    },
+    {
+      "outfall_id": "N_2178134809_50e5d42",
+      "frequency_pct": 99.71,
+      "average_flow_cms": 4.841,
+      "max_flow_cms": 17.144,
+      "total_volume_million_liters": 365.194
+    },
+    {
+      "outfall_id": "N_2178135403_c4ee85a",
+      "frequency_pct": 99.89,
+      "average_flow_cms": 2.733,
+      "max_flow_cms": 16.883,
+      "total_volume_million_liters": 206.816
+    },
+    {
+      "outfall_id": "N_2178137603_2aa84df",
+      "frequency_pct": 99.85,
+      "average_flow_cms": 6.397,
+      "max_flow_cms": 19.129,
+      "total_volume_million_liters": 484.606
+    },
+    {
+      "outfall_id": "B_2178137603_29700_aaa625c",
+      "frequency_pct": 99.69,
+      "average_flow_cms": 4.629,
+      "max_flow_cms": 26.186,
+      "total_volume_million_liters": 349.281
+    },
+    {
+      "outfall_id": "N_2178142104_fff4fcd",
+      "frequency_pct": 99.8,
+      "average_flow_cms": 9.713,
+      "max_flow_cms": 39.198,
+      "total_volume_million_liters": 733.969
+    },
+    {
+      "outfall_id": "N_2178143001_58242ba",
+      "frequency_pct": 99.16,
+      "average_flow_cms": 0.376,
+      "max_flow_cms": 2.302,
+      "total_volume_million_liters": 28.232
+    },
+    {
+      "outfall_id": "N_2178146205_d4a0388",
+      "frequency_pct": 99.85,
+      "average_flow_cms": 7.875,
+      "max_flow_cms": 35.839,
+      "total_volume_million_liters": 593.668
+    },
+    {
+      "outfall_id": "N_2179105001_f9bc8c5",
+      "frequency_pct": 75.96,
+      "average_flow_cms": 0.284,
+      "max_flow_cms": 1.417,
+      "total_volume_million_liters": 16.301
+    },
+    {
+      "outfall_id": "B_2179105001_30077_d46d12c",
+      "frequency_pct": 0.0,
+      "average_flow_cms": 0.0,
+      "max_flow_cms": 0.0,
+      "total_volume_million_liters": 0.0
+    },
+    {
+      "outfall_id": "N_2179111206_18125e0",
+      "frequency_pct": 95.34,
+      "average_flow_cms": 3.669,
+      "max_flow_cms": 31.428,
+      "total_volume_million_liters": 264.252
+    }
+  ],
+  "sanity_flags": {
+    "continuity_below_1_percent": true,
+    "node_depth_over_10m": true,
+    "conduit_velocity_over_10m_s": true,
+    "zero_flow_conduits_present": true,
+    "boundary_outfalls_with_zero_flow": 9
+  },
+  "checks_are_uncalibrated_sanity_thresholds": true
+}

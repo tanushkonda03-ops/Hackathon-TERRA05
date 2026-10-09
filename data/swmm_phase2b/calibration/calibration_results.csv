@@ -1,0 +1,11 @@
+parameter,baseline,final,units,source,calibration_method,confidence,result
+manning_n,0.025,0.025,SWMM native units,pilot_conduits.csv; value marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+n_imperv,0.015,0.015,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+n_perv,0.2,0.2,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+s_imperv_mm,2.0,2.0,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+s_perv_mm,5.0,5.0,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+horton_max_mm_hr,50.0,50.0,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+horton_min_mm_hr,5.0,5.0,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+horton_decay_hr,3.0,3.0,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+horton_dry_days,7.0,7.0,SWMM native units,pilot_subcatchments.csv; marked ASSUMED,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration
+boundary_stage,not assigned,not assigned,SWMM native units,No receiving-water stage source,NONE; frozen at Phase 1 baseline,low / assumed,No defensible observations for hydraulic calibration

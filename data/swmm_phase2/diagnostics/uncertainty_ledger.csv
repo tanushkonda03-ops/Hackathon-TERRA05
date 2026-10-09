@@ -1,0 +1,13 @@
+uncertainty_id,parameter,source,impact,status
+U01,vertical datum,DEM metadata / repository offset,Node ground and cover elevations may be shifted,UNVERIFIED
+U02,node elevation,DEM-derived rim and source inverts,Affects surcharge and node flooding,UNVERIFIED
+U03,36 Warning 04 conduits,Source conduit endpoint records,SWMM substitutes minimum slope for hydraulic calculations,SOURCE MATCHED; ENGINEERING REVIEW REQUIRED
+U04,physical outfalls,Directed pilot network sinks,Pilot boundaries may not be receiving-water outlets,UNVERIFIED
+U05,receiving water / tide,No verified boundary-stage series,Backwater is not represented; tide disabled,DISABLED
+U06,catchment routing,Nearest existing-network node assignment,Spatial runoff allocation may be misplaced,UNVERIFIED
+U07,203 distant catchment outlets,Outlet distances over 500 m,Runoff may enter network at a distant node,REVIEW REQUIRED
+U08,Manning roughness,Shape-based engineering assumptions,Controls conduit conveyance,ASSUMED; NOT CALIBRATED
+U09,Horton parameters,MVP infiltration parameters,Controls runoff generation,ASSUMED; NOT CALIBRATED
+U10,reconstructed rainfall,Coarse historical totals interpolated to 15-minute steps,Affects peak runoff timing/intensity,RECONSTRUCTED; NOT OBSERVED AT 15 MINUTES
+U11,missing inlet capacity,No surveyed inlet/gully inventory,Surface-to-sewer transfer capacity is unknown,UNAVAILABLE
+U12,surface depth coupling,No calibrated 2D surface-SWMM coupling,SWMM depth cannot represent street depth,NOT IMPLEMENTED; OUTPUT NULL

@@ -1,0 +1,16 @@
+section,metric,first_unit,second_unit,first_report_unit_value,second_report_unit_value
+runoff,Total Precipitation,hectare_m,mm,1431.407,944.2
+runoff,Infiltration Loss,hectare_m,mm,49.936,32.939
+runoff,Surface Runoff,hectare_m,mm,1376.221,907.797
+runoff,Final Storage,hectare_m,mm,5.386,3.553
+routing,Dry Weather Inflow,hectare_m,million_liters,0.0,0.0
+routing,Wet Weather Inflow,hectare_m,million_liters,1376.173,13761.873
+routing,Groundwater Inflow,hectare_m,million_liters,0.0,0.0
+routing,RDII Inflow,hectare_m,million_liters,0.0,0.0
+routing,External Inflow,hectare_m,million_liters,0.0,0.0
+routing,External Outflow,hectare_m,million_liters,1207.413,12074.256
+routing,Flooding Loss,hectare_m,million_liters,152.005,1520.065
+runoff,Evaporation Loss,hectare_m,mm,0.0,0.0
+routing,Exfiltration Loss,hectare_m,million_liters,0.0,0.0
+routing,Initial Stored Volume,hectare_m,million_liters,0.002,0.02
+routing,Continuity Error,percent,not_applicable,-0.05,

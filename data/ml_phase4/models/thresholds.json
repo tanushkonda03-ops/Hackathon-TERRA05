@@ -1,0 +1,6 @@
+{
+  "production_baseline": 0.0012947609648108482,
+  "threshold_source": "Phase 3 validation-selected threshold; not an official operational warning threshold",
+  "citywide_gis_threshold": 0.8984069764614104,
+  "phase4_threshold_selected": false
+}

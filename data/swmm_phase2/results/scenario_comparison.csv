@@ -1,0 +1,4 @@
+scenario_a,scenario_b,rainfall_depth_difference_mm,peak_depth_difference_m,flooded_area_difference_km2,flood_duration_difference_minutes,time_to_flood_difference_minutes,peak_drainage_flow_difference_m3s,comparison_status
+baseline_100pct,rainfall_25pct,-708.1500000000001,-15.98451280593872,,,,-104.45109558105469,"HYDRAULIC_METRICS_ONLY; flood area, grid depth and duration unavailable without surface coupling"
+baseline_100pct,rainfall_50pct,-472.1,-10.136474609375,,,,-34.017250061035156,"HYDRAULIC_METRICS_ONLY; flood area, grid depth and duration unavailable without surface coupling"
+baseline_100pct,rainfall_75pct,-236.05000000000007,-5.320371627807617,,,,-9.179275512695312,"HYDRAULIC_METRICS_ONLY; flood area, grid depth and duration unavailable without surface coupling"

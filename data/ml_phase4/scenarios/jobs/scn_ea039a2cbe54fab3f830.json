@@ -1,0 +1,62 @@
+{
+  "simulation_id": "scn_ea039a2cbe54fab3f830",
+  "scenario_id": "custom_71e79f94a8cd",
+  "mode": "custom",
+  "event_id": null,
+  "status": "COMPLETE",
+  "cache_hit": false,
+  "created_at": "2026-10-09T16:00:25.890199+00:00",
+  "updated_at": "2026-10-09T16:04:03.462495+00:00",
+  "rainfall_source": "user-defined scenario",
+  "rainfall_hash": "71e79f94a8cd5c64b5a9e0e0c48be7e4bbaa0422915cda477dd5bb24cef4a95b",
+  "rainfall_total_mm": 200.0,
+  "duration_minutes": 360,
+  "physics_supported": true,
+  "prediction_mode": "MIXED_PHYSICS_AND_GIS_FALLBACK",
+  "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+  "progress": 100,
+  "physics_simulation_id": "sim_7191e4f9b133f6761576",
+  "physics_cache_hit": false,
+  "physics_summary": {
+    "engine": "swmm",
+    "simulation_id": "sim_7191e4f9b133f6761576",
+    "scenario_id": "custom_71e79f94a8cd",
+    "rainfall_multiplier": 1.0,
+    "max_node_depth_m": 7.054101467132568,
+    "max_conduit_velocity_ms": 5.318626403808594,
+    "peak_drainage_flow_m3s": 31.75957679748535,
+    "flooded_node_count": 3,
+    "grid_flooded_area_km2": null,
+    "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+    "result_paths": {
+      "conduit_metrics": "conduit_metrics.csv",
+      "conduit_physics_timeseries": "conduit_physics_timeseries.csv",
+      "flood_events": "flood_events.csv",
+      "grid_event_metrics": "grid_event_metrics.csv",
+      "grid_flood_events_proxy": "grid_flood_events_proxy.csv",
+      "grid_physics_timeseries": "grid_physics_timeseries.csv",
+      "node_physics_timeseries": "node_physics_timeseries.csv",
+      "physics_water_balance": "physics_water_balance.csv",
+      "subcatchment_metrics": "subcatchment_metrics.csv",
+      "subcatchment_physics_timeseries": "subcatchment_physics_timeseries.csv"
+    }
+  },
+  "result_path": "C:\\Agnitia\\Hackathon-TERRA05\\data\\ml_phase4\\predictions\\scenario_predictions\\scn_ea039a2cbe54fab3f830_risk_map.json",
+  "prediction_count": 47758,
+  "physics_supported_cells": 1516,
+  "elapsed_seconds": 217.571,
+  "risk_summary": {
+    "grid_cells": 47758,
+    "peak_risk_score": 0.971501886844635,
+    "high_or_very_high_cells": 8901,
+    "critical_asset_cells": 14576
+  },
+  "performance": {
+    "physics_cache": "reused or computed by SWMM job",
+    "ml_inference_seconds": 14.183634,
+    "prediction_cells": 47758,
+    "swmm_runtime_seconds": 155.1720000000205,
+    "swmm_cache_hit": false,
+    "end_to_end_seconds": 217.571
+  }
+}

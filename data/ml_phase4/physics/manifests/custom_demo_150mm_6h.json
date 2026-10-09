@@ -1,0 +1,18 @@
+{
+  "event_id": null,
+  "scenario_id": "custom_ac2e4ee7d435",
+  "model_version": "terra05-swmm-v1.0.0",
+  "run_timestamp": "2026-10-09T15:18:01.455413+00:00",
+  "rainfall_hash": "ac2e4ee7d435d0d730a334319c7731e9105dfc803c175b1d8a45de6fbc908bf7",
+  "simulation_id": "sim_36e166c7627bc70db1de",
+  "input_hash": "3494f1b269ce86980731ce3ecdec444b613bb20ce22a0a6656564b03d9cf8878",
+  "scenario_hash": "36e166c7627bc70db1ded0c2b899a0416658ce5ca9bf14640cddc4afdec58645",
+  "execution": {
+    "reused_existing_run": false,
+    "runtime_seconds": 93.46899999992456,
+    "return_code": 0
+  },
+  "result_dir": "C:\\Agnitia\\Hackathon-TERRA05\\data\\swmm_phase2\\runs\\36e166c7627bc70db1ded0c2b899a0416658ce5ca9bf14640cddc4afdec58645\\results",
+  "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+  "scenario_label": "Synthetic user-defined scenario; not an observed event"
+}

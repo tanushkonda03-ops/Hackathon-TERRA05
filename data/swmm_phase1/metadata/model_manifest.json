@@ -1,0 +1,64 @@
+{
+  "model_name": "terra05_wardL_2005",
+  "model_path": "data\\swmm_phase1\\models\\terra05_wardL_2005.inp",
+  "build_timestamp_utc": "2026-10-09T11:46:10+00:00",
+  "git_commit": "1f04aea239192113878001f12fcc744dc0111b0b",
+  "routing": "DYNWAVE",
+  "rainfall_event": "TS_2005_JULY26",
+  "rainfall_total_mm": 944.2,
+  "rainfall_resolution_minutes": 15,
+  "rainfall_status": "RECONSTRUCTED",
+  "infrastructure_mode": "EXISTING_ONLY",
+  "infiltration_method": "HORTON",
+  "tide": false,
+  "datum_offset_m": 27.432,
+  "classification": {
+    "source_derived": [
+      "node IDs",
+      "conduit IDs, dimensions, endpoint inverts, lengths, status, shape labels",
+      "DEM pixels",
+      "rainfall 3-hour totals used in reconstruction",
+      "grid polygons"
+    ],
+    "derived": [
+      "EPSG:32643 node coordinates",
+      "node invert as minimum connected endpoint invert with endpoint offsets preserving source invert",
+      "existing-only graph and pilot membership",
+      "cell areas from polygon geometry",
+      "nearest-node catchment outlet",
+      "land-cover built-up proxy"
+    ],
+    "assumed": [
+      "Manning n by shape",
+      "OREC interpreted as open rectangular",
+      "Horton rates 50/5 mm/h, decay 3 1/h, drying time 7 d",
+      "subcatchment roughness/storage",
+      "FREE pilot boundaries at graph sinks; multi-inlet terminals split into colocated one-inlet boundaries",
+      "fallback node rim depth at conduit crown + 0.3 m where DEM cover is insufficient"
+    ],
+    "scenario": [
+      "26 July 2005 reconstructed rainfall",
+      "no tide",
+      "Existing-only infrastructure"
+    ]
+  },
+  "source_hashes_sha256": {
+    "data\\raw\\storm_water_drains.geojson": "c99a8b26303d542d499409c2b3a02892154a773e13ab67e1848094f44adcdc2e",
+    "data\\processed\\flood_grid_100m.geojson": "f16b57db35cb6496b09a1416021f8264fcdb975f0bc786951accece0f8e87a32",
+    "data\\raw\\external\\dem_mumbai_utm43.tif": "761d89e3a083797b0a0a10175d62ebb119d9e12fd05a1ffce6bcc9fcda1fc645",
+    "data\\swmm_ready\\swmm_rainfall_catalog.csv": "c6c40e7670c1ff640ad47acfe3c248a61f539f65af5bcc30a386dbb78c795a80"
+  },
+  "limitations": [
+    "Engineering-estimate model; not a calibrated or complete BMC network",
+    "Physical receiving-water outfalls are not verified; SWMM outfalls are explicit pilot boundaries",
+    "DEM vertical datum metadata do not independently establish the repository's 27.432 m offset",
+    "15-minute rainfall is reconstructed from coarser observations",
+    "100 m grid built-up fraction is an imperviousness proxy"
+  ],
+  "swmm_executable": "C:\\Program Files\\EPA SWMM 5.2.4 (64-bit)\\runswmm.exe",
+  "swmm_version": "5.2.4",
+  "environment": {
+    "python": "3.12.10",
+    "os": "win32"
+  }
+}

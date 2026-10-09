@@ -1,0 +1,8 @@
+{
+  "classification": "immutable Phase 1 baseline snapshot",
+  "sha256": {
+    "baseline.inp": "dd0be4c9e78ca8b669233fef15f0a33705ad441deccdeab454d8f3a528ec81d5",
+    "baseline.rpt": "3a47100642cb314ebb3c4464570c874dc6019995e36ddd1ecaa0ed9f82916b12",
+    "baseline.out": "1a106ec3d9078e7cfddc6762d19fcda1dd90263ef7336e6c552bcaea89c91a56"
+  }
+}

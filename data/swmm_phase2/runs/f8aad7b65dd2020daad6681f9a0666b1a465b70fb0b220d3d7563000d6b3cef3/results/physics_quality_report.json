@@ -1,0 +1,23 @@
+{
+  "swmm_runtime_ok": true,
+  "continuity_ok": true,
+  "continuity_error_percent": [
+    -0.007,
+    0.012
+  ],
+  "topology_ok": true,
+  "rainfall_ok": false,
+  "rainfall_total_mm": 143.75,
+  "elevation_validation_status": "UNVERIFIED; datum and cover assumptions remain",
+  "warning04_count": 36,
+  "boundary_validation_status": "UNVERIFIED; pilot boundaries are computational, physical outfalls/tide not confirmed",
+  "catchment_validation_status": "UNVERIFIED; all outlet IDs resolve, 203 outlets exceed 500 m",
+  "hydraulic_sanity_status": "WITHIN_CONFIGURED_SANITY_LIMITS",
+  "overall_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+  "validation_status": "OBSERVATION_CALIBRATION_NOT_PERFORMED",
+  "warning_counts": {
+    "02": 2,
+    "04": 36
+  },
+  "flood_threshold_source": "CONFIGURED_ENGINEERING_THRESHOLD; not calibrated municipal warning thresholds"
+}

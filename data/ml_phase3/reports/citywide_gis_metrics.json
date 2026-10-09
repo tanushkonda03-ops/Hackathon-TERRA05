@@ -1,0 +1,80 @@
+{
+  "validation": {
+    "pr_auc": 0.07709771233282355,
+    "roc_auc": 0.7058618125849906,
+    "precision": 0.10044642857142858,
+    "recall": 0.052508751458576426,
+    "f1": 0.06896551724137931,
+    "balanced_accuracy": 0.5168983837155444,
+    "confusion_matrix_tn_fp_fn_tp": [
+      [
+        21134,
+        403
+      ],
+      [
+        812,
+        45
+      ]
+    ],
+    "threshold": 0.8984069764614104
+  },
+  "test": {
+    "pr_auc": 0.1628125101144901,
+    "roc_auc": 0.7840848330393494,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "balanced_accuracy": 0.5,
+    "confusion_matrix_tn_fp_fn_tp": [
+      [
+        6682,
+        0
+      ],
+      [
+        412,
+        0
+      ]
+    ],
+    "threshold": 0.8984069764614104
+  },
+  "train_rows": 18270,
+  "validation_rows": 22394,
+  "test_rows": 7094,
+  "threshold_fold": 4,
+  "test_fold": 2,
+  "features": [
+    "elevation_mean",
+    "slope_mean",
+    "flow_accumulation",
+    "flow_accumulation_area_km2",
+    "flow_accumulation_log",
+    "drain_density",
+    "distance_to_drain",
+    "distance_to_water",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "water_fraction",
+    "mangrove_fraction",
+    "building_count",
+    "building_density",
+    "clay_percent",
+    "sand_percent",
+    "silt_percent",
+    "infiltration_proxy",
+    "topographic_wetness_index",
+    "drain_capacity_proxy_m2",
+    "drainage_stress_index",
+    "road_length_m",
+    "has_railway",
+    "has_hospital",
+    "is_critical_asset_cell",
+    "rainfall_total_mm",
+    "rainfall_1h_mm",
+    "rainfall_3h_mm",
+    "rainfall_6h_mm",
+    "rainfall_12h_mm",
+    "rainfall_24h_mm",
+    "peak_15min_mm",
+    "peak_1h_mm"
+  ]
+}

@@ -1,0 +1,11 @@
+parameter,component,baseline,minimum,maximum,source,classification,calibratable,sensitivity
+manning_n,conduits,0.025,0.01,0.03,pilot_conduits.csv; value marked ASSUMED,ASSUMED,False,High potential hydraulic sensitivity; no flow/depth observations to calibrate
+n_imperv,subcatchments,0.015,0.01,0.03,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Runoff timing/sensitivity; no event-specific hydraulic observations
+n_perv,subcatchments,0.2,0.05,0.3,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Runoff timing/sensitivity; no event-specific hydraulic observations
+s_imperv_mm,subcatchments,2.0,0.0,5.0,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Storage parameter; no observations
+s_perv_mm,subcatchments,5.0,0.0,15.0,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Storage parameter; no observations
+horton_max_mm_hr,subcatchments,50.0,10.0,100.0,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Potential high sensitivity; no soil/site calibration data
+horton_min_mm_hr,subcatchments,5.0,0.5,20.0,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Potential high sensitivity; no soil/site calibration data
+horton_decay_hr,subcatchments,3.0,0.5,10.0,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Potential sensitivity; no observations
+horton_dry_days,subcatchments,7.0,1.0,14.0,pilot_subcatchments.csv; marked ASSUMED,ASSUMED,False,Potential sensitivity; no observations
+boundary_stage,boundaries,not assigned,not defensible,not defensible,No receiving-water stage source,UNKNOWN,False,Disabled; no source-supported stage bounds

@@ -1,0 +1,13 @@
+{
+  "phase": "TERRA05 Phase 4",
+  "status": "COMPLETE_WITH_DATA_LIMITATIONS",
+  "event_registry": "datasets/event_registry.csv",
+  "multi_event_supervised_validation": "NOT_SUPPORTED",
+  "candidate_dataset_rows": 47758,
+  "eligible_train_rows": 0,
+  "custom_swmm_solver_runs": 1,
+  "historical_replay_solver_runs": 0,
+  "demo_scenario": "custom_ac2e4ee7d435",
+  "demo_risk_result": "predictions/scenario_predictions/scn_4c10123bda0c7e4b2f91_risk_map.json",
+  "model_v2_status": "not fit: no event-matched supervised targets"
+}

@@ -1,0 +1,10 @@
+event_id,station,observation_date,observation_time_utc,rainfall_mm,model_reconstructed_mm,error_mm,absolute_error_mm,comparison_basis,eligibility
+E001,Santacruz,2005-07-26,03:00,0.9,0.9,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-26,06:00,0.0,0.0,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-26,09:00,17.5,17.5,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-26,12:00,431.7,431.70000000000005,5.684341886080802e-14,5.684341886080802e-14,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-26,15:00,217.6,217.6,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-26,18:00,101.2,101.2,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-26,21:00,116.1,116.1,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-27,00:00,11.0,11.0,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration
+E001,Santacruz,2005-07-27,03:00,48.2,48.2,0.0,0.0,Sum of 12 reconstructed 15-minute bins compared with independent IMD 3-hour interval total,RAINFALL_VALIDATION_ONLY; not hydraulic calibration

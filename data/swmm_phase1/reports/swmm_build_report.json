@@ -1,0 +1,40 @@
+{
+  "status": "PRE-RUN VALIDATION PASSED",
+  "model": "data\\swmm_phase1\\models\\terra05_wardL_2005.inp",
+  "pilot": {
+    "rule": "all Existing-only connected components with a node within 250 m of Ward L 100 m grid union",
+    "seed_nodes": 1374,
+    "component_count": 20,
+    "nodes": 3269,
+    "conduits": 3314,
+    "subcatchment_cells": 1516
+  },
+  "selected_components": 20,
+  "nodes": 3269,
+  "conduits": 3314,
+  "boundaries": 34,
+  "subcatchments": 1516,
+  "subcatchment_area_ha": 1516.0,
+  "grid_actual_area_quantiles_ha": {
+    "0.0": 10000.0,
+    "0.01": 10000.0,
+    "0.5": 10000.0,
+    "0.99": 10000.0,
+    "1.0": 10000.0
+  },
+  "outlet_distance_m_quantiles": {
+    "0.0": 0.52645415357897,
+    "0.5": 197.39405964644195,
+    "0.95": 889.6810743764322,
+    "0.99": 1169.7544900878013,
+    "1.0": 1371.3366198718265
+  },
+  "nodes_with_dem_nodata": 0,
+  "nodes_dem_cover_below_pipe_crown": 47,
+  "negative_link_slopes_preserved": 6,
+  "near_zero_link_slopes_preserved": 36,
+  "id_validation": "passed",
+  "reference_validation": "passed",
+  "rainfall_total_validation": "passed",
+  "routing": "DYNWAVE"
+}

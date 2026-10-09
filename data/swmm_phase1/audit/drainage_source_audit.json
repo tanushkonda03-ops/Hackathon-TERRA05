@@ -1,0 +1,95 @@
+{
+  "source_files": {
+    "drainage": "data\\raw\\storm_water_drains.geojson",
+    "grid": "data\\processed\\flood_grid_100m.geojson",
+    "dem": "data\\raw\\external\\dem_mumbai_utm43.tif",
+    "rainfall": "data\\swmm_ready\\swmm_rainfall_catalog.csv"
+  },
+  "source_crs": "EPSG:32643",
+  "analysis_crs": "EPSG:32643",
+  "conduits_total": 34711,
+  "nodes_total": 34345,
+  "status_counts": {
+    "Existing": 23465,
+    "Proposal": 11246
+  },
+  "shape_counts": {
+    "RECT": 7139,
+    "OREC": 10777,
+    "CIRC": 15558,
+    "ARCH": 1237
+  },
+  "duplicate_conduit_ids": 0,
+  "self_loops": 0,
+  "isolated_nodes": 0,
+  "orphan_conduits": 0,
+  "orphan_nodes": 0,
+  "quality_flag_counts": {
+    "near_zero_slope": 119,
+    "negative_slope": 26,
+    "extreme_dimension_review": 1495,
+    "extreme_length_review": 1,
+    "geometry_length_mismatch": 2
+  },
+  "missing_node_references": 0,
+  "invalid_length_count": 0,
+  "invalid_dimension_count": 0,
+  "missing_invert_count": 0,
+  "slope_counts": {
+    "positive": 34566,
+    "near-zero": 119,
+    "negative": 26
+  },
+  "existing_network": {
+    "conduits": 23465,
+    "nodes": 24035,
+    "weak_components": 858,
+    "largest_component_node_counts": [
+      2829,
+      1202,
+      581,
+      560,
+      520,
+      456,
+      405,
+      374,
+      373,
+      369,
+      368,
+      343,
+      291,
+      285,
+      283,
+      255,
+      238,
+      227,
+      224,
+      217
+    ],
+    "directed_sink_nodes": 963
+  },
+  "pilot_selection": {
+    "rule": "all Existing-only connected components with a node within 250 m of Ward L 100 m grid union",
+    "seed_nodes": 1374,
+    "component_count": 20,
+    "nodes": 3269,
+    "conduits": 3314,
+    "subcatchment_cells": 1516
+  },
+  "rainfall_2005": {
+    "classification": "RECONSTRUCTED 15-minute rainfall",
+    "records": 108,
+    "total_mm": 944.2,
+    "start": "2005-07-26T00:00:00",
+    "end_interval_start": "2005-07-27T02:45:00",
+    "interval_minutes_counts": {
+      "15.0": 107
+    },
+    "metadata_source_limitations": "TS_2005_JULY26 is a synthetic temporal disaggregation of 3-hour source totals; its 15-minute values are not observed measurements."
+  },
+  "datum": {
+    "repository_offset_m": 27.432,
+    "direction": "DEM MSL + 27.432 m -> BMC THD (repository convention)",
+    "independent_vertical_datum_validation": false
+  }
+}

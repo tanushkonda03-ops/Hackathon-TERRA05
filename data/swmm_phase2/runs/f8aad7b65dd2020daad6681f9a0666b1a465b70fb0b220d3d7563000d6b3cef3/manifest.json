@@ -1,0 +1,121 @@
+{
+  "simulation_id": "sim_f8aad7b65dd2020daad6",
+  "scenario_hash": "f8aad7b65dd2020daad6681f9a0666b1a465b70fb0b220d3d7563000d6b3cef3",
+  "scenario": {
+    "scenario_id": "custom_1de3b1adb968",
+    "rainfall_multiplier": 1.0,
+    "infrastructure_mode": "existing",
+    "tide_mode": "disabled",
+    "rainfall_profile_mm": [
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25,
+      6.25
+    ]
+  },
+  "event_id": null,
+  "scenario_id": "custom_1de3b1adb968",
+  "model_version": "terra05-swmm-v1.0.0",
+  "input_hash": "3be1a10c88f182fe87a848a49ccd10e7ce9a4e9ad31111c717b0b3d4a1931b99",
+  "model_sha256": "3be1a10c88f182fe87a848a49ccd10e7ce9a4e9ad31111c717b0b3d4a1931b99",
+  "input_path": "C:\\Agnitia\\Hackathon-TERRA05\\data\\swmm_phase2\\runs\\f8aad7b65dd2020daad6681f9a0666b1a465b70fb0b220d3d7563000d6b3cef3\\scenario.inp",
+  "execution": {
+    "reused_existing_run": false,
+    "runtime_seconds": 118.90599999995902,
+    "return_code": 0
+  },
+  "rainfall_hash": "1de3b1adb968065803d7e6a25e241e8ff2b4ae9dbe3f0e942b5e99a40862d6b4",
+  "run_timestamp": "2026-10-09T15:55:28.556246+00:00",
+  "elapsed_seconds": 147.21799999999348,
+  "completed_at": "2026-10-09T15:55:28.556246+00:00",
+  "result_dir": "C:\\Agnitia\\Hackathon-TERRA05\\data\\swmm_phase2\\runs\\f8aad7b65dd2020daad6681f9a0666b1a465b70fb0b220d3d7563000d6b3cef3\\results",
+  "quality": {
+    "swmm_runtime_ok": true,
+    "continuity_ok": true,
+    "continuity_error_percent": [
+      -0.007,
+      0.012
+    ],
+    "topology_ok": true,
+    "rainfall_ok": false,
+    "rainfall_total_mm": 143.75,
+    "elevation_validation_status": "UNVERIFIED; datum and cover assumptions remain",
+    "warning04_count": 36,
+    "boundary_validation_status": "UNVERIFIED; pilot boundaries are computational, physical outfalls/tide not confirmed",
+    "catchment_validation_status": "UNVERIFIED; all outlet IDs resolve, 203 outlets exceed 500 m",
+    "hydraulic_sanity_status": "WITHIN_CONFIGURED_SANITY_LIMITS",
+    "overall_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+    "validation_status": "OBSERVATION_CALIBRATION_NOT_PERFORMED",
+    "warning_counts": {
+      "02": 2,
+      "04": 36
+    },
+    "flood_threshold_source": "CONFIGURED_ENGINEERING_THRESHOLD; not calibrated municipal warning thresholds"
+  },
+  "summary": {
+    "engine": "swmm",
+    "simulation_id": "sim_f8aad7b65dd2020daad6",
+    "scenario_id": "custom_1de3b1adb968",
+    "rainfall_multiplier": 1.0,
+    "max_node_depth_m": 7.053661823272705,
+    "max_conduit_velocity_ms": 5.322483062744141,
+    "peak_drainage_flow_m3s": 23.451696395874023,
+    "flooded_node_count": 3,
+    "grid_flooded_area_km2": null,
+    "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+    "result_paths": {
+      "conduit_metrics": "conduit_metrics.csv",
+      "conduit_physics_timeseries": "conduit_physics_timeseries.csv",
+      "flood_events": "flood_events.csv",
+      "grid_event_metrics": "grid_event_metrics.csv",
+      "grid_flood_events_proxy": "grid_flood_events_proxy.csv",
+      "grid_physics_timeseries": "grid_physics_timeseries.csv",
+      "node_physics_timeseries": "node_physics_timeseries.csv",
+      "physics_water_balance": "physics_water_balance.csv",
+      "subcatchment_metrics": "subcatchment_metrics.csv",
+      "subcatchment_physics_timeseries": "subcatchment_physics_timeseries.csv"
+    }
+  },
+  "water_balance": {
+    "rainfall_volume_ML": 2274.0,
+    "infiltration_volume_ML": 239.60000000000002,
+    "surface_runoff_volume_ML": 2018.64,
+    "total_rainfall_mm": 150.0,
+    "total_infiltration_mm": 15.805,
+    "total_surface_runoff_mm": 133.156,
+    "drainage_inflow_ML": 2018.619,
+    "drainage_outflow_ML": 1997.248,
+    "swmm_flooding_ML": 14.693,
+    "final_drainage_storage_ML": 6.45,
+    "continuity_error_percent": [
+      -0.007,
+      0.012
+    ],
+    "surface_storage_ML": null,
+    "surface_storage_note": "Not available from SWMM 1D output; no surface coupling was run",
+    "simulation_id": "sim_f8aad7b65dd2020daad6",
+    "scenario_id": "custom_1de3b1adb968",
+    "rainfall_multiplier": 1.0,
+    "counting_contract": "SWMM runoff is the runoff inflow to drainage and is reported separately; do not add drainage inflow to rainfall runoff again. SWMM flooding is overflow loss from the drainage system. Surface storage/depth is unavailable without a coupled 2D surface model."
+  }
+}

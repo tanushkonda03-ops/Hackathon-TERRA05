@@ -1,0 +1,11 @@
+{
+  "model_version": "terra05-swmm-v1.0.0",
+  "selection": "Phase 1 baseline retained; no hydraulic calibration performed",
+  "parameters": "Source/configuration values preserved exactly; see calibration_parameters.csv",
+  "rainfall": "historical_2005 reconstructed 108x15-minute hyetograph; no changes",
+  "infrastructure_mode": "existing",
+  "routing": "Dynamic Wave",
+  "boundary_configuration": "Phase 1 assumed computational boundaries; tide disabled",
+  "calibration_status": "SWMM_CALIBRATION_READY_DATA_LIMITED",
+  "confidence": "low for assumed hydraulic parameters; no independently observed hydraulic validation"
+}

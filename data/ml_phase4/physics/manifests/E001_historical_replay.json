@@ -1,0 +1,12 @@
+{
+  "event_id": "E001",
+  "scenario_id": "historical_2005",
+  "model_version": "terra05-swmm-v1.0.0",
+  "run_timestamp": "2026-10-09T15:17:35.179071+00:00",
+  "rainfall_hash": "f933f8ceab70e6e77446b58b541a8d933c9f71fc5ee91b01cc36454d2f21b4da",
+  "simulation_id": "sim_f1a0b61cb7d9743e8dce",
+  "cache_hit": true,
+  "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+  "results_source": "data/swmm_phase2 Phase 1 baseline reuse",
+  "target_usage": "not a Phase 4 supervised target; label event match unresolved"
+}

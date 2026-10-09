@@ -1,0 +1,146 @@
+{
+  "continuity_error_percent": [
+    -0.009,
+    -0.05
+  ],
+  "summary_rows": [
+    {
+      "section": "runoff",
+      "metric": "Total Precipitation",
+      "first_unit": "hectare_m",
+      "second_unit": "mm",
+      "first_report_unit_value": 1431.407,
+      "second_report_unit_value": 944.2
+    },
+    {
+      "section": "runoff",
+      "metric": "Evaporation Loss",
+      "first_unit": "hectare_m",
+      "second_unit": "mm",
+      "first_report_unit_value": 0.0,
+      "second_report_unit_value": 0.0
+    },
+    {
+      "section": "runoff",
+      "metric": "Infiltration Loss",
+      "first_unit": "hectare_m",
+      "second_unit": "mm",
+      "first_report_unit_value": 49.936,
+      "second_report_unit_value": 32.939
+    },
+    {
+      "section": "runoff",
+      "metric": "Surface Runoff",
+      "first_unit": "hectare_m",
+      "second_unit": "mm",
+      "first_report_unit_value": 1376.221,
+      "second_report_unit_value": 907.797
+    },
+    {
+      "section": "runoff",
+      "metric": "Final Storage",
+      "first_unit": "hectare_m",
+      "second_unit": "mm",
+      "first_report_unit_value": 5.386,
+      "second_report_unit_value": 3.553
+    },
+    {
+      "section": "routing",
+      "metric": "Dry Weather Inflow",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 0.0,
+      "second_report_unit_value": 0.0
+    },
+    {
+      "section": "routing",
+      "metric": "Wet Weather Inflow",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 1376.173,
+      "second_report_unit_value": 13761.873
+    },
+    {
+      "section": "routing",
+      "metric": "Groundwater Inflow",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 0.0,
+      "second_report_unit_value": 0.0
+    },
+    {
+      "section": "routing",
+      "metric": "RDII Inflow",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 0.0,
+      "second_report_unit_value": 0.0
+    },
+    {
+      "section": "routing",
+      "metric": "External Inflow",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 0.0,
+      "second_report_unit_value": 0.0
+    },
+    {
+      "section": "routing",
+      "metric": "External Outflow",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 1207.413,
+      "second_report_unit_value": 12074.256
+    },
+    {
+      "section": "routing",
+      "metric": "Flooding Loss",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 152.005,
+      "second_report_unit_value": 1520.065
+    },
+    {
+      "section": "runoff",
+      "metric": "Evaporation Loss",
+      "first_unit": "hectare_m",
+      "second_unit": "mm",
+      "first_report_unit_value": 0.0,
+      "second_report_unit_value": 0.0
+    },
+    {
+      "section": "routing",
+      "metric": "Exfiltration Loss",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 0.0,
+      "second_report_unit_value": 0.0
+    },
+    {
+      "section": "routing",
+      "metric": "Initial Stored Volume",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 0.002,
+      "second_report_unit_value": 0.02
+    },
+    {
+      "section": "routing",
+      "metric": "Final Stored Volume",
+      "first_unit": "hectare_m",
+      "second_unit": "million_liters",
+      "first_report_unit_value": 17.449,
+      "second_report_unit_value": 174.491
+    }
+  ],
+  "report_excerpt": [
+    "    Flow Routing ........... YES",
+    "  Flow Routing Method ...... DYNWAVE",
+    "  Runoff Quantity Continuity     hectare-m            mm",
+    "  Continuity Error (%) .....        -0.009",
+    "  Flow Routing Continuity        hectare-m      10^6 ltr",
+    "  Continuity Error (%) .....        -0.050",
+    "  Highest Continuity Errors",
+    "  Outfall Loading Summary"
+  ]
+}

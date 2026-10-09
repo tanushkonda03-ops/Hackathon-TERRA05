@@ -1,0 +1,16 @@
+{
+  "inp_node_count": 3273,
+  "pilot_node_count_including_boundary_aliases": 3273,
+  "inp_conduit_count": 3314,
+  "pilot_conduit_count": 3314,
+  "selected_source_component_count": 20,
+  "inp_component_count_after_boundary_aliases": 23,
+  "unique_source_endpoint_pairs": 3273,
+  "unique_inp_endpoint_pairs": 3273,
+  "missing_conduit_ids_in_inp": 0,
+  "unexpected_conduit_ids_in_inp": 0,
+  "missing_endpoint_pairs_in_inp": 0,
+  "unexpected_endpoint_pairs_in_inp": 0,
+  "node_count_delta": 0,
+  "meaning": "Conduit IDs and endpoint pairs are compared against the built pilot. Component counts include expected splits from the explicit single-inlet boundary aliases; 20 connected pilot components become 23 INP components after those aliases."
+}

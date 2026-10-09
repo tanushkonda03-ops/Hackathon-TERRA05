@@ -1,0 +1,44 @@
+{
+  "model_version": "terra05-xgb-v1.0.0",
+  "status": "PHASE_3_COMPLETE_WITH_LIMITATIONS",
+  "training_dataset_sha256": "919c6e85fac42c5e7c938b6e6e6533824b6aa942d704ab04f723b4335efb6782",
+  "feature_schema_sha256": "bdc25dc202be905ba88f6f17b91edd4524334d0d091ec513f11416ad28e878d1",
+  "primary_model_sha256": "6d679fcdca4db55e3cba7c2c578519c472f37c4bb2cc343340eb83ed5ab38379",
+  "evaluation_model_sha256": "bac335d3c2364fdf32e96749015312d38af09c94e7345db279a18b7069b4b4d5",
+  "citywide_gis_model_sha256": "b02d4a1602ae9832073cd5f7aa46ced91d7f57bb56d89d1d3e29c73d9d19fe94",
+  "target_grid_rows": 47758,
+  "physics_supported_rows": 1516,
+  "positive_labels": 1953,
+  "negative_labels": 45805,
+  "feature_counts": {
+    "gis": 25,
+    "rainfall": 8,
+    "swmm": 6
+  },
+  "validation_strategy": "Deterministic three-way GroupShuffleSplit over 2 km EPSG:32643 spatial blocks within the 1,516 physics-supported Ward L cells; only E001 once per grid_id",
+  "split_counts": {
+    "train": {
+      "cells": 463,
+      "positive": 37
+    },
+    "validation": {
+      "cells": 626,
+      "positive": 181
+    },
+    "test": {
+      "cells": 427,
+      "positive": 62
+    }
+  },
+  "python_version": "3.12.10",
+  "xgboost_version": "3.4.1",
+  "scikit_learn_version": "1.9.1",
+  "seed": 42,
+  "known_limitations": [
+    "Source label event/date provenance is not independently established",
+    "SWMM hydraulically unvalidated",
+    "15-minute rainfall reconstructed",
+    "citywide model has no SWMM support outside 1,516 cells",
+    "no future-event training labels"
+  ]
+}

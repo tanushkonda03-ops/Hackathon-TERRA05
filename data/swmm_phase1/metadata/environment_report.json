@@ -1,0 +1,14 @@
+{
+  "python": "3.12.10",
+  "platform": "win32",
+  "swmm_version": "5.2.4",
+  "swmm_executable": "C:\\Program Files\\EPA SWMM 5.2.4 (64-bit)\\runswmm.exe",
+  "packages": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "geopandas": "1.2.0",
+    "rasterio": "1.5.2",
+    "networkx": "3.7"
+  },
+  "dependencies": "project-local .venv; see scripts/requirements.txt"
+}

@@ -1,0 +1,25 @@
+{
+  "grid_cell_count": 47758,
+  "hydraulic_coverage_cell_count": 1516,
+  "nodes_mapped": 1694,
+  "conduits_mapped": 1712,
+  "subcatchments_assigned": 1516,
+  "pilot_node_count": 3269,
+  "pilot_conduit_count": 3314,
+  "pilot_subcatchment_count": 1516,
+  "node_distance_m_quantiles": {
+    "0.0": 0.52645415357897,
+    "0.5": 5227.897945604305,
+    "0.95": 14111.353815581226,
+    "0.99": 16074.577093552825,
+    "1.0": 18188.047764585506
+  },
+  "conduit_distance_m_quantiles": {
+    "0.0": 0.012254722370245734,
+    "0.5": 5227.897945604305,
+    "0.95": 14111.353815581226,
+    "0.99": 16074.577093552825,
+    "1.0": 18188.047764585506
+  },
+  "interpretation": "Citywide nearest objects are a locator only. Direct hydraulic coverage is limited to cells with an explicit pilot subcatchment. Node depth is never assigned as surface-water depth; nearest-node quantities are labeled HYDRAULIC_PROXY."
+}

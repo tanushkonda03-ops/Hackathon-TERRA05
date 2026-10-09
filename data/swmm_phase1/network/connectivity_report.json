@@ -1,0 +1,165 @@
+{
+  "existing_component_count": 20,
+  "components": [
+    {
+      "component_id": 0,
+      "node_count": 374,
+      "conduit_count": 391,
+      "pilot_seed_node_count": 53,
+      "directed_sink_count": 7,
+      "boundary_count": 7
+    },
+    {
+      "component_id": 1,
+      "node_count": 1202,
+      "conduit_count": 1246,
+      "pilot_seed_node_count": 397,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 2,
+      "node_count": 456,
+      "conduit_count": 455,
+      "pilot_seed_node_count": 11,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 3,
+      "node_count": 8,
+      "conduit_count": 7,
+      "pilot_seed_node_count": 8,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 4,
+      "node_count": 6,
+      "conduit_count": 5,
+      "pilot_seed_node_count": 6,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 5,
+      "node_count": 30,
+      "conduit_count": 29,
+      "pilot_seed_node_count": 9,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 6,
+      "node_count": 37,
+      "conduit_count": 36,
+      "pilot_seed_node_count": 9,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 7,
+      "node_count": 32,
+      "conduit_count": 31,
+      "pilot_seed_node_count": 8,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 8,
+      "node_count": 35,
+      "conduit_count": 34,
+      "pilot_seed_node_count": 35,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 9,
+      "node_count": 66,
+      "conduit_count": 66,
+      "pilot_seed_node_count": 66,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 10,
+      "node_count": 10,
+      "conduit_count": 9,
+      "pilot_seed_node_count": 10,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 11,
+      "node_count": 217,
+      "conduit_count": 216,
+      "pilot_seed_node_count": 211,
+      "directed_sink_count": 2,
+      "boundary_count": 2
+    },
+    {
+      "component_id": 12,
+      "node_count": 217,
+      "conduit_count": 216,
+      "pilot_seed_node_count": 211,
+      "directed_sink_count": 2,
+      "boundary_count": 2
+    },
+    {
+      "component_id": 13,
+      "node_count": 207,
+      "conduit_count": 207,
+      "pilot_seed_node_count": 207,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 14,
+      "node_count": 104,
+      "conduit_count": 103,
+      "pilot_seed_node_count": 21,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 15,
+      "node_count": 36,
+      "conduit_count": 35,
+      "pilot_seed_node_count": 36,
+      "directed_sink_count": 3,
+      "boundary_count": 3
+    },
+    {
+      "component_id": 16,
+      "node_count": 9,
+      "conduit_count": 8,
+      "pilot_seed_node_count": 9,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 17,
+      "node_count": 13,
+      "conduit_count": 12,
+      "pilot_seed_node_count": 13,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 18,
+      "node_count": 3,
+      "conduit_count": 2,
+      "pilot_seed_node_count": 3,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    },
+    {
+      "component_id": 19,
+      "node_count": 207,
+      "conduit_count": 206,
+      "pilot_seed_node_count": 51,
+      "directed_sink_count": 1,
+      "boundary_count": 1
+    }
+  ]
+}

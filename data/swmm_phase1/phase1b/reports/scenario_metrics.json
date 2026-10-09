@@ -1,0 +1,126 @@
+[
+  {
+    "scenario": "baseline_100pct",
+    "kind": "unchanged Phase 1 run",
+    "rainfall_mm": 944.2,
+    "node_max_depth_m": 23.27560043334961,
+    "max_velocity_m_s": 14.977828025817871,
+    "max_flow_cms": 159.80816650390625,
+    "flooded_nodes": 37,
+    "zero_flow_conduits": 1292,
+    "continuity_error_percent": [
+      -0.009,
+      -0.05
+    ],
+    "warning04_count": 36,
+    "warning02_count": 2,
+    "report_path": "data/swmm_phase1/baseline/baseline.rpt",
+    "output_path": "data/swmm_phase1/baseline/baseline.out",
+    "input_path": "data/swmm_phase1/baseline/baseline.inp"
+  },
+  {
+    "scenario": "rainfall_25pct",
+    "kind": "scaled reconstructed rainfall; same event/network/parameters",
+    "rainfall_mm": 236.05,
+    "runtime_seconds": 155.6934792000102,
+    "node_max_depth_m": 7.291087627410889,
+    "max_velocity_m_s": 5.322845935821533,
+    "max_flow_cms": 55.35707092285156,
+    "flooded_nodes": 4,
+    "zero_flow_conduits": 1547,
+    "continuity_error_percent": [
+      -0.008,
+      0.0
+    ],
+    "warning04_count": 36,
+    "warning02_count": 2,
+    "report_path": "data\\swmm_phase1\\phase1b\\runs\\rainfall_25pct\\rainfall_25pct.rpt",
+    "output_path": "data\\swmm_phase1\\phase1b\\runs\\rainfall_25pct\\rainfall_25pct.out",
+    "input_path": "data\\swmm_phase1\\phase1b\\models\\rainfall_25pct.inp",
+    "return_code": 0
+  },
+  {
+    "scenario": "rainfall_50pct",
+    "kind": "scaled reconstructed rainfall; same event/network/parameters",
+    "rainfall_mm": 472.1,
+    "runtime_seconds": 180.76993219996803,
+    "node_max_depth_m": 13.13912582397461,
+    "max_velocity_m_s": 7.8019585609436035,
+    "max_flow_cms": 125.7909164428711,
+    "flooded_nodes": 13,
+    "zero_flow_conduits": 1373,
+    "continuity_error_percent": [
+      -0.008,
+      -0.058
+    ],
+    "warning04_count": 36,
+    "warning02_count": 2,
+    "report_path": "data\\swmm_phase1\\phase1b\\runs\\rainfall_50pct\\rainfall_50pct.rpt",
+    "output_path": "data\\swmm_phase1\\phase1b\\runs\\rainfall_50pct\\rainfall_50pct.out",
+    "input_path": "data\\swmm_phase1\\phase1b\\models\\rainfall_50pct.inp",
+    "return_code": 0
+  },
+  {
+    "scenario": "rainfall_75pct",
+    "kind": "scaled reconstructed rainfall; same event/network/parameters",
+    "rainfall_mm": 708.15,
+    "runtime_seconds": 196.89646610000636,
+    "node_max_depth_m": 17.955228805541992,
+    "max_velocity_m_s": 11.75990104675293,
+    "max_flow_cms": 150.62889099121094,
+    "flooded_nodes": 22,
+    "zero_flow_conduits": 1324,
+    "continuity_error_percent": [
+      -0.009,
+      -0.046
+    ],
+    "warning04_count": 36,
+    "warning02_count": 2,
+    "report_path": "data\\swmm_phase1\\phase1b\\runs\\rainfall_75pct\\rainfall_75pct.rpt",
+    "output_path": "data\\swmm_phase1\\phase1b\\runs\\rainfall_75pct\\rainfall_75pct.out",
+    "input_path": "data\\swmm_phase1\\phase1b\\models\\rainfall_75pct.inp",
+    "return_code": 0
+  },
+  {
+    "scenario": "diagnostic_10mm_1h",
+    "kind": "synthetic constant-intensity smoke diagnostic; not calibration/design rainfall",
+    "rainfall_mm": 10.0,
+    "runtime_seconds": 5.05680120002944,
+    "node_max_depth_m": 1.1987782716751099,
+    "max_velocity_m_s": 3.2790000438690186,
+    "max_flow_cms": 3.8864235877990723,
+    "flooded_nodes": 0,
+    "zero_flow_conduits": 1965,
+    "continuity_error_percent": [
+      -0.582,
+      -0.173
+    ],
+    "warning04_count": 36,
+    "warning02_count": 2,
+    "report_path": "data\\swmm_phase1\\phase1b\\runs\\diagnostic_10mm_1h\\diagnostic_10mm_1h.rpt",
+    "output_path": "data\\swmm_phase1\\phase1b\\runs\\diagnostic_10mm_1h\\diagnostic_10mm_1h.out",
+    "input_path": "data\\swmm_phase1\\phase1b\\models\\diagnostic_10mm_1h.inp",
+    "return_code": 0
+  },
+  {
+    "scenario": "diagnostic_50mm_3h",
+    "kind": "synthetic constant-intensity smoke diagnostic; not calibration/design rainfall",
+    "rainfall_mm": 50.0,
+    "runtime_seconds": 22.486240199999884,
+    "node_max_depth_m": 3.8442492485046387,
+    "max_velocity_m_s": 4.447416305541992,
+    "max_flow_cms": 14.404014587402344,
+    "flooded_nodes": 0,
+    "zero_flow_conduits": 1700,
+    "continuity_error_percent": [
+      -0.252,
+      -0.057
+    ],
+    "warning04_count": 36,
+    "warning02_count": 2,
+    "report_path": "data\\swmm_phase1\\phase1b\\runs\\diagnostic_50mm_3h\\diagnostic_50mm_3h.rpt",
+    "output_path": "data\\swmm_phase1\\phase1b\\runs\\diagnostic_50mm_3h\\diagnostic_50mm_3h.out",
+    "input_path": "data\\swmm_phase1\\phase1b\\models\\diagnostic_50mm_3h.inp",
+    "return_code": 0
+  }
+]

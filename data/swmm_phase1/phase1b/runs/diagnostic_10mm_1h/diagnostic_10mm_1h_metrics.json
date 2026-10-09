@@ -1,0 +1,21 @@
+{
+  "scenario": "diagnostic_10mm_1h",
+  "kind": "synthetic constant-intensity smoke diagnostic; not calibration/design rainfall",
+  "rainfall_mm": 10.0,
+  "runtime_seconds": 5.05680120002944,
+  "node_max_depth_m": 1.1987782716751099,
+  "max_velocity_m_s": 3.2790000438690186,
+  "max_flow_cms": 3.8864235877990723,
+  "flooded_nodes": 0,
+  "zero_flow_conduits": 1965,
+  "continuity_error_percent": [
+    -0.582,
+    -0.173
+  ],
+  "warning04_count": 36,
+  "warning02_count": 2,
+  "report_path": "data\\swmm_phase1\\phase1b\\runs\\diagnostic_10mm_1h\\diagnostic_10mm_1h.rpt",
+  "output_path": "data\\swmm_phase1\\phase1b\\runs\\diagnostic_10mm_1h\\diagnostic_10mm_1h.out",
+  "input_path": "data\\swmm_phase1\\phase1b\\models\\diagnostic_10mm_1h.inp",
+  "return_code": 0
+}

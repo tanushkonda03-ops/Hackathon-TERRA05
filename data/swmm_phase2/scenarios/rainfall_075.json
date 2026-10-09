@@ -1,0 +1,25 @@
+{
+  "scenario_id": "rainfall_075",
+  "base_event": "historical_2005",
+  "rainfall_multiplier": 0.75,
+  "infrastructure_mode": "existing",
+  "tide_mode": "disabled",
+  "rainfall_source": "reconstructed 26 July 2005 profile; 108 x 15-minute intervals",
+  "infrastructure_modes_supported": [
+    "existing"
+  ],
+  "infrastructure_modes_prepared": [
+    "proposal",
+    "existing_plus_proposal"
+  ],
+  "tide_modes_prepared": [
+    "low",
+    "normal",
+    "high",
+    "very_high"
+  ],
+  "tide_modes_applied": [
+    "disabled"
+  ],
+  "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED"
+}

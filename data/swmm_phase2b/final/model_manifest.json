@@ -1,0 +1,35 @@
+{
+  "model_version": "terra05-swmm-v1.0.0",
+  "swmm_version": "EPA SWMM 5.2.4",
+  "routing": "Dynamic Wave",
+  "source_data_hashes_sha256": {
+    "data/swmm_phase1/baseline/baseline.inp": "dd0be4c9e78ca8b669233fef15f0a33705ad441deccdeab454d8f3a528ec81d5",
+    "data/processed/rainfall_observations_v1.csv": "588e95a231c25e42e8ab1ef12c82714c280de248d09c6903dd7dbbf580d9c86c",
+    "data/swmm_phase1/network/pilot_conduits.csv": "cd383514c15bbdb54980db50975ec4bf3e9f9edc3943689ffb8b168176fffc0d",
+    "data/swmm_phase1/network/pilot_subcatchments.csv": "4ebf85cf9e82a7b1a283ddb36269d98be7c2cc6731f14b37bb39b4657e4ce5e1",
+    "data/swmm_phase2/results/grid_physics_timeseries.csv": "4d873c009670a43ae6eb512cdb6e6348ff49f34e6fa8909791744c174a112405"
+  },
+  "code_version": "Phase 1 baseline and Phase 2A engine; frozen by Phase 2B evidence audit",
+  "parameter_set": "Phase 1 baseline retained; no calibration without hydraulic observations",
+  "rainfall_definition": "E001 July 2005 reconstructed 108x15-minute hyetograph; source validated only against published IMD 3-hour accumulations where comparable",
+  "infrastructure_mode": "existing",
+  "boundary_configuration": "34 assumed computational boundaries; receiving water unknown; tide disabled",
+  "calibration_status": "SWMM_CALIBRATION_READY_DATA_LIMITED",
+  "validation_status": "hydraulically unvalidated; no event-matched depth/flow/stage/flood extent observations",
+  "known_limitations": [
+    "No event-matched hydraulic observation series",
+    "Flood-spot grid event/date/depth unverified",
+    "Vertical datum and 27.432 m transformation unverified",
+    "34 model boundary objects are assumed",
+    "203 long-distance catchment assignments remain unknown",
+    "36 Warning 04 cases retained without fabricated drops",
+    "No surface street-depth coupling",
+    "Only rainfall-scale (not hydraulic-parameter) sensitivity cases pre-existed"
+  ],
+  "baseline_hashes_sha256": {
+    "terra05_swmm_final.inp": "dd0be4c9e78ca8b669233fef15f0a33705ad441deccdeab454d8f3a528ec81d5",
+    "terra05_swmm_final.rpt": "3a47100642cb314ebb3c4464570c874dc6019995e36ddd1ecaa0ed9f82916b12",
+    "terra05_swmm_final.out": "1a106ec3d9078e7cfddc6762d19fcda1dd90263ef7336e6c552bcaea89c91a56"
+  },
+  "artifact_created_utc": "2026-10-09"
+}

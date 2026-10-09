@@ -1,0 +1,25 @@
+{
+  "model_version": "terra05-ml-v2.0.0",
+  "model_status": "NOT_TRAINED_NO_EVENT_MATCHED_SUPERVISED_TARGETS",
+  "production_model": "terra05-xgb-v1.0.0 (Phase 3 baseline retained)",
+  "training_events": [],
+  "validation_events": [],
+  "test_events": [],
+  "target_type": "supplied_historical_waterlogging_label",
+  "target_provenance": "Supplied flood-grid source does not independently match target cells to event E001",
+  "feature_groups": {
+    "GIS": 25,
+    "rainfall": 8,
+    "SWMM_nonempty": 6
+  },
+  "swmm_model_version": "terra05-swmm-v1.0.0",
+  "physics_coverage_cells": 1516,
+  "citywide_grid_cells": 47758,
+  "training_dataset_sha256": null,
+  "validation_strategy": "No Phase 4 event holdout possible; retain Phase 3 spatial-block metrics as single-event label agreement only",
+  "threshold": 0.0012947609648108482,
+  "random_seed": 42,
+  "existing_phase3_model_metadata": "../ml_phase3/models/terra05_xgb_metadata.json",
+  "validation_status": "MULTI_EVENT_SUPERVISED_VALIDATION_NOT_SUPPORTED",
+  "note": "No terra05_ml_v2.json estimator is emitted because fitting without eligible event-matched targets would fabricate supervised evidence."
+}

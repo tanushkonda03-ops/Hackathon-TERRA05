@@ -1,0 +1,16 @@
+{
+  "scenario_hash": "01414e8afc72affca105896a918c8d9c715a84a4a1bba3b427a2567112c4a072",
+  "scenario": {
+    "scenario_id": "historical_2005",
+    "rainfall_multiplier": 1.0,
+    "infrastructure_mode": "existing",
+    "tide_mode": "disabled",
+    "rainfall_profile_mm": null
+  },
+  "source_model": "data/swmm_phase1/models/terra05_wardL_2005.inp",
+  "source_output": "data/swmm_phase1/baseline/baseline.out",
+  "extraction_mode": "reuse existing SWMM output; full 15-minute results",
+  "engine_version": "EPA SWMM 5.2.4",
+  "validation_status": "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED",
+  "result_directory": "data/swmm_phase2/results"
+}
