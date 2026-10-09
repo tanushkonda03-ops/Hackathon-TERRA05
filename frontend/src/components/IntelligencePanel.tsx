@@ -401,6 +401,47 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
           </div>
         </div>
 
+        {/* Safe Evacuation & Hospital Corridor Recommendation */}
+        <div className="space-y-1.5 pt-1 border-t border-slate-100">
+          <div className="flex items-center justify-between text-[9.5px] font-mono text-slate-400 uppercase font-bold">
+            <span className="flex items-center gap-1 text-emerald-800">
+              <ShieldAlert className="w-3.5 h-3.5 text-emerald-600" />
+              <span>EVACUATION & HOSPITAL ACCESS</span>
+            </span>
+            <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded border border-emerald-300">
+              OPEN / DRY
+            </span>
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs font-mono space-y-1">
+            <div className="text-[11px] font-bold text-emerald-950">
+              {location.id === 'kurla-west' ? 'SCLR Elevated Flyover (Bypasses LBS Marg)' :
+               location.id === 'bandra-east' ? 'Western Express Highway (WEH Elevated Trunk)' :
+               location.id === 'sandhurst-road' ? 'Eastern Freeway Elevated Bypass' :
+               location.id === 'sion' ? 'Sion Elevated Arterial to Trauma Ward' :
+               'Elevated Bypass Corridor (Above Flood Plane)'}
+            </div>
+            <div className="text-[10px] text-slate-600 flex justify-between">
+              <span>Emergency Destination:</span>
+              <span className="font-semibold text-slate-900">
+                {location.id === 'kurla-west' ? 'Sion Municipal Hospital' :
+                 location.id === 'bandra-east' ? 'Bhabha & Lilavati Hospital' :
+                 location.id === 'sandhurst-road' ? 'JJ Hospital Byculla' :
+                 location.id === 'sion' ? 'Lokmanya Tilak Hospital' : 'Municipal General Hospital'}
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-600 flex justify-between">
+              <span>Dry Refuge Shelter:</span>
+              <span className="font-semibold text-emerald-800">
+                {location.id === 'kurla-west' ? 'BMC Ward L Urdu School' :
+                 location.id === 'bandra-east' ? 'Kalanagar Relief Camp' :
+                 location.id === 'sandhurst-road' ? 'BMC B-Ward School' :
+                 location.id === 'sion' ? 'F-North Welfare Center' : 'Ward Relief Post'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Stormwater Conduit Capacity */}
         <div className="space-y-1.5 pt-1 border-t border-slate-100">
           <div className="flex items-center justify-between text-[9.5px] font-mono text-slate-400 uppercase font-bold">

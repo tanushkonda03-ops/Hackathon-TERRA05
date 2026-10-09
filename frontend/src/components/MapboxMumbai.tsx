@@ -4,7 +4,7 @@ import { Map as MapLibreMap, NavigationControl, ScaleControl, GeoJSONSource } fr
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { FeatureCollection, LineString, Feature } from 'geojson';
-import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, TimelineImpactMetrics, createLocationFromGridFeature, getLocationCatchmentBounds } from '../data/locations';
+import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, TimelineImpactMetrics, getLocationCatchmentBounds } from '../data/locations';
 import { 
   MITHI_RIVER_GEOJSON, 
   BMC_DRAINAGE_GEOJSON, 
@@ -13,6 +13,8 @@ import {
   CRITICAL_INFRASTRUCTURE_GEOJSON,
   BMC_FLOOD_SPOTS_GEOJSON, 
   HISTORICAL_2019_GEOJSON, 
+  MUMBAI_EVACUATION_CORRIDORS_GEOJSON,
+  MUMBAI_MUNICIPAL_SHELTERS_GEOJSON,
   getRealisticFloodPolygonsGeoJSON 
 } from '../data/mumbaiGeojson';
 import { getDrainageNetwork, getRiskMap, transformRiskMapToGeoJSON4326, SimulationResponse, simulationDataToGeoJSON } from '../services/api';
@@ -38,10 +40,15 @@ interface MapboxMumbaiProps {
     historical2019: boolean;
     terrain3D: boolean;
     riskGrid: boolean;
+    evacuationRoutes?: boolean;
   };
   cameraPreset: '3D' | 'TOP' | 'RESET';
   simulationData?: SimulationResponse | null;
   simStepIndex?: number;
+  interventions?: {
+    mobilePumps: boolean;
+    tidalGates: boolean;
+  };
   onStatusChange?: (status: 'CONNECTING' | 'ONLINE' | 'ERROR') => void;
   onDiagnosticsUpdate?: (diag: Record<string, any>) => void;
 }
@@ -56,6 +63,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   cameraPreset,
   simulationData,
   simStepIndex,
+  interventions,
   onStatusChange,
   onDiagnosticsUpdate,
 }) => {
@@ -81,6 +89,13 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     swdHeight?: number;
     swdLength?: number;
     invertElevation?: number;
+    isEvacCorridor?: boolean;
+    evacStatus?: string;
+    trafficStatus?: string;
+    destinationHospital?: string;
+    isShelter?: boolean;
+    capacity?: number;
+    facilities?: string;
   } | null>(null);
 
   // Close location dropdown when clicking outside or pressing Escape
@@ -320,56 +335,92 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           });
         }
 
-        // 3B: 2D Computational Runoff & Water Accumulation Grid
+        // 3B: 2D Fluid Dynamic Water Inundation (Seamless WebGL continuous surface)
         if (!map.getSource('terra05-sim-water-src')) {
           map.addSource('terra05-sim-water-src', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] },
           });
 
+          // Fluid water heatmap: continuous, organic, seamless liquid surface with ZERO grid boxes or tiles
           map.addLayer({
             id: 'terra05-sim-water-layer',
-            type: 'fill',
+            type: 'heatmap',
             source: 'terra05-sim-water-src',
             layout: {
               visibility: layers.floodDepth ? 'visible' : 'none',
             },
             paint: {
-              'fill-color': [
+              // Weight scales smoothly with depth (0.04m to 1.0m)
+              'heatmap-weight': [
                 'interpolate',
                 ['linear'],
                 ['get', 'depth'],
-                0.005, 'rgba(186, 230, 253, 0.40)',
-                0.05,  'rgba(56, 189, 248, 0.60)',
-                0.15,  'rgba(2, 132, 199, 0.75)',
-                0.30,  'rgba(3, 105, 161, 0.85)',
-                0.60,  'rgba(12, 74, 110, 0.90)',
-                1.00,  'rgba(8, 47, 73, 0.95)'
+                0.04, 0.20,
+                0.10, 0.45,
+                0.25, 0.70,
+                0.50, 0.88,
+                1.00, 1.00
               ],
-              'fill-opacity': [
+              // Intensity scales with zoom for consistent saturation
+              'heatmap-intensity': [
                 'interpolate',
                 ['linear'],
-                ['get', 'depth'],
-                0.005, 0.45,
-                0.10,  0.70,
-                0.50,  0.88,
-                1.00,  0.95
+                ['zoom'],
+                11, 0.7,
+                13, 0.9,
+                15, 1.15,
+                17, 1.4
               ],
-              'fill-outline-color': '#0284C7',
+              // Natural fluid aquatic palette: transparent edge -> crystal azure -> deep marine navy
+              'heatmap-color': [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0.00, 'rgba(0, 0, 0, 0)',
+                0.10, 'rgba(186, 230, 253, 0.45)', // Crystal shallow edge
+                0.28, 'rgba(56, 189, 248, 0.65)',  // Moderate ponding
+                0.55, 'rgba(2, 132, 199, 0.80)',   // Solid water depth
+                0.80, 'rgba(3, 105, 161, 0.90)',   // Deep street channel
+                1.00, 'rgba(8, 47, 73, 0.95)'      // Maximum inundation
+              ],
+              // Radius scaled to ensure adjacent 100m points merge into a unified body of water
+              'heatmap-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                11, 14,
+                12, 20,
+                13, 30,
+                14, 48,
+                15, 78,
+                16, 130,
+                17, 210
+              ],
+              'heatmap-opacity': 0.88,
             },
           });
 
+          // Companion invisible layer for pinpoint feature inspection (hover & click)
           map.addLayer({
-            id: 'terra05-sim-water-edge-layer',
-            type: 'line',
+            id: 'terra05-sim-water-interact-layer',
+            type: 'circle',
             source: 'terra05-sim-water-src',
             layout: {
               visibility: layers.floodDepth ? 'visible' : 'none',
             },
             paint: {
-              'line-color': '#0369A1',
-              'line-width': 1.0,
-              'line-opacity': 0.65,
+              'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                12, 12,
+                14, 22,
+                16, 45
+              ],
+              'circle-color': '#0284C7',
+              'circle-opacity': 0.001, // 100% visually invisible; captures mouse events
+              'circle-stroke-opacity': 0.0,
             },
           });
         }
@@ -600,6 +651,82 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           });
         }
 
+        // --- LAYER 8: SAFE EMERGENCY EVACUATION CORRIDORS & MUNICIPAL REFUGE SHELTERS ---
+        if (!map.getSource('evacuation-corridors-src')) {
+          map.addSource('evacuation-corridors-src', {
+            type: 'geojson',
+            data: MUMBAI_EVACUATION_CORRIDORS_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'evacuation-corridors-casing',
+            type: 'line',
+            source: 'evacuation-corridors-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.evacuationRoutes !== false ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#064E3B',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4.5, 14, 7.5, 17, 11],
+              'line-opacity': 0.85,
+            },
+          });
+
+          map.addLayer({
+            id: 'evacuation-corridors-line',
+            type: 'line',
+            source: 'evacuation-corridors-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.evacuationRoutes !== false ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#10B981',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 11, 2.5, 14, 4.5, 17, 7],
+              'line-opacity': 1.0,
+            },
+          });
+        }
+
+        if (!map.getSource('evacuation-shelters-src')) {
+          map.addSource('evacuation-shelters-src', {
+            type: 'geojson',
+            data: MUMBAI_MUNICIPAL_SHELTERS_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'evacuation-shelters-pulse',
+            type: 'circle',
+            source: 'evacuation-shelters-src',
+            layout: {
+              visibility: layers.evacuationRoutes !== false ? 'visible' : 'none',
+            },
+            paint: {
+              'circle-radius': 11,
+              'circle-color': '#10B981',
+              'circle-opacity': 0.35,
+            },
+          });
+
+          map.addLayer({
+            id: 'evacuation-shelters-point',
+            type: 'circle',
+            source: 'evacuation-shelters-src',
+            layout: {
+              visibility: layers.evacuationRoutes !== false ? 'visible' : 'none',
+            },
+            paint: {
+              'circle-radius': 6.5,
+              'circle-color': '#059669',
+              'circle-stroke-width': 2.5,
+              'circle-stroke-color': '#FFFFFF',
+            },
+          });
+        }
+
         // Hover Raycasting
         map.on('mousemove', 'terra05-flood-layer', (e) => {
           if (e.features && e.features[0]) {
@@ -618,15 +745,15 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           setHoveredFeature(null);
         });
 
-        // 2D Computational Simulation Water Cell hover and click handlers
-        map.on('mousemove', 'terra05-sim-water-layer', (e) => {
+        // 2D Computational Simulation Water Inundation hover and inspect handlers
+        map.on('mousemove', 'terra05-sim-water-interact-layer', (e) => {
           if (e.features && e.features[0]) {
             const props = e.features[0].properties;
             map.getCanvas().style.cursor = 'pointer';
             setHoveredFeature({
               x: e.point.x,
               y: e.point.y,
-              name: `Computational Grid #${props?.grid_id} (Ward ${props?.ward || 'L'})`,
+              name: `Flood Inundation Zone (${props?.ward ? `Ward ${props.ward}` : 'Catchment Basin'})`,
               depth: typeof props?.depth === 'number' ? Number(props.depth) : undefined,
               elevation: typeof props?.elevation_m === 'number' ? Number(props.elevation_m) : undefined,
               maxDepth: typeof props?.max_depth === 'number' ? Number(props.max_depth) : undefined,
@@ -636,21 +763,28 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           }
         });
 
-        map.on('mouseleave', 'terra05-sim-water-layer', () => {
+        map.on('mouseleave', 'terra05-sim-water-interact-layer', () => {
           map.getCanvas().style.cursor = '';
           setHoveredFeature(null);
         });
 
-        map.on('click', 'terra05-sim-water-layer', (e) => {
+        map.on('click', 'terra05-sim-water-interact-layer', (e) => {
           if (e.features && e.features[0]) {
-            const feat = e.features[0];
-            const props = feat.properties;
-            const newLoc = createLocationFromGridFeature(props, e.lngLat.lng, e.lngLat.lat);
-            onSelectLocation(newLoc);
+            const props = e.features[0].properties;
+            setHoveredFeature({
+              x: e.point.x,
+              y: e.point.y,
+              name: `Flood Inundation Zone (${props?.ward ? `Ward ${props.ward}` : 'Catchment Basin'})`,
+              depth: typeof props?.depth === 'number' ? Number(props.depth) : undefined,
+              elevation: typeof props?.elevation_m === 'number' ? Number(props.elevation_m) : undefined,
+              maxDepth: typeof props?.max_depth === 'number' ? Number(props.max_depth) : undefined,
+              builtUp: typeof props?.built_up_fraction === 'number' ? Math.round(Number(props.built_up_fraction) * 100) : undefined,
+              isSimCell: true,
+            });
           }
         });
 
-        // 100m Risk Grid hover and click handlers
+        // 100m Risk Grid hover and inspect handlers (does not hijack municipal focus)
         map.on('mousemove', 'terra05-risk-grid-fill', (e) => {
           if (e.features && e.features[0]) {
             const props = e.features[0].properties;
@@ -658,7 +792,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
             setHoveredFeature({
               x: e.point.x,
               y: e.point.y,
-              name: `Grid Cell #${props?.grid_id} (${props?.ward ? `Ward ${props.ward}` : 'Corridor'})`,
+              name: `Hydraulic Mesh Cell (${props?.ward ? `Ward ${props.ward}` : 'Corridor'})`,
               depth: typeof props?.flood_fraction === 'number' ? Number((props.flood_fraction * 0.5).toFixed(2)) : undefined,
               elevation: typeof props?.elevation_mean === 'number' ? Math.round(props.elevation_mean * 10) / 10 : undefined,
             });
@@ -672,10 +806,14 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
 
         map.on('click', 'terra05-risk-grid-fill', (e) => {
           if (e.features && e.features[0]) {
-            const feat = e.features[0];
-            const props = feat.properties;
-            const newLoc = createLocationFromGridFeature(props, e.lngLat.lng, e.lngLat.lat);
-            onSelectLocation(newLoc);
+            const props = e.features[0].properties;
+            setHoveredFeature({
+              x: e.point.x,
+              y: e.point.y,
+              name: `Hydraulic Mesh Cell (${props?.ward ? `Ward ${props.ward}` : 'Corridor'})`,
+              depth: typeof props?.flood_fraction === 'number' ? Number((props.flood_fraction * 0.5).toFixed(2)) : undefined,
+              elevation: typeof props?.elevation_mean === 'number' ? Math.round(props.elevation_mean * 10) / 10 : undefined,
+            });
           }
         });
 
@@ -723,6 +861,51 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         });
 
         map.on('mouseleave', 'bmc-drainage-layer', () => {
+          map.getCanvas().style.cursor = '';
+          setHoveredFeature(null);
+        });
+
+        // Evacuation Corridors Hover
+        map.on('mousemove', 'evacuation-corridors-line', (e) => {
+          if (e.features && e.features[0]) {
+            const props = e.features[0].properties;
+            map.getCanvas().style.cursor = 'pointer';
+            setHoveredFeature({
+              x: e.point.x,
+              y: e.point.y,
+              name: props?.name || 'Safe Evacuation Corridor',
+              elevation: typeof props?.elevationM === 'number' ? props.elevationM : undefined,
+              isEvacCorridor: true,
+              evacStatus: props?.status,
+              trafficStatus: props?.trafficStatus,
+              destinationHospital: props?.destinationHospital,
+            });
+          }
+        });
+
+        map.on('mouseleave', 'evacuation-corridors-line', () => {
+          map.getCanvas().style.cursor = '';
+          setHoveredFeature(null);
+        });
+
+        // Evacuation Shelters Hover
+        map.on('mousemove', 'evacuation-shelters-point', (e) => {
+          if (e.features && e.features[0]) {
+            const props = e.features[0].properties;
+            map.getCanvas().style.cursor = 'pointer';
+            setHoveredFeature({
+              x: e.point.x,
+              y: e.point.y,
+              name: props?.name || 'Municipal Refuge Shelter',
+              elevation: typeof props?.elevationM === 'number' ? props.elevationM : undefined,
+              isShelter: true,
+              capacity: props?.capacity,
+              facilities: props?.facilities,
+            });
+          }
+        });
+
+        map.on('mouseleave', 'evacuation-shelters-point', () => {
           map.getCanvas().style.cursor = '';
           setHoveredFeature(null);
         });
@@ -872,7 +1055,8 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       // A. Update Water Inundation Polygon Geometry via persistent source setData
       const floodSource = map.getSource('terra05-flood-src') as GeoJSONSource;
       if (floodSource) {
-        const updatedGeoJSON = getRealisticFloodPolygonsGeoJSON(rainfall, timelineStep, layers.uncertainty);
+        const effectiveRainfall = (interventions?.mobilePumps ? rainfall * 0.70 : rainfall) * (interventions?.tidalGates ? 0.85 : 1.0);
+        const updatedGeoJSON = getRealisticFloodPolygonsGeoJSON(effectiveRainfall, timelineStep, layers.uncertainty);
         floodSource.setData(updatedGeoJSON);
       }
 
@@ -897,7 +1081,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     } catch (updateErr) {
       console.error('[TERRA05][SIMULATION UPDATE ERROR]', updateErr);
     }
-  }, [rainfall, timelineStep, layers.uncertainty, timelineMetrics, mapLoaded, selectedLocation]);
+  }, [rainfall, timelineStep, layers.uncertainty, timelineMetrics, mapLoaded, selectedLocation, interventions?.mobilePumps, interventions?.tidalGates]);
 
   // Helper to update location-specific active SWD features and dynamic hydraulic stress styling
   const updateActiveDrainage = (
@@ -950,23 +1134,33 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       let activeColor = '#06B6D4'; // Focus network highlighted in clean cyan (Standby)
       let activeWidth = 2.4;
 
+      // Evaluate effective drainage stress relieved by municipal interventions
+      let effectiveStress = timelineMetrics.drainStressState;
+      if (interventions?.mobilePumps && effectiveStress === 'SURCHARGING OVERFLOW') {
+        effectiveStress = 'HIGH LOAD';
+      }
+      if (interventions?.mobilePumps && interventions?.tidalGates) {
+        if (effectiveStress === 'HIGH LOAD') effectiveStress = 'LOADING';
+        else if (effectiveStress === 'LOADING') effectiveStress = 'OPTIMAL';
+      }
+
       if (timelineStep === 0 && rainfall === 0) {
         // Standby baseline: dry weather readiness, distinct from flowing/stressed conduits
         activeColor = '#06B6D4';
         activeWidth = 2.4;
-      } else if (timelineStep === 1 || timelineMetrics.drainStressState === 'OPTIMAL') {
+      } else if (timelineStep === 1 || effectiveStress === 'OPTIMAL') {
         activeColor = '#0284C7'; // Inflow / Gravity Conveyance
         activeWidth = 2.8;
-      } else if (timelineMetrics.drainStressState === 'LOADING') {
+      } else if (effectiveStress === 'LOADING') {
         activeColor = '#0284C7';
         activeWidth = 3.2;
-      } else if (timelineMetrics.drainStressState === 'HIGH LOAD') {
+      } else if (effectiveStress === 'HIGH LOAD') {
         activeColor = '#D97706'; // Amber (Stressed)
         activeWidth = 3.8;
-      } else if (timelineMetrics.drainStressState === 'OVERLOADED') {
+      } else if (effectiveStress === 'OVERLOADED') {
         activeColor = '#EA580C'; // Orange-Red
         activeWidth = 4.4;
-      } else if (timelineMetrics.drainStressState === 'SURCHARGING OVERFLOW') {
+      } else if (effectiveStress === 'SURCHARGING OVERFLOW') {
         activeColor = '#DC2626'; // Red (Surcharging)
         activeWidth = 5.2;
       }
@@ -1018,11 +1212,11 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     return () => controller.abort();
   }, [mapLoaded]);
 
-  // Update localized SWD layer when selectedLocation, timelineStep, or stress state changes
+  // Update localized SWD layer when selectedLocation, timelineStep, stress state, or interventions change
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     updateActiveDrainage(fullDrainageNetworkRef.current, selectedLocation);
-  }, [selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, timelineStep, timelineMetrics.drainStressState, mapLoaded]);
+  }, [selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, timelineStep, timelineMetrics.drainStressState, mapLoaded, interventions?.mobilePumps, interventions?.tidalGates]);
 
   // 3B. Update 2D Computational Hydrodynamic Simulation Water Layer GeoJSON
   useEffect(() => {
@@ -1051,8 +1245,8 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         if (map.getLayer('terra05-sim-water-layer')) {
           map.setLayoutProperty('terra05-sim-water-layer', 'visibility', layers.floodDepth ? 'visible' : 'none');
         }
-        if (map.getLayer('terra05-sim-water-edge-layer')) {
-          map.setLayoutProperty('terra05-sim-water-edge-layer', 'visibility', layers.floodDepth ? 'visible' : 'none');
+        if (map.getLayer('terra05-sim-water-interact-layer')) {
+          map.setLayoutProperty('terra05-sim-water-interact-layer', 'visibility', layers.floodDepth ? 'visible' : 'none');
         }
       } else {
         // Clear sim layer, restore schematic polygon if floodDepth layer is active
@@ -1066,8 +1260,8 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         if (map.getLayer('terra05-sim-water-layer')) {
           map.setLayoutProperty('terra05-sim-water-layer', 'visibility', 'none');
         }
-        if (map.getLayer('terra05-sim-water-edge-layer')) {
-          map.setLayoutProperty('terra05-sim-water-edge-layer', 'visibility', 'none');
+        if (map.getLayer('terra05-sim-water-interact-layer')) {
+          map.setLayoutProperty('terra05-sim-water-interact-layer', 'visibility', 'none');
         }
       }
     } catch (err) {
@@ -1099,13 +1293,18 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     setVisibility('critical-infra-layer', layers.criticalInfra);
     setVisibility('bmc-spots-layer', layers.floodSpots);
     setVisibility('terra05-sim-water-layer', layers.floodDepth && Boolean(simulationData));
-    setVisibility('terra05-sim-water-edge-layer', layers.floodDepth && Boolean(simulationData));
+    setVisibility('terra05-sim-water-interact-layer', layers.floodDepth && Boolean(simulationData));
     setVisibility('terra05-flood-layer', layers.floodDepth && !simulationData);
     setVisibility('terra05-water-edge-layer', layers.floodDepth && !simulationData);
     setVisibility('terra05-uncertainty-layer', layers.uncertainty);
     setVisibility('historical-2019-layer', layers.historical2019);
     setVisibility('terra05-risk-grid-fill', layers.riskGrid);
     setVisibility('terra05-risk-grid-line', layers.riskGrid);
+    const evacVisible = layers.evacuationRoutes !== false;
+    setVisibility('evacuation-corridors-casing', evacVisible);
+    setVisibility('evacuation-corridors-line', evacVisible);
+    setVisibility('evacuation-shelters-pulse', evacVisible);
+    setVisibility('evacuation-shelters-point', evacVisible);
   }, [layers, mapLoaded, simulationData]);
 
   // 5. Smooth camera flyTo when a user explicitly selects a focus area
@@ -1249,6 +1448,22 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
             <span className="font-bold text-sky-700 text-[11px]">T+0{timelineStep}</span>
           </div>
         </div>
+
+        {/* Active Countermeasure Mitigation Pill */}
+        {(interventions?.mobilePumps || interventions?.tidalGates) && (
+          <div className="pointer-events-auto flex items-center">
+            <div className="bg-emerald-900/95 text-white backdrop-blur-md border border-emerald-600 rounded-xl shadow-gis px-3 py-1.5 flex items-center space-x-2 text-xs font-mono animate-in fade-in">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+              <span className="font-bold text-[11px] text-emerald-100 tracking-wide">
+                {interventions.mobilePumps && interventions.tidalGates
+                  ? 'MITIGATION ACTIVE: PUMPS + SLUICE GATES (-45% DEPTH)'
+                  : interventions.mobilePumps
+                  ? 'MITIGATION ACTIVE: MOBILE PUMPS (-30% DEPTH)'
+                  : 'MITIGATION ACTIVE: TIDAL SLUICE GATES (-15% DEPTH)'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* GIS Hover Inspection Tooltip (Constrained in Viewport) */}
@@ -1294,15 +1509,72 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
                   </span>
                 </div>
               )}
-              <div className="text-[9.5px] text-slate-500 pt-0.5 border-t border-slate-100">
-                {hoveredFeature.isInsideFocusArea
-                  ? (timelineStep === 0 && rainfall === 0
-                      ? 'Focus Area Network (Standby / Normal Gravity Readiness)'
-                      : `Simulated Hydraulic Response: ${timelineMetrics.drainStressState}`)
-                  : (selectedLocation
-                      ? 'Municipal Baseline Infrastructure (Outside Selected Basin)'
-                      : 'Municipal Baseline SWD Network (Citywide)')}
+              <div className="text-[9.5px] text-slate-500 pt-0.5 border-t border-slate-100 space-y-0.5">
+                <div>
+                  {hoveredFeature.isInsideFocusArea
+                    ? (timelineStep === 0 && rainfall === 0
+                        ? 'Focus Area Network (Standby / Normal Gravity Readiness)'
+                        : `Simulated Hydraulic Response: ${timelineMetrics.drainStressState}`)
+                    : (selectedLocation
+                        ? 'Municipal Baseline Infrastructure (Outside Selected Basin)'
+                        : 'Municipal Baseline SWD Network (Citywide)')}
+                </div>
+                {hoveredFeature.isInsideFocusArea && (interventions?.mobilePumps || interventions?.tidalGates) && (
+                  <div className="text-emerald-700 font-bold">
+                    ✓ Countermeasure: Dewatering Relief Flow Active
+                  </div>
+                )}
               </div>
+            </div>
+          ) : hoveredFeature.isEvacCorridor ? (
+            <div className="space-y-1 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Route Type:</span>
+                <span className="font-bold text-emerald-800">ELEVATED EVACUATION TRUNK</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Status:</span>
+                <span className="font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
+                  {hoveredFeature.evacStatus || 'OPEN / DRY'}
+                </span>
+              </div>
+              {hoveredFeature.elevation !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Elevation:</span>
+                  <span className="font-bold text-slate-800">{hoveredFeature.elevation}m MSL (Above Water)</span>
+                </div>
+              )}
+              {hoveredFeature.destinationHospital && (
+                <div className="text-[10px] text-slate-600 border-t border-slate-100 pt-1">
+                  <span className="font-bold text-slate-800">Hospital Corridor: </span>
+                  {hoveredFeature.destinationHospital}
+                </div>
+              )}
+            </div>
+          ) : hoveredFeature.isShelter ? (
+            <div className="space-y-1 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Facility:</span>
+                <span className="font-bold text-emerald-800">MUNICIPAL FLOOD REFUGE</span>
+              </div>
+              {hoveredFeature.capacity !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Shelter Capacity:</span>
+                  <span className="font-bold text-slate-900">{hoveredFeature.capacity} Citizens</span>
+                </div>
+              )}
+              {hoveredFeature.elevation !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Elevation:</span>
+                  <span className="font-bold text-slate-800">{hoveredFeature.elevation}m MSL (High Ground)</span>
+                </div>
+              )}
+              {hoveredFeature.facilities && (
+                <div className="text-[10px] text-slate-600 border-t border-slate-100 pt-1">
+                  <span className="font-bold text-slate-800">Amenities: </span>
+                  {hoveredFeature.facilities}
+                </div>
+              )}
             </div>
           ) : (
             <>

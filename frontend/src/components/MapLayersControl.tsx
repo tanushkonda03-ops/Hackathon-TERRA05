@@ -13,6 +13,7 @@ interface MapLayersControlProps {
     historical2019: boolean;
     terrain3D: boolean;
     riskGrid: boolean;
+    evacuationRoutes: boolean;
   };
   onToggleLayer: (layerKey: keyof MapLayersControlProps['layers']) => void;
   onCameraPreset: (preset: '3D' | 'TOP' | 'RESET') => void;
@@ -163,6 +164,10 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
                   <span className="w-4 border-t-2 border-rose-600" />
                   <span>Overloaded / overflow</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-4 border-t-2 border-emerald-600" />
+                  <span>Elevated Evac Corridor</span>
+                </div>
               </div>
             </div>
 
@@ -189,8 +194,9 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
             {/* GROUP 4: URBAN IMPACT */}
             <div className="border-t border-slate-100 pt-2.5 space-y-1">
               <span className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
-                URBAN IMPACT
+                URBAN IMPACT & EVACUATION
               </span>
+              {renderToggle('🚑 Evac Corridors & Shelters', layers.evacuationRoutes, () => onToggleLayer('evacuationRoutes'), 'text-emerald-700 font-bold')}
               {renderToggle('Arterial Road Submergence', layers.roadsExposure, () => onToggleLayer('roadsExposure'), 'text-amber-700')}
               {renderToggle('Critical Infrastructure', layers.criticalInfra, () => onToggleLayer('criticalInfra'))}
               {renderToggle('BMC Chronic Flood Spots', layers.floodSpots, () => onToggleLayer('floodSpots'), 'text-rose-600')}

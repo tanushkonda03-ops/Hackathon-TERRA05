@@ -235,7 +235,7 @@ export function convertBounds4326To32643(
 export function simulationDataToGeoJSON(
   simData: SimulationResponse,
   stepIndex: number,
-  minDepthThresholdM: number = 0.005
+  minDepthThresholdM: number = 0.04 // 4 cm threshold: displays genuine ponding, filters out superficial surface dampness
 ): GeoJSON.FeatureCollection {
   if (!simData || !simData.cells || simData.cells.length === 0) {
     return { type: 'FeatureCollection', features: [] };
@@ -251,14 +251,6 @@ export function simulationDataToGeoJSON(
     const depth = cell.depth_by_timestep[step] ?? 0;
     if (depth < minDepthThresholdM) continue;
 
-    const cosLat = Math.cos((cell.centroid_lat * Math.PI) / 180);
-    const dLng = halfSizeM / (111320 * (cosLat > 0.1 ? cosLat : 0.94));
-
-    const w = cell.centroid_lng - dLng;
-    const e = cell.centroid_lng + dLng;
-    const s = cell.centroid_lat - dLat;
-    const n = cell.centroid_lat + dLat;
-
     features.push({
       type: 'Feature',
       properties: {
@@ -271,16 +263,8 @@ export function simulationDataToGeoJSON(
         is_inundated: depth >= 0.05 ? 1 : 0,
       },
       geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [w, s],
-            [e, s],
-            [e, n],
-            [w, n],
-            [w, s],
-          ],
-        ],
+        type: 'Point',
+        coordinates: [cell.centroid_lng, cell.centroid_lat],
       },
     });
   }

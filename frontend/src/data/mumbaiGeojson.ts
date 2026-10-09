@@ -475,6 +475,183 @@ export const BMC_FLOOD_SPOTS_GEOJSON: FeatureCollection<Point> = {
   ],
 };
 
+// 6B. SAFE EMERGENCY EVACUATION CORRIDORS (Elevated flyovers & high-grade bypasses connecting inundated wards to hospitals)
+export const MUMBAI_EVACUATION_CORRIDORS_GEOJSON: FeatureCollection<LineString> = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        id: 'evac-sclr-flyover',
+        name: 'SCLR Elevated Flyover Corridor (Kurla → Sion Hospital Bypass)',
+        corridorType: 'ELEVATED_EXPRESSWAY',
+        status: 'OPEN_DRY',
+        elevationM: 14.2,
+        trafficStatus: 'AMBULANCE & RESCUE PRIORITY ONLY',
+        destinationHospital: 'Lokmanya Tilak Municipal General Hospital (Sion)',
+        lengthKm: 4.3,
+        primaryWard: 'L (Kurla) & F-North (Sion)',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [72.8710, 19.0720],
+          [72.8765, 19.0710],
+          [72.8820, 19.0690],
+          [72.8860, 19.0620],
+          [72.8814, 19.0528],
+          [72.8690, 19.0430],
+          [72.8605, 19.0375], // Sion Hospital Trauma Entrance
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'evac-weh-corridor',
+        name: 'Western Express Highway (WEH Elevated Relief Trunk)',
+        corridorType: 'ELEVATED_ARTERIAL',
+        status: 'OPEN_DRY',
+        elevationM: 12.8,
+        trafficStatus: 'CLEAR / DRAINED',
+        destinationHospital: 'Bhabha Hospital Bandra & Lilavati Hospital',
+        lengthKm: 6.2,
+        primaryWard: 'H-East & K-East',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [72.8510, 19.0540],
+          [72.8530, 19.0630],
+          [72.8550, 19.0740],
+          [72.8580, 19.0850],
+          [72.8610, 19.0980],
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'evac-eeh-kem-corridor',
+        name: 'Eastern Express Highway Trunk to K.E.M. Hospital Parel',
+        corridorType: 'ARTERIAL_TRUNK',
+        status: 'CLEAR_HIGH_GROUND',
+        elevationM: 9.4,
+        trafficStatus: 'REGULATED PASSAGE',
+        destinationHospital: 'KEM Hospital & Tata Memorial Centre (Parel)',
+        lengthKm: 5.6,
+        primaryWard: 'L & F-South',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [72.8880, 19.0770],
+          [72.8850, 19.0650],
+          [72.8814, 19.0528],
+          [72.8730, 19.0380],
+          [72.8620, 19.0250],
+          [72.8420, 19.0020], // Parel Medical Hub
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'evac-eastern-freeway',
+        name: 'Eastern Freeway Elevated Bypass (Sandhurst Road Bypass)',
+        corridorType: 'ELEVATED_EXPRESSWAY',
+        status: 'OPEN_DRY',
+        elevationM: 15.6,
+        trafficStatus: 'UNOBSTRUCTED BY LOCAL WATERLOGGING',
+        destinationHospital: 'JJ Hospital Byculla & St. George Hospital',
+        lengthKm: 7.8,
+        primaryWard: 'B (Sandhurst Rd) & E (Byculla)',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [72.8480, 18.9680],
+          [72.8440, 18.9590],
+          [72.8410, 18.9520],
+          [72.8380, 18.9450],
+          [72.8360, 18.9380],
+        ],
+      },
+    },
+  ],
+};
+
+// 6C. DESIGNATED MUNICIPAL FLOOD REFUGE SHELTERS (High ground facilities equipped with generators and emergency medical triage)
+export const MUMBAI_MUNICIPAL_SHELTERS_GEOJSON: FeatureCollection<Point> = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        id: 'shelter-kurla-urdu',
+        name: 'BMC Ward L Urdu/Marathi High School',
+        ward: 'L (Kurla)',
+        capacity: 500,
+        elevationM: 12.5,
+        status: 'ACTIVE_OPEN',
+        phone: '022-26505109',
+        facilities: 'Drinking Water, Dry Rations, Medical First Aid, Diesel Generator',
+        locality: 'Kurla West',
+        walkingDistM: '350m from Kurla Station West',
+      },
+      geometry: { type: 'Point', coordinates: [72.8735, 19.0710] },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'shelter-sion-community',
+        name: 'BMC F-North Community Welfare Center',
+        ward: 'F-North (Sion)',
+        capacity: 650,
+        elevationM: 11.2,
+        status: 'ACTIVE_OPEN',
+        phone: '022-24024388',
+        facilities: 'NDRF Boat Staging, Hot Meals, Trauma Stabilization',
+        locality: 'Sion East',
+        walkingDistM: '420m from Sion Circle',
+      },
+      geometry: { type: 'Point', coordinates: [72.8660, 19.0410] },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'shelter-bandra-relief',
+        name: 'Bandra East Municipal Relief Center (Kalanagar)',
+        ward: 'H-East (Bandra)',
+        capacity: 750,
+        elevationM: 10.8,
+        status: 'STANDBY_READY',
+        phone: '022-26422311',
+        facilities: 'Displacement Shelter, Emergency Power, Sanitized Water Tanks',
+        locality: 'Bandra East',
+        walkingDistM: '500m from Kalanagar Junction',
+      },
+      geometry: { type: 'Point', coordinates: [72.8530, 19.0560] },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'shelter-sandhurst-bward',
+        name: 'BMC B-Ward Municipal High School',
+        ward: 'B (Sandhurst Road)',
+        capacity: 400,
+        elevationM: 9.8,
+        status: 'ACTIVE_OPEN',
+        phone: '022-23759881',
+        facilities: 'Subway Pump Relief Post, Medical Officers, Dry Food Packets',
+        locality: 'Sandhurst Road',
+        walkingDistM: '280m from Sandhurst Rd Station',
+      },
+      geometry: { type: 'Point', coordinates: [72.8390, 18.9565] },
+    },
+  ],
+};
+
 // 7. DETERMINISTIC PHYSICAL INUNDATION STATE SURFACES
 // Core basins with realistic topographic edge geometries
 interface BasinGeometryDef {
@@ -588,9 +765,10 @@ const DETERMINISTIC_BASINS: BasinGeometryDef[] = [
 // T06: 0.30 (Residual pooling in lowest depressions only)
 //
 // Guaranteed: T00 ⊆ T01 ⊆ T02 ⊆ T03 ⊆ T04 (Monotonic rising)
-// And: T06 ⊆ T05 ⊆ T04 (Monotonic recession)
-const PHASE_RADIUS_FACTORS = [0.0, 0.18, 0.42, 0.72, 1.00, 0.70, 0.30];
-const PHASE_DEPTH_FACTORS  = [0.0, 0.15, 0.40, 0.70, 1.00, 0.65, 0.25];
+// Realistic urban retention factors:
+// Post-peak, surcharged conduits and tidal resistance sustain inundation through T05 and T06.
+const PHASE_RADIUS_FACTORS = [0.0, 0.18, 0.42, 0.75, 1.00, 0.90, 0.75];
+const PHASE_DEPTH_FACTORS  = [0.0, 0.15, 0.40, 0.72, 1.00, 0.88, 0.70];
 
 export const getRealisticFloodPolygonsGeoJSON = (
   rainfall: number,

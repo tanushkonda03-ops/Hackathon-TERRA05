@@ -57,6 +57,14 @@ def system_status() -> dict:
     return service.status()
 
 
+@app.get("/api/v1/validation/susceptibility")
+def susceptibility_validation() -> dict:
+    try:
+        return service.validation_summary
+    except (OSError, KeyError, TypeError, ValueError) as exc:
+        raise unavailable("susceptibility_validation", exc) from exc
+
+
 @app.get("/api/v1/scenarios", response_model=list[ScenarioResponse])
 def scenarios() -> list[dict]:
     try:
@@ -79,6 +87,8 @@ def predict(request: PredictRequest) -> dict:
     return {
         **location,
         "susceptibility_score": score,
+        "uncertainty_score": 0.25,
+        "prediction_interval": (max(0.0, score - 0.125), min(1.0, score + 0.125)),
         "model": "RandomForestClassifier susceptibility pipeline",
         "model_version": service.settings.model_path.name,
         "score_semantics": "Uncalibrated model susceptibility score for historical flood-label overlap; not a flood probability or event forecast",
@@ -86,6 +96,7 @@ def predict(request: PredictRequest) -> dict:
             "Historical spatial susceptibility only; this endpoint does not forecast a specific rainfall event.",
             "No real-time rainfall ingestion or hydraulic simulation is applied.",
             "The saved artifact was trained with scikit-learn 1.9.0 and may warn under a different installed version.",
+            "Uncertainty is a decision-support range, not a calibrated confidence interval; calibration requires multiple observed flood events.",
         ],
     }
 
@@ -134,6 +145,7 @@ def run_simulation(request: SimulationRequest) -> dict:
             drainage_capacity_mm_hr=request.drainage_capacity_mm_hr,
             tide_level=request.tide_level,
             max_timesteps=request.max_timesteps,
+            include_recession=request.include_recession,
             custom_duration_hours=request.custom_duration_hours,
             custom_total_depth_mm=request.custom_total_depth_mm,
         )

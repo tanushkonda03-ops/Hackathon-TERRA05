@@ -23,6 +23,8 @@ class PredictionResponse(BaseModel):
     grid_id: int
     ward: str | None
     susceptibility_score: float = Field(ge=0, le=1)
+    uncertainty_score: float = Field(ge=0, le=1)
+    prediction_interval: tuple[float, float]
     model: str
     model_version: str
     score_semantics: str
@@ -78,6 +80,7 @@ class SimulationRequest(BaseModel):
     drainage_capacity_mm_hr: float = Field(default=25.0, ge=0.0, le=200.0, description="Base municipal stormwater drainage extraction rate (mm/hr)")
     tide_level: str = Field(default="normal", pattern="^(normal|high|extreme)$", description="Coastal tide/backwater condition")
     max_timesteps: int | None = Field(default=None, gt=0, le=200, description="Optional cap on number of timesteps")
+    include_recession: bool = Field(default=False, description="Append a zero-rainfall drainage tail after the rainfall event")
     custom_duration_hours: float | None = Field(default=None, gt=0, le=168, description="Custom rainfall duration in hours")
     custom_total_depth_mm: float | None = Field(default=None, gt=0, le=5000, description="Total custom rainfall depth in millimetres")
 
@@ -119,6 +122,14 @@ class SimulationCellResult(BaseModel):
     depth_by_timestep: list[float]
     max_depth_m: float
     final_depth_m: float
+    historical_susceptibility: float = Field(ge=0, le=1)
+    physical_event_score: float = Field(ge=0, le=1)
+    hybrid_event_risk_score: float = Field(ge=0, le=1)
+    event_inundated: bool
+    wet_fraction_of_steps: float = Field(ge=0, le=1)
+    risk_tier: str
+    uncertainty_score: float = Field(ge=0, le=1)
+    risk_interval: tuple[float, float]
 
 
 class SimulationWaterBalance(BaseModel):
@@ -151,6 +162,8 @@ class SimulationResponse(BaseModel):
     timesteps: list[SimulationTimestepMetrics]
     cells: list[SimulationCellResult]
     limitations: list[str]
+    provenance: dict[str, Any]
+    event_forecast: dict[str, Any]
 
 
 class SwmmStatusResponse(BaseModel):

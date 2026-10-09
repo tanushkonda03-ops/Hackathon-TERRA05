@@ -91,6 +91,52 @@ class BackendDataService:
         score = float(model.predict_proba(row[feature_names])[0, 1])
         return score, {"grid_id": int(row.iloc[0]["grid_id"]), "ward": str(row.iloc[0]["ward"])}
 
+    @cached_property
+    def validation_summary(self) -> dict[str, Any]:
+        metrics_path = self.settings.root / "outputs" / "reports" / "ward_flood_susceptibility_tuned_metrics.json"
+        holdout_path = self.settings.root / "outputs" / "reports" / "ward_flood_susceptibility_tuned_holdout.csv"
+        if not metrics_path.is_file() or not holdout_path.is_file():
+            raise FileNotFoundError("Computed susceptibility validation artifacts are unavailable")
+
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        confusion = metrics.get("test_confusion_matrix")
+        if not isinstance(confusion, list) or len(confusion) != 2:
+            raise ValueError("Validation report has no 2x2 confusion matrix")
+
+        true_negative, false_positive = (int(value) for value in confusion[0])
+        false_negative, true_positive = (int(value) for value in confusion[1])
+        return {
+            "source": "outputs/reports/ward_flood_susceptibility_tuned_metrics.json",
+            "dataset": "Spatial holdout test fold 2",
+            "model": metrics["model"],
+            "threshold": metrics["selected_threshold"],
+            "metrics": {
+                "roc_auc": metrics["test_roc_auc"] * 100,
+                "average_precision": metrics["test_average_precision"] * 100,
+                "iou": (
+                    true_positive / (true_positive + false_positive + false_negative) * 100
+                    if true_positive + false_positive + false_negative
+                    else 0
+                ),
+                "precision": metrics["test_precision"] * 100,
+                "recall": metrics["test_recall"] * 100,
+                "f1_score": metrics["test_f1"] * 100,
+                "balanced_accuracy": metrics["test_balanced_accuracy"] * 100,
+            },
+            "confusion": {
+                "true_negative": true_negative,
+                "false_positive": false_positive,
+                "false_negative": false_negative,
+                "true_positive": true_positive,
+                "test_cells": true_negative + false_positive + false_negative + true_positive,
+            },
+            "limitations": [
+                "This is historical spatial susceptibility validation, not event-specific hydraulic validation.",
+                "Labels come from historical flood-polygon overlap and do not provide observed water depths.",
+                "The untouched geographic test fold is reported separately from threshold selection.",
+            ],
+        }
+
     def grid_id_for_coordinates(self, latitude: float, longitude: float) -> int:
         try:
             import geopandas as gpd
@@ -193,6 +239,7 @@ class BackendDataService:
         drainage_capacity_mm_hr: float = 25.0,
         tide_level: str = "normal",
         max_timesteps: int | None = None,
+        include_recession: bool = False,
         custom_duration_hours: float | None = None,
         custom_total_depth_mm: float | None = None,
     ) -> dict[str, Any]:
@@ -228,6 +275,23 @@ class BackendDataService:
             intervals = [row for row in self.rainfall_rows if row["timeseries_id"] == scenario_id]
             if not intervals:
                 raise LookupError(f"No rainfall intervals found for scenario '{scenario_id}'")
+
+        if include_recession:
+            interval_minutes = int(metadata.get("interval_minutes", 15))
+            recession_steps = 480  # Up to 120 hours; the engine stops early once clear.
+            rainfall_end_index = len(intervals)
+            intervals = [
+                *intervals,
+                *[
+                    {
+                        "timeseries_id": scenario_id,
+                        "datetime": f"T+{(rainfall_end_index + index) * interval_minutes}m",
+                        "rainfall_15min_mm": 0.0,
+                        "intensity_mm_per_hr": 0.0,
+                    }
+                    for index in range(recession_steps)
+                ],
+            ]
 
         def _normalize_ward(w: str) -> str:
             w_clean = w.strip().upper().replace(" WARD", "").replace("WARD ", "").replace("WARD", "")
@@ -286,5 +350,89 @@ class BackendDataService:
             routing_enabled=routing_enabled,
             drainage_capacity_mm_hr=drainage_capacity_mm_hr * tide_factor,
             max_timesteps=max_timesteps,
+            stop_when_clear=include_recession,
         )
-        return engine.run()
+        result = engine.run()
+
+        # The physical simulation is the event forecast. The historical model
+        # adds context, but is not treated as an event probability.
+        feature_table = self.feature_table
+        try:
+            model = self.model
+            feature_names = list(getattr(model, "feature_names_in_", []))
+        except (ImportError, OSError, RuntimeError, ValueError) as exc:
+            LOGGER.warning("Historical susceptibility context unavailable for event run: %s", exc)
+            model = None
+            feature_names = []
+        feature_rows = feature_table.set_index("grid_id")
+        grid_ids = [cell["grid_id"] for cell in result["cells"]]
+        available_ids = [grid_id for grid_id in grid_ids if grid_id in feature_rows.index]
+        historical_scores: dict[int, float] = {}
+        if model is not None and feature_names and available_ids:
+            model_input = feature_rows.loc[available_ids, feature_names]
+            probabilities = model.predict_proba(model_input)[:, 1]
+            historical_scores = {
+                int(grid_id): float(score)
+                for grid_id, score in zip(available_ids, probabilities)
+            }
+
+        for cell in result["cells"]:
+            depths = cell["depth_by_timestep"]
+            peak_depth = float(cell["max_depth_m"])
+            wet_steps = sum(depth >= 0.05 for depth in depths)
+            persistence = wet_steps / max(1, len(depths))
+            physical_score = min(1.0, 0.7 * min(peak_depth / 0.5, 1.0) + 0.3 * persistence)
+            historical_score = historical_scores.get(int(cell["grid_id"]), 0.0)
+            feature_row = feature_rows.loc[cell["grid_id"]] if cell["grid_id"] in feature_rows.index else None
+            critical_score = 1.0 if feature_row is not None and float(feature_row.get("is_critical_asset_cell", 0)) > 0 else 0.0
+            hybrid_score = min(1.0, 0.7 * physical_score + 0.2 * historical_score + 0.1 * critical_score)
+            uncertainty_score = min(
+                0.6,
+                max(
+                    0.15,
+                    0.20
+                    + 0.35 * abs(physical_score - historical_score)
+                    + 0.10 * (1.0 - persistence)
+                    + (0.10 if not historical_scores else 0.0),
+                ),
+            )
+            interval_half_width = uncertainty_score / 2.0
+            cell["historical_susceptibility"] = round(historical_score, 4)
+            cell["physical_event_score"] = round(physical_score, 4)
+            cell["hybrid_event_risk_score"] = round(hybrid_score, 4)
+            cell["event_inundated"] = peak_depth >= 0.05
+            cell["wet_fraction_of_steps"] = round(persistence, 4)
+            cell["risk_tier"] = (
+                "SEVERE" if hybrid_score >= 0.75 else
+                "HIGH" if hybrid_score >= 0.5 else
+                "MODERATE" if hybrid_score >= 0.25 else
+                "LOW"
+            )
+            cell["uncertainty_score"] = round(uncertainty_score, 4)
+            cell["risk_interval"] = (
+                round(max(0.0, hybrid_score - interval_half_width), 4),
+                round(min(1.0, hybrid_score + interval_half_width), 4),
+            )
+
+        result["event_forecast"] = {
+            "target": "event inundation and water-depth estimate",
+            "forecast_source": "time-stepped 2D surface-runoff simulation",
+            "hybrid_context": "historical susceptibility plus critical-asset exposure",
+            "score_semantics": "hybrid event-risk score, not a calibrated probability",
+            "risk_tier_thresholds": {"LOW": 0.25, "MODERATE": 0.5, "HIGH": 0.75, "SEVERE": 1.0},
+            "event_id": scenario_id,
+            "tide_level": tide_level,
+            "uncertainty": {
+                "available": True,
+                "label": "Decision-support uncertainty range",
+                "method": "Proxy width from physical-versus-historical disagreement, wet-duration, and calibration status",
+                "not_calibrated": True,
+            },
+        }
+        result["provenance"]["event_forecast"] = (
+            "Physics-first event estimate with historical susceptibility context"
+            if historical_scores
+            else "Physics-first event estimate; historical context unavailable"
+        )
+        result["provenance"]["calibration_status"] = "Not calibrated against multiple observed event-depth datasets"
+        return result

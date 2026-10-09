@@ -98,6 +98,7 @@ class SurfaceRunoffEngine:
         max_timesteps: int | None = None,
         depression_storage_imp_mm: float | None = None,
         depression_storage_perv_mm: float | None = None,
+        stop_when_clear: bool = False,
     ):
         if not features:
             raise ValueError("No spatial features provided for simulation domain")
@@ -120,6 +121,7 @@ class SurfaceRunoffEngine:
         if depression_storage_perv_mm is not None:
             cfg.depression_storage_perv_mm = max(0.0, float(depression_storage_perv_mm))
         self.config = cfg
+        self.stop_when_clear = stop_when_clear
 
         # Filter intervals if max_timesteps specified
         self.intervals = scenario_intervals[:cfg.max_timesteps] if cfg.max_timesteps else scenario_intervals
@@ -278,9 +280,15 @@ class SurfaceRunoffEngine:
             excess_m = np.where(self.mask, excess_mm / 1000.0, 0.0)
             depth += excess_m
 
-            # 5. Municipal drainage conveyance removal
-            drain_scaling = np.clip(self.grid_drain / 10.0 + 0.4, 0.3, 1.6)
-            step_drain_cap_mm = (self.config.drainage_capacity_mm_hr * dt_hr) * drain_scaling
+            # 5. Municipal drainage conveyance removal with realistic hydraulic surcharge & tailwater choke
+            # When streets and conduits are flooded (depth > 0.05m), intake grates choke and conduits surcharge.
+            # Post-peak (timesteps >= 5), downstream trunk channels (Mithi River, Mahim Creek) reach high stage,
+            # creating backpressure that limits outfall gravity conveyance to 25%-35% of nominal capacity.
+            surcharge_factor = np.clip(1.0 - (depth / 0.40) * 0.65, 0.25, 1.0)
+            tailwater_factor = 0.35 if step_idx >= 5 else 0.85
+            effective_drain_scaling = np.clip(self.grid_drain / 10.0 + 0.4, 0.3, 1.6) * surcharge_factor * tailwater_factor
+
+            step_drain_cap_mm = (self.config.drainage_capacity_mm_hr * dt_hr) * effective_drain_scaling
             step_drain_cap_m = step_drain_cap_mm / 1000.0
             drain_removed_m = np.where(self.mask, np.minimum(depth, step_drain_cap_m), 0.0)
             step_drain_vol = float(np.sum(drain_removed_m * self.CELL_AREA_M2))
@@ -357,6 +365,15 @@ class SurfaceRunoffEngine:
                 "mass_balance_error_percent": round(step_balance_err_pct, 6),
             })
 
+            if (
+                self.stop_when_clear
+                and p_mm == 0.0
+                and cur_storage_vol <= 1000.0
+                and inundated_count == 0
+                and max_d <= 0.005
+            ):
+                break
+
         # Final domain water balance
         final_storage_vol = float(np.sum(depth[self.mask] * self.CELL_AREA_M2))
         expected_storage = cum_rain_vol - cum_infil_vol - cum_depr_vol - cum_drain_vol
@@ -423,4 +440,21 @@ class SurfaceRunoffEngine:
                 "Sub-grid micro-topography, building wall reflections, and tidal backwater sluice operations are simplified.",
                 "Historical flood susceptibility scores are separate spatial ML indicators and not combined into this hydraulic calculation.",
             ],
+            "provenance": {
+                "simulation_type": "2D surface-runoff prototype",
+                "rainfall_input": "scenario catalogue or evenly distributed user-entered rainfall",
+                "drainage_representation": "spatial drainage-density and capacity influence",
+                "tide_representation": "capacity-scaling proxy",
+                "swmm_status": "adapter and synthetic benchmark available; calibrated Mumbai model unavailable",
+                "synthetic_or_proxy_inputs": [
+                    "base drainage capacity rate",
+                    "tide capacity factors",
+                    "sub-grid routing and storage assumptions",
+                ],
+                "not_observed_measurements": [
+                    "cell-level event water depths",
+                    "citywide pipe flow and surcharge",
+                    "real-time rainfall field",
+                ],
+            },
         }
