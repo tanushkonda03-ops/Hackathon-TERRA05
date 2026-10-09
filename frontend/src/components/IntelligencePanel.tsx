@@ -14,7 +14,8 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
-  Info
+  Info,
+  X
 } from 'lucide-react';
 import { MumbaiLocation, TimelineImpactMetrics } from '../data/locations';
 import { getPrediction, PredictionResponse, SimulationResponse } from '../services/api';
@@ -25,6 +26,7 @@ interface IntelligencePanelProps {
   timelineMetrics?: TimelineImpactMetrics;
   simulationData?: SimulationResponse | null;
   simStepIndex?: number;
+  onClose?: () => void;
 }
 
 export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
@@ -33,6 +35,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   timelineMetrics: propTimelineMetrics,
   simulationData,
   simStepIndex = 0,
+  onClose,
 }) => {
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
   const [predictionLoading, setPredictionLoading] = useState<boolean>(false);
@@ -160,9 +163,21 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
             <span className="text-[9.5px] font-mono uppercase tracking-wider text-slate-400 font-bold">
               SELECTED AREA
             </span>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-              {prediction?.ward ? `Ward ${prediction.ward}` : location.ward}
-            </span>
+            <div className="flex items-center space-x-1.5">
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                {prediction?.ward ? `Ward ${prediction.ward}` : location.ward}
+              </span>
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  aria-label="Close Intelligence Panel"
+                  className="p-0.5 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                  title="Close Panel"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <h2 className="text-base font-bold text-slate-900 mt-0.5 tracking-tight">
             {location.name}

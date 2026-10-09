@@ -27,8 +27,8 @@ import {
   Terminal,
   Activity,
   X,
-  PanelRightOpen,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -62,8 +62,8 @@ export const App: React.FC = () => {
   // Camera preset mode
   const [cameraPreset, setCameraPreset] = useState<'3D' | 'TOP' | 'RESET'>('3D');
 
-  // Panel collapse toggle for wide map exploration
-  const [isIntelligencePanelOpen, setIsIntelligencePanelOpen] = useState<boolean>(true);
+  // Panel collapse toggle for wide map exploration (Default collapsed on Flood Map)
+  const [isIntelligencePanelOpen, setIsIntelligencePanelOpen] = useState<boolean>(false);
 
   // Dynamic Mapbox status
   const [mapStatus, setMapStatus] = useState<'CONNECTING' | 'ONLINE' | 'ERROR'>('CONNECTING');
@@ -87,7 +87,7 @@ export const App: React.FC = () => {
     floodSpots: true,
     drainage: true,
     runoffFlow: true,
-    roadsExposure: true,
+    roadsExposure: false, // Off by default so schematic lines don't slice across terrain
     criticalInfra: true,
     floodDepth: true,
     uncertainty: false,
@@ -294,45 +294,20 @@ export const App: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2.5">
-          {/* Backend Status Indicator */}
-          <div className={`flex items-center space-x-1.5 text-xs font-mono px-2.5 py-1 rounded-lg border shadow-gis-xs ${
-            backendStatus === 'READY'
-              ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
-              : backendStatus === 'DEGRADED'
-              ? 'text-amber-800 bg-amber-50 border-amber-200'
-              : backendStatus === 'CONNECTING'
-              ? 'text-sky-800 bg-sky-50 border-sky-200 animate-pulse'
-              : 'text-slate-600 bg-slate-100 border-slate-200'
-          }`} title={systemStatus?.model?.detail || 'FastAPI Service at 127.0.0.1:8000'}>
+          {/* Mithi River Hydraulic Status (Header Placement) */}
+          <div 
+            className="flex items-center space-x-2 text-xs font-mono px-2.5 py-1 rounded-lg border border-sky-200 bg-sky-50 shadow-gis-xs"
+            title="Mithi River Basin Hydraulic Status"
+          >
             <span className={`w-1.5 h-1.5 rounded-full ${
-              backendStatus === 'READY'
-                ? 'bg-emerald-500 ring-2 ring-emerald-200'
-                : backendStatus === 'DEGRADED'
-                ? 'bg-amber-500 ring-2 ring-amber-200'
-                : backendStatus === 'CONNECTING'
-                ? 'bg-sky-500'
-                : 'bg-slate-400'
+              timelineMetrics.mithiRiverStatus === 'BANKFULL / OVERFLOW' ? 'bg-rose-500 animate-pulse' : 'bg-sky-500'
             }`} />
-            <span className="text-[10.5px] font-semibold">
-              {backendStatus === 'READY' ? 'API & MODEL ONLINE' :
-               backendStatus === 'DEGRADED' ? 'API DEGRADED' :
-               backendStatus === 'CONNECTING' ? 'CONNECTING API...' : 'BACKEND OFFLINE'}
-            </span>
-          </div>
-
-          {/* GIS Engine Status Indicator */}
-          <div className={`hidden sm:flex items-center space-x-1.5 text-xs font-mono px-2.5 py-1 rounded-lg border shadow-gis-xs ${
-            mapStatus === 'ONLINE'
-              ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
-              : mapStatus === 'CONNECTING'
-              ? 'text-amber-800 bg-amber-50 border-amber-200 animate-pulse'
-              : 'text-rose-800 bg-rose-50 border-rose-200'
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
-              mapStatus === 'ONLINE' ? 'bg-emerald-500 ring-2 ring-emerald-200' : mapStatus === 'CONNECTING' ? 'bg-amber-500' : 'bg-rose-500'
-            }`} />
-            <span className="text-[10.5px] font-semibold">
-              {mapStatus === 'ONLINE' ? 'GIS ENGINE ONLINE' : mapStatus === 'CONNECTING' ? 'CONNECTING...' : 'ERROR'}
+            <span className="font-bold text-slate-900 tracking-wide text-[10.5px]">MITHI RIVER</span>
+            <span className="text-slate-300">|</span>
+            <span className="text-slate-600 text-[10.5px]">
+              Status: <strong className={timelineMetrics.mithiRiverStatus === 'BANKFULL / OVERFLOW' ? 'text-rose-700' : 'text-sky-800'}>
+                {timelineMetrics.mithiRiverStatus}
+              </strong>
             </span>
           </div>
 
@@ -363,15 +338,6 @@ export const App: React.FC = () => {
           >
             <Terminal className="w-3.5 h-3.5" />
             <span className="hidden lg:inline text-[11px] font-semibold">TECH DETAILS</span>
-          </button>
-
-          {/* Prototype Notice Modal Trigger */}
-          <button
-            onClick={() => setShowDisclaimer(true)}
-            className="flex items-center space-x-1 text-xs font-mono text-slate-600 bg-slate-50 hover:bg-slate-100 border border-gis-border px-2 py-1 rounded-lg shadow-gis-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-          >
-            <Info className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden md:inline text-[11px] font-semibold">ABOUT THIS DEMO</span>
           </button>
         </div>
       </header>
@@ -422,13 +388,14 @@ export const App: React.FC = () => {
                 onCameraPreset={(preset) => setCameraPreset(preset)}
               />
 
-              {/* Redesigned Floating Simulation Controller */}
-              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-36px)] max-w-4xl z-30 pointer-events-none">
-                <div className="pointer-events-auto bg-white/95 backdrop-blur-md border border-gis-border rounded-2xl shadow-float px-5 py-3 flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-4">
+              {/* Streamlined Floating Simulation Controller */}
+              <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-3xl xl:max-w-4xl z-30 pointer-events-none">
+                <div className="pointer-events-auto bg-white/95 backdrop-blur-md border border-gis-border rounded-2xl shadow-float px-4 py-2 sm:py-2.5 flex flex-col gap-1.5">
+                  {/* Row 1: Rain Scenario Selector + Event Phase + Primary Actions */}
+                  <div className="flex items-center justify-between gap-2.5">
                     {/* Segmented Rainfall Selector */}
-                    <div className="flex items-center space-x-2 border-r border-slate-200 pr-4 shrink-0">
-                      <div className="text-[10px] uppercase font-mono text-slate-400 font-bold flex items-center space-x-1">
+                    <div className="flex items-center space-x-1.5 shrink-0">
+                      <div className="text-[10px] uppercase font-mono text-slate-400 font-bold flex items-center space-x-1 hidden sm:flex">
                         <CloudRain className="w-3.5 h-3.5 text-sky-600" />
                         <span>RAIN</span>
                       </div>
@@ -444,7 +411,7 @@ export const App: React.FC = () => {
                                               rate === 100 ? 'DESIGN_RED_100MM' : 'DESIGN_CLOUDBURST_150MM';
                               setSelectedScenarioId(matchId);
                             }}
-                            className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold transition-all ${
+                            className={`px-2 py-0.5 rounded-md text-[11px] font-mono font-bold transition-all ${
                               rainfall === rate && selectedScenarioId !== 'TS_2005_JULY26' && selectedScenarioId !== 'CUSTOM'
                                 ? 'bg-slate-900 text-white shadow-gis-xs'
                                 : 'text-slate-600 hover:text-slate-900'
@@ -460,7 +427,7 @@ export const App: React.FC = () => {
                             setRainfall(150);
                             setSelectedScenarioId('TS_2005_JULY26');
                           }}
-                          className={`px-2 py-1 rounded-md text-[10.5px] font-mono font-bold transition-all ml-0.5 ${
+                          className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all ml-0.5 ${
                             selectedScenarioId === 'TS_2005_JULY26'
                               ? 'bg-rose-700 text-white shadow-gis-xs'
                               : 'text-rose-700 hover:bg-rose-50'
@@ -472,141 +439,32 @@ export const App: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Physical Timestep Progression */}
-                    <div className="flex-1 flex flex-col space-y-1.5 px-1 min-w-0">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <div className="flex items-center space-x-2 truncate">
-                          <span className="font-bold text-slate-950">
-                            {currentPhase.code}
-                          </span>
-                          <span className="text-slate-300">·</span>
-                          <span className="font-semibold text-slate-700 uppercase text-[11px]">
-                            {currentPhase.name}
-                          </span>
-                          {currentSimStepMetrics && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">
-                              {currentSimStepMetrics.rainfall_intensity_mm_per_hr.toFixed(0)} mm/hr
-                            </span>
-                          )}
-                          {isSimulationLoading && (
-                            <span className="text-[10px] font-mono text-sky-600 animate-pulse">
-                              SIMULATING...
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-3 text-[10.5px] text-slate-500 font-mono shrink-0">
-                          <span>
-                            Flooded area: <strong className="text-slate-800">
-                              {currentSimStepMetrics
-                                ? `${currentSimStepMetrics.inundated_area_km2.toFixed(2)} km²`
-                                : `${timelineMetrics.floodedAreaKm2} km²`}
-                            </strong>
-                          </span>
-                          {currentSimStepMetrics && (
-                            <span>
-                              Deepest water: <strong className="text-sky-800">{currentSimStepMetrics.max_water_depth_m.toFixed(2)}m</strong>
-                            </span>
-                          )}
-                          {currentSimStepMetrics && (
-                            <span className="hidden lg:inline">
-                              Water held: <strong className="text-slate-700">{Math.round(currentSimStepMetrics.surface_storage_volume_m3).toLocaleString()} m³</strong>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Timeline Scrubbing Bar */}
-                      <div className="flex items-center space-x-1 overflow-x-auto py-0.5">
-                        {timelinePhases.slice(0, 16).map((phase) => {
-                          const isCurrent = timelineStep === phase.step;
-                          const isPast = timelineStep > phase.step;
-                          return (
-                            <button
-                              key={phase.step}
-                              onClick={() => {
-                                setIsSimulating(false);
-                                setTimelineStep(phase.step);
-                              }}
-                              className={`flex-1 py-1 px-1.5 rounded text-[10px] font-mono font-semibold transition-all text-center whitespace-nowrap ${
-                                isCurrent
-                                  ? 'bg-sky-800 text-white shadow-gis-xs ring-1 ring-sky-900 font-bold'
-                                  : isPast
-                                  ? 'bg-sky-50 text-sky-900 hover:bg-sky-100 border border-sky-100'
-                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                              }`}
-                              title={`${phase.code}: ${phase.name} (Rain: ${phase.intensity?.toFixed(0) ?? 0}mm/h)`}
-                            >
-                              <span>{phase.code}</span>
-                            </button>
-                          );
-                        })}
-                        <button
-                          onClick={() => setSelectedScenarioId('CUSTOM')}
-                          className={`px-2 py-1 rounded text-xs font-mono font-bold transition-all shrink-0 ${
-                            selectedScenarioId === 'CUSTOM'
-                              ? 'bg-sky-700 text-white shadow-gis-xs'
-                              : 'text-sky-700 hover:bg-sky-50 border border-sky-200/50'
-                          }`}
-                        >
-                          CUSTOM
-                        </button>
-                      </div>
-
-                      {/* Custom inputs & Tide settings */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-                        {selectedScenarioId === 'CUSTOM' && (
-                          <div className="flex items-center gap-2 text-[11px] text-slate-600 font-mono">
-                            <label className="flex items-center gap-1">
-                              Duration:
-                              <input
-                                type="number"
-                                min="0.25"
-                                max="168"
-                                step="0.25"
-                                value={customDurationHours}
-                                onChange={(event) => setCustomDurationHours(Number(event.target.value))}
-                                className="w-16 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-900"
-                              />
-                              h
-                            </label>
-                            <label className="flex items-center gap-1">
-                              Total rain:
-                              <input
-                                type="number"
-                                min="0.1"
-                                max="5000"
-                                step="0.1"
-                                value={customTotalDepthMm}
-                                onChange={(event) => setCustomTotalDepthMm(Number(event.target.value))}
-                                className="w-20 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-900"
-                              />
-                              mm
-                            </label>
-                            <span className="text-slate-400">
-                              ({(customTotalDepthMm / customDurationHours).toFixed(2)} mm/hr avg)
-                            </span>
-                          </div>
-                        )}
-                        <label className="flex items-center gap-1.5 text-[11px] text-slate-600 font-mono ml-auto">
-                          <span className="text-slate-400 font-semibold uppercase text-[10px]">Tide condition:</span>
-                          <select
-                            value={tideLevel}
-                            onChange={(event) => setTideLevel(event.target.value as 'normal' | 'high' | 'extreme')}
-                            className="rounded-md border border-slate-300 px-2 py-0.5 text-xs text-slate-900 bg-white"
-                          >
-                            <option value="normal">Normal</option>
-                            <option value="high">High</option>
-                            <option value="extreme">Extreme</option>
-                          </select>
-                        </label>
-                      </div>
+                    {/* Center Event Phase Indicator */}
+                    <div className="flex-1 flex items-center justify-center space-x-2 text-xs font-mono min-w-0 px-1 truncate">
+                      <span className="font-bold text-slate-950">
+                        {currentPhase.code}
+                      </span>
+                      <span className="text-slate-300">·</span>
+                      <span className="font-semibold text-slate-700 uppercase text-[11px] truncate">
+                        {currentPhase.name}
+                      </span>
+                      {currentSimStepMetrics && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-sky-50 text-sky-800 border border-sky-200 shrink-0">
+                          {currentSimStepMetrics.rainfall_intensity_mm_per_hr.toFixed(0)} mm/hr
+                        </span>
+                      )}
+                      {isSimulationLoading && (
+                        <span className="text-[10px] font-mono text-sky-600 animate-pulse shrink-0">
+                          SIMULATING...
+                        </span>
+                      )}
                     </div>
 
                     {/* Play / Pause / Reset Controls */}
-                    <div className="flex items-center space-x-1.5 border-l border-slate-200 pl-4 shrink-0">
+                    <div className="flex items-center space-x-1.5 shrink-0">
                       <button
                         onClick={handleToggleSimulation}
-                        className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold tracking-wide transition-all shadow-gis-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                        className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wide transition-all shadow-gis-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                           isSimulating
                             ? 'bg-amber-600 hover:bg-amber-700 text-white'
                             : 'bg-slate-900 hover:bg-slate-800 text-white'
@@ -627,7 +485,7 @@ export const App: React.FC = () => {
 
                       <button
                         onClick={handleResetSimulation}
-                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-gis-xs"
+                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-gis-xs"
                         title="Reset Timeline to Rainfall Onset (T+00)"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
@@ -635,57 +493,171 @@ export const App: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Scenario Metadata & Scientific Notice Footer */}
-                  <div className="border-t border-slate-100 pt-1.5 flex items-center justify-between text-[10px] font-mono text-slate-500">
-                    <div className="flex items-center space-x-2">
+                  {/* Row 2: Timeline Scrubbing Bar + Real-Time Metrics */}
+                  <div className="flex items-center justify-between gap-3 pt-0.5">
+                    {/* Timeline Scrubbing Buttons */}
+                    <div className="flex-1 flex items-center space-x-1 overflow-x-auto py-0.5 min-w-0">
+                      {timelinePhases.slice(0, 16).map((phase) => {
+                        const isCurrent = timelineStep === phase.step;
+                        const isPast = timelineStep > phase.step;
+                        return (
+                          <button
+                            key={phase.step}
+                            onClick={() => {
+                              setIsSimulating(false);
+                              setTimelineStep(phase.step);
+                            }}
+                            className={`flex-1 min-w-[28px] py-1 px-1 rounded text-[10px] font-mono font-semibold transition-all text-center whitespace-nowrap ${
+                              isCurrent
+                                ? 'bg-sky-800 text-white shadow-gis-xs ring-1 ring-sky-900 font-bold'
+                                : isPast
+                                ? 'bg-sky-50 text-sky-900 hover:bg-sky-100 border border-sky-100'
+                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            }`}
+                            title={`${phase.code}: ${phase.name} (Rain: ${phase.intensity?.toFixed(0) ?? 0}mm/h)`}
+                          >
+                            <span>{phase.code}</span>
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() => setSelectedScenarioId('CUSTOM')}
+                        className={`px-1.5 py-0.5 rounded text-[10.5px] font-mono font-bold transition-all shrink-0 ${
+                          selectedScenarioId === 'CUSTOM'
+                            ? 'bg-sky-700 text-white shadow-gis-xs'
+                            : 'text-sky-700 hover:bg-sky-50 border border-sky-200/50'
+                        }`}
+                      >
+                        CUSTOM
+                      </button>
+                    </div>
+
+                    {/* Inundation Metrics & Tide Selector */}
+                    <div className="flex items-center space-x-2.5 text-[10.5px] text-slate-600 font-mono shrink-0">
+                      <span>
+                        Flooded: <strong className="text-slate-900">
+                          {currentSimStepMetrics
+                            ? `${currentSimStepMetrics.inundated_area_km2.toFixed(2)} km²`
+                            : `${timelineMetrics.floodedAreaKm2} km²`}
+                        </strong>
+                      </span>
+                      {currentSimStepMetrics && (
+                        <span>
+                          Deepest: <strong className="text-sky-800">{currentSimStepMetrics.max_water_depth_m.toFixed(2)}m</strong>
+                        </span>
+                      )}
+                      <label className="flex items-center gap-1 text-[10.5px] text-slate-500 font-mono">
+                        <span className="uppercase text-[9.5px] text-slate-400 font-semibold hidden md:inline">Tide:</span>
+                        <select
+                          value={tideLevel}
+                          onChange={(event) => setTideLevel(event.target.value as 'normal' | 'high' | 'extreme')}
+                          className="rounded border border-slate-200 px-1.5 py-0.5 text-[10.5px] text-slate-800 bg-white"
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="high">High</option>
+                          <option value="extreme">Extreme</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Custom inputs when CUSTOM is chosen */}
+                  {selectedScenarioId === 'CUSTOM' && (
+                    <div className="flex items-center gap-2 text-[11px] text-slate-600 font-mono border-t border-slate-100 pt-1">
+                      <label className="flex items-center gap-1">
+                        Duration:
+                        <input
+                          type="number"
+                          min="0.25"
+                          max="168"
+                          step="0.25"
+                          value={customDurationHours}
+                          onChange={(event) => setCustomDurationHours(Number(event.target.value))}
+                          className="w-14 rounded border border-slate-300 px-1 py-0.5 text-xs text-slate-900"
+                        />
+                        h
+                      </label>
+                      <label className="flex items-center gap-1">
+                        Total rain:
+                        <input
+                          type="number"
+                          min="0.1"
+                          max="5000"
+                          step="0.1"
+                          value={customTotalDepthMm}
+                          onChange={(event) => setCustomTotalDepthMm(Number(event.target.value))}
+                          className="w-16 rounded border border-slate-300 px-1 py-0.5 text-xs text-slate-900"
+                        />
+                        mm
+                      </label>
+                      <span className="text-slate-400 text-[10px]">
+                        ({(customTotalDepthMm / customDurationHours).toFixed(1)} mm/hr avg)
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Scenario Metadata & Footnote */}
+                  <div className="border-t border-slate-100 pt-1 flex items-center justify-between text-[9.5px] font-mono text-slate-500">
+                    <div className="flex items-center space-x-1.5 truncate">
                       <span className="text-slate-400 font-semibold uppercase">SCENARIO:</span>
-                      <span className="font-bold text-slate-800">
+                      <span className="font-bold text-slate-800 truncate">
                         {selectedScenarioId}
                       </span>
                       {(() => {
                         const sc = backendScenarios.find((s) => s.timeseries_id === selectedScenarioId);
                         return sc ? (
-                          <span className="text-slate-500">
+                          <span className="text-slate-500 hidden sm:inline">
                             ({sc.duration_hours}h duration · {sc.total_depth_mm}mm depth · {sc.peak_intensity_mm_per_hr}mm/h peak)
                           </span>
                         ) : null;
                       })()}
                       {simulationData && (
-                        <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-semibold ml-1">
-                          2D RUNOFF ENGINE ({simulationData.domain_summary.cell_count} CELLS)
+                        <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-semibold ml-1 shrink-0">
+                          2D ENGINE ({simulationData.domain_summary.cell_count} CELLS)
                         </span>
                       )}
                     </div>
-                    <span className="text-slate-400 italic">
+                    <span className="text-slate-400 italic hidden md:inline shrink-0">
                       Water estimate for this demo; click a map area for details.
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Re-open Intelligence Panel Floating Button if collapsed */}
-              {!isIntelligencePanelOpen && selectedLocation && (
+              {/* Unobtrusive Edge Tab attached to right edge of map workspace to open Intelligence Sidebar */}
+              {!isIntelligencePanelOpen && (
                 <button
                   onClick={() => setIsIntelligencePanelOpen(true)}
-                  className="absolute right-4 top-16 z-30 bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-gis px-3 py-2 text-xs font-mono font-bold text-slate-700 hover:text-slate-900 hover:border-slate-300 flex items-center space-x-1.5 transition-all"
-                  title="Expand Intelligence Panel"
+                  aria-label="Open Intelligence Sidebar"
+                  aria-expanded={isIntelligencePanelOpen}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-white/95 hover:bg-white text-slate-700 hover:text-sky-700 border-l border-y border-gis-border rounded-l-xl shadow-float py-3 px-1.5 flex flex-col items-center gap-1.5 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 cursor-pointer"
+                  title="Open Flood Intelligence & Risk Advisory Panel"
                 >
-                  <PanelRightOpen className="w-4 h-4 text-sky-700" />
-                  <span>INTELLIGENCE PANEL</span>
+                  <ChevronLeft className="w-4 h-4 text-slate-400 group-hover:text-sky-600 transition-transform group-hover:-translate-x-0.5" />
+                  <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-mono font-bold tracking-wider text-slate-500 group-hover:text-slate-900 uppercase select-none">
+                    INTELLIGENCE
+                  </span>
                 </button>
               )}
             </div>
           )}
         </main>
 
-        {/* Right Intelligence Panel with Smooth Collapse Toggle */}
-        {selectedLocation && activeTab !== 'validation' && activeTab !== 'data' && activeTab !== 'architecture' && isIntelligencePanelOpen && (
-          <div className="relative h-full flex shrink-0">
+        {/* Right Intelligence Panel with Smooth CSS Slide Transform */}
+        {selectedLocation && activeTab === 'overview' && (
+          <div 
+            className={`transition-all duration-300 ease-in-out h-full flex shrink-0 relative bg-white ${
+              isIntelligencePanelOpen
+                ? 'w-80 md:w-[340px] opacity-100 translate-x-0 border-l border-gis-border'
+                : 'w-0 opacity-0 translate-x-full pointer-events-none overflow-hidden border-l-0'
+            }`}
+          >
             {/* Collapse button on left edge */}
             <button
               onClick={() => setIsIntelligencePanelOpen(false)}
-              className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 bg-white border border-gis-border shadow-gis-xs rounded-full p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-              title="Collapse Panel (Maximize Map)"
+              className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 bg-white border border-gis-border shadow-gis-xs rounded-full p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 cursor-pointer"
+              title="Collapse Sidebar (Maximize Map)"
+              aria-label="Collapse Intelligence Sidebar"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -696,6 +668,7 @@ export const App: React.FC = () => {
               timelineMetrics={timelineMetrics}
               simulationData={simulationData}
               simStepIndex={timelineStep}
+              onClose={() => setIsIntelligencePanelOpen(false)}
             />
           </div>
         )}

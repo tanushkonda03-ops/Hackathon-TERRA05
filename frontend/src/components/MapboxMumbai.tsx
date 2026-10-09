@@ -294,7 +294,8 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
             },
             paint: {
               'line-color': '#64748B',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 3.5, 16, 7],
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 16, 5],
+              'line-dasharray': [4, 2],
               'line-opacity': 0.85,
             },
           });
@@ -819,9 +820,9 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       // C. Dynamically Update Road Inundation Colors
       if (map.getLayer('mumbai-roads-layer')) {
         let roadColor = '#64748B'; // Normal
-        if (timelineStep === 2) roadColor = '#D97706'; // At Risk (Subtle Amber)
+        if (timelineStep === 2) roadColor = '#D97706'; // At Risk (Amber)
         else if (timelineStep === 3) roadColor = '#EA580C'; // Partially Flooded (Orange)
-        else if (timelineStep >= 4) roadColor = '#DC2626'; // Impassable / Submerged (Red)
+        else if (timelineStep >= 4) roadColor = '#E11D48'; // Impassable / Submerged Corridor (Rose Hazard)
 
         map.setPaintProperty('mumbai-roads-layer', 'line-color', roadColor);
       }
@@ -1085,10 +1086,10 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         className="w-full h-full absolute inset-0 pointer-events-none z-10"
       />
 
-      {/* Top Map HUD Bar: Responsive Unified Header Container */}
-      <div className="absolute top-3 left-3 sm:left-4 right-3 sm:right-4 z-20 pointer-events-none flex items-start justify-between gap-3">
-        {/* Left: Focus Area Indicator & Dropdown */}
-        <div className="pointer-events-auto flex items-center flex-wrap gap-2 shrink-0">
+      {/* Top Map HUD Bar: Responsive Unified Container bounded away from top-right MapLayersControl */}
+      <div className="absolute top-3 left-3 sm:left-4 max-w-[calc(100%-250px)] z-20 pointer-events-none flex flex-wrap items-center gap-2">
+        {/* Basin Context & Focus Area Dropdown */}
+        <div className="pointer-events-auto flex items-center flex-wrap gap-2">
           <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-gis px-3 py-1.5 flex items-center space-x-2 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-sky-600 shrink-0" />
             <span className="font-bold text-slate-900 uppercase truncate max-w-[120px] sm:max-w-none">
@@ -1106,7 +1107,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
               onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
               className="bg-white/95 backdrop-blur-md border border-gis-border hover:border-slate-400 px-3 py-1.5 rounded-xl shadow-gis text-xs font-mono font-bold text-slate-800 flex items-center space-x-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
             >
-              <span className="truncate max-w-[150px] sm:max-w-none">
+              <span className="truncate max-w-[140px] sm:max-w-none">
                 FOCUS AREA: {selectedLocation?.name || 'Select'}
               </span>
               <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
@@ -1143,37 +1144,24 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           </div>
         </div>
 
-        {/* Center: Scenario Event Status Pill (Desktop & Laptop) */}
-        <div className="pointer-events-auto hidden md:flex items-center min-w-0 mx-auto px-2">
-          <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-full shadow-gis px-3.5 py-1.5 flex items-center space-x-2 text-xs font-mono whitespace-nowrap">
+        {/* Scenario Event Status Pill */}
+        <div className="pointer-events-auto flex items-center">
+          <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-gis px-3 py-1.5 flex items-center space-x-2 text-xs font-mono">
             <span className={`w-2 h-2 rounded-full shrink-0 ${
               timelineStep === 0 ? 'bg-slate-400' :
               timelineStep === 4 ? 'bg-rose-600 animate-pulse' :
               timelineStep > 4 ? 'bg-amber-500' : 'bg-sky-600'
             }`} />
-            <span className="font-bold text-slate-900">
-              {timelineStep === 4 ? 'PEAK INUNDATION EVENT' :
+            <span className="font-bold text-slate-900 text-[11px] truncate max-w-[130px] sm:max-w-none">
+              {timelineStep === 4 ? 'PEAK INUNDATION' :
                timelineStep > 4 ? 'RECESSION PHASE' :
-               timelineStep === 0 ? 'SCENARIO STANDBY' : 'WATER PROPAGATION ACTIVE'}
+               timelineStep === 0 ? 'SCENARIO STANDBY' : 'WATER PROPAGATION'}
             </span>
             <span className="text-slate-300 font-normal">|</span>
-            <span className="text-slate-600">{rainfall} mm/hr</span>
+            <span className="text-slate-600 text-[11px]">{rainfall} mm/hr</span>
             <span className="text-slate-300 font-normal">|</span>
-            <span className="font-bold text-sky-700">T+0{timelineStep}</span>
+            <span className="font-bold text-sky-700 text-[11px]">T+0{timelineStep}</span>
           </div>
-        </div>
-
-        {/* Right Reserve Space for MapLayersControl (which is ~240px wide at top-right) */}
-        <div className="w-[230px] shrink-0 pointer-events-none hidden lg:block" />
-      </div>
-
-      {/* Bottom Left: Repositioned Mithi River Channel Status Pill (Safely above bottom simulation controller) */}
-      <div className="absolute bottom-[148px] sm:bottom-[156px] left-3 sm:left-4 z-20 pointer-events-none">
-        <div className="bg-white/95 backdrop-blur-md border border-gis-border text-slate-900 text-[10.5px] font-mono font-bold px-3 py-1.5 rounded-lg shadow-gis flex items-center space-x-2 pointer-events-auto">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-          <span className="tracking-wide">MITHI RIVER</span>
-          <span className="text-slate-300 font-normal">|</span>
-          <span className="text-slate-500 font-normal">Status: <strong className={timelineMetrics.mithiRiverStatus === 'BANKFULL / OVERFLOW' ? 'text-rose-600' : 'text-sky-700'}>{timelineMetrics.mithiRiverStatus}</strong></span>
         </div>
       </div>
 
