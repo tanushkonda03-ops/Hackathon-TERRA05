@@ -16,12 +16,14 @@ interface MapLayersControlProps {
   };
   onToggleLayer: (layerKey: keyof MapLayersControlProps['layers']) => void;
   onCameraPreset: (preset: '3D' | 'TOP' | 'RESET') => void;
+  className?: string;
 }
 
 export const MapLayersControl: React.FC<MapLayersControlProps> = ({
   layers,
   onToggleLayer,
   onCameraPreset,
+  className,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activePreset, setActivePreset] = useState<'3D' | 'TOP' | 'RESET'>('3D');
@@ -75,7 +77,7 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
   );
 
   return (
-    <div ref={dropdownRef} className="absolute top-3.5 right-4 z-20 select-none flex items-start space-x-2">
+    <div ref={dropdownRef} className={className || "absolute top-3.5 right-4 z-20 select-none flex items-start space-x-2"}>
       {/* 2D / 3D / Reset Camera Control Stack */}
       <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-gis p-1 flex items-center space-x-0.5">
         <button
@@ -150,7 +152,7 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
               </span>
               <div className="space-y-1.5 text-[11px] text-slate-600 bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 font-sans">
                 <div className="flex items-center gap-2">
-                  <span className="w-4 border-t-2 border-cyan-600 border-dashed" />
+                  <span className="w-4 border-t-2 border-cyan-600" />
                   <span>Drainage network</span>
                 </div>
                 <div className="flex items-center gap-2">

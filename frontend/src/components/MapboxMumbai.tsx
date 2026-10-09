@@ -169,333 +169,8 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           console.warn('[TERRA05][3D BUILDING NOTE]', bldErr);
         }
 
-        // --- LAYER 2: MITHI RIVER NATURAL CHANNEL (Primary Landmark) ---
-        if (!map.getSource('mithi-river-src')) {
-          map.addSource('mithi-river-src', {
-            type: 'geojson',
-            data: MITHI_RIVER_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'mithi-river-casing',
-            type: 'line',
-            source: 'mithi-river-src',
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: {
-              'line-color': '#0369A1',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 7, 16, 17],
-              'line-opacity': 0.9,
-            },
-          });
-
-          map.addLayer({
-            id: 'mithi-river-core',
-            type: 'line',
-            source: 'mithi-river-src',
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: {
-              'line-color': '#38BDF8',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 16, 12],
-              'line-opacity': 1.0,
-            },
-          });
-        }
-
-        // --- LAYER 3: BMC STORMWATER DRAINAGE NETWORK ---
-        // 3A: Municipal Baseline Physical Network (all existing conduits across Mumbai)
-        if (!map.getSource('bmc-drainage-src')) {
-          map.addSource('bmc-drainage-src', {
-            type: 'geojson',
-            data: BMC_DRAINAGE_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'bmc-drainage-layer',
-            type: 'line',
-            source: 'bmc-drainage-src',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-              visibility: layers.drainage ? 'visible' : 'none',
-            },
-            paint: {
-              'line-color': '#0891B2',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.8, 16, 3.5],
-              'line-opacity': selectedLocation ? 0.35 : 0.65,
-              'line-dasharray': [2, 1],
-            },
-          });
-        }
-
-        // 3B: Location-Specific Active Hydraulic Drainage Flow Layer (Selected Catchment Focus)
-        if (!map.getSource('bmc-drainage-active-src')) {
-          map.addSource('bmc-drainage-active-src', {
-            type: 'geojson',
-            data: { type: 'FeatureCollection', features: [] },
-          });
-
-          map.addLayer({
-            id: 'bmc-drainage-active-layer',
-            type: 'line',
-            source: 'bmc-drainage-active-src',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-              visibility: layers.drainage ? 'visible' : 'none',
-            },
-            paint: {
-              'line-color': '#0891B2',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 3.0, 16, 6.5],
-              'line-opacity': 0.95,
-            },
-          });
-        }
-
-        // --- LAYER 4: SURFACE RUNOFF FLOW PATHS ---
-        if (!map.getSource('runoff-flow-src')) {
-          map.addSource('runoff-flow-src', {
-            type: 'geojson',
-            data: RUNOFF_FLOW_PATHS_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'runoff-flow-layer',
-            type: 'line',
-            source: 'runoff-flow-src',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-              visibility: layers.runoffFlow ? 'visible' : 'none',
-            },
-            paint: {
-              'line-color': '#0284C7',
-              'line-width': 2.0,
-              'line-dasharray': [4, 2],
-              'line-opacity': 0.85,
-            },
-          });
-        }
-
-        // --- LAYER 5: MAJOR ROAD ARTERIALS ---
-        if (!map.getSource('mumbai-roads-src')) {
-          map.addSource('mumbai-roads-src', {
-            type: 'geojson',
-            data: MUMBAI_MAJOR_ROADS_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'mumbai-roads-layer',
-            type: 'line',
-            source: 'mumbai-roads-src',
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-              visibility: layers.roadsExposure ? 'visible' : 'none',
-            },
-            paint: {
-              'line-color': '#64748B',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 16, 5],
-              'line-dasharray': [4, 2],
-              'line-opacity': 0.85,
-            },
-          });
-        }
-
-        // --- LAYER 6: CRITICAL INFRASTRUCTURE (Hospitals, Transit, Shelters) ---
-        if (!map.getSource('critical-infra-src')) {
-          map.addSource('critical-infra-src', {
-            type: 'geojson',
-            data: CRITICAL_INFRASTRUCTURE_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'critical-infra-layer',
-            type: 'circle',
-            source: 'critical-infra-src',
-            layout: {
-              visibility: layers.criticalInfra ? 'visible' : 'none',
-            },
-            paint: {
-              'circle-radius': 6.0,
-              'circle-color': [
-                'match',
-                ['get', 'category'],
-                'HOSPITAL', '#DC2626',
-                'TRANSIT_HUB', '#2563EB',
-                'FIRE_STATION', '#D97706',
-                'SHELTER', '#059669',
-                '#64748B'
-              ],
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#FFFFFF',
-            },
-          });
-        }
-
-        // --- LAYER 7: REALISTIC FLOOD WATER SURFACE (Smooth Geographic Basin Inundation) ---
-        if (!map.getSource('terra05-flood-src')) {
-          map.addSource('terra05-flood-src', {
-            type: 'geojson',
-            data: getRealisticFloodPolygonsGeoJSON(rainfall, timelineStep, layers.uncertainty),
-          });
-
-          // Depth-sensitive semi-transparent water
-          map.addLayer({
-            id: 'terra05-flood-layer',
-            type: 'fill',
-            source: 'terra05-flood-src',
-            filter: ['==', ['get', 'layerType'], 'CORE_WATER'],
-            paint: {
-              'fill-color': [
-                'interpolate',
-                ['linear'],
-                ['get', 'depth'],
-                0.0,  '#BAE6FD',
-                0.15, '#38BDF8',
-                0.30, '#0284C7',
-                0.60, '#0369A1',
-                1.0,  '#0C4A6E'
-              ],
-              'fill-opacity': [
-                'interpolate',
-                ['linear'],
-                ['get', 'depth'],
-                0.0,  0.35,
-                0.30, 0.55,
-                1.0,  0.75
-              ],
-              'fill-outline-color': '#0284C7',
-            },
-          });
-
-          // Water edge contour
-          map.addLayer({
-            id: 'terra05-water-edge-layer',
-            type: 'line',
-            source: 'terra05-flood-src',
-            filter: ['==', ['get', 'layerType'], 'CORE_WATER'],
-            paint: {
-              'line-color': '#0284C7',
-              'line-width': 1.5,
-              'line-opacity': 0.8,
-            },
-          });
-
-          // 90% Uncertainty Envelope
-          map.addLayer({
-            id: 'terra05-uncertainty-layer',
-            type: 'line',
-            source: 'terra05-flood-src',
-            filter: ['==', ['get', 'layerType'], 'UNCERTAINTY_BOUND'],
-            layout: {
-              visibility: layers.uncertainty ? 'visible' : 'none',
-            },
-            paint: {
-              'line-color': '#6366F1',
-              'line-width': 2.0,
-              'line-dasharray': [4, 3],
-              'line-opacity': 0.70,
-            },
-          });
-        }
-
-        // --- LAYER 7B: 2D COMPUTATIONAL RUNOFF & WATER ACCUMULATION GRID (Dynamic Hydro Prototype) ---
-        if (!map.getSource('terra05-sim-water-src')) {
-          map.addSource('terra05-sim-water-src', {
-            type: 'geojson',
-            data: { type: 'FeatureCollection', features: [] },
-          });
-
-          map.addLayer({
-            id: 'terra05-sim-water-layer',
-            type: 'fill',
-            source: 'terra05-sim-water-src',
-            layout: {
-              visibility: layers.floodDepth ? 'visible' : 'none',
-            },
-            paint: {
-              'fill-color': [
-                'interpolate',
-                ['linear'],
-                ['get', 'depth'],
-                0.005, 'rgba(186, 230, 253, 0.40)', // Shallow ponding onset
-                0.05,  'rgba(56, 189, 248, 0.60)',  // Moderate ponding
-                0.15,  'rgba(2, 132, 199, 0.75)',   // Significant stormwater accumulation
-                0.30,  'rgba(3, 105, 161, 0.85)',   // Deep inundation
-                0.60,  'rgba(12, 74, 110, 0.90)',   // Severe street submersion
-                1.00,  'rgba(8, 47, 73, 0.95)'      // Major corridor flooding
-              ],
-              'fill-opacity': [
-                'interpolate',
-                ['linear'],
-                ['get', 'depth'],
-                0.005, 0.45,
-                0.10,  0.70,
-                0.50,  0.88,
-                1.00,  0.95
-              ],
-              'fill-outline-color': '#0284C7',
-            },
-          });
-
-          map.addLayer({
-            id: 'terra05-sim-water-edge-layer',
-            type: 'line',
-            source: 'terra05-sim-water-src',
-            layout: {
-              visibility: layers.floodDepth ? 'visible' : 'none',
-            },
-            paint: {
-              'line-color': '#0369A1',
-              'line-width': 1.0,
-              'line-opacity': 0.65,
-            },
-          });
-        }
-
-        // --- LAYER 8: BMC CHRONIC FLOOD SPOTS ---
-        if (!map.getSource('bmc-spots-src')) {
-          map.addSource('bmc-spots-src', {
-            type: 'geojson',
-            data: BMC_FLOOD_SPOTS_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'bmc-spots-layer',
-            type: 'circle',
-            source: 'bmc-spots-src',
-            layout: { visibility: layers.floodSpots ? 'visible' : 'none' },
-            paint: {
-              'circle-radius': 5.5,
-              'circle-color': '#B91C1C',
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#FFFFFF',
-              'circle-opacity': 0.9,
-            },
-          });
-        }
-
-        // --- LAYER 9: HISTORICAL JULY 2019 BENCHMARK REPLAY ---
-        if (!map.getSource('historical-2019-src')) {
-          map.addSource('historical-2019-src', {
-            type: 'geojson',
-            data: HISTORICAL_2019_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'historical-2019-layer',
-            type: 'fill',
-            source: 'historical-2019-src',
-            layout: { visibility: layers.historical2019 ? 'visible' : 'none' },
-            paint: {
-              'fill-color': '#10B981',
-              'fill-opacity': 0.25,
-              'fill-outline-color': '#059669',
-            },
-          });
-        }
-
-        // --- LAYER 10: 100M ML RISK GRID (FastAPI Backend Grid) ---
+        // --- LAYER 1: BASELINE ML RISK GRID & BENCHMARK HISTORICAL FLOOD ---
+        // 1A: 100M ML Risk Grid (Backend Spatial Mesh)
         if (!map.getSource('terra05-risk-grid-src')) {
           map.addSource('terra05-risk-grid-src', {
             type: 'geojson',
@@ -531,6 +206,396 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
               'line-color': '#94A3B8',
               'line-width': 0.75,
               'line-opacity': 0.35,
+            },
+          });
+        }
+
+        // 1B: Historical July 2019 Benchmark Replay
+        if (!map.getSource('historical-2019-src')) {
+          map.addSource('historical-2019-src', {
+            type: 'geojson',
+            data: HISTORICAL_2019_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'historical-2019-layer',
+            type: 'fill',
+            source: 'historical-2019-src',
+            layout: { visibility: layers.historical2019 ? 'visible' : 'none' },
+            paint: {
+              'fill-color': '#10B981',
+              'fill-opacity': 0.25,
+              'fill-outline-color': '#059669',
+            },
+          });
+        }
+
+        // --- LAYER 2: MAJOR ROAD ARTERIALS BASELINE ---
+        if (!map.getSource('mumbai-roads-src')) {
+          map.addSource('mumbai-roads-src', {
+            type: 'geojson',
+            data: MUMBAI_MAJOR_ROADS_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'mumbai-roads-layer',
+            type: 'line',
+            source: 'mumbai-roads-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.roadsExposure ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#64748B',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 16, 5],
+              'line-dasharray': [4, 2],
+              'line-opacity': 0.85,
+            },
+          });
+        }
+
+        // --- LAYER 3: FLOOD WATER SURFACE & 2D HYDRODYNAMIC SIMULATION CELLS ---
+        // 3A: Realistic Flood Water Surface (Smooth Geographic Basin Inundation)
+        if (!map.getSource('terra05-flood-src')) {
+          map.addSource('terra05-flood-src', {
+            type: 'geojson',
+            data: getRealisticFloodPolygonsGeoJSON(rainfall, timelineStep, layers.uncertainty),
+          });
+
+          map.addLayer({
+            id: 'terra05-flood-layer',
+            type: 'fill',
+            source: 'terra05-flood-src',
+            filter: ['==', ['get', 'layerType'], 'CORE_WATER'],
+            paint: {
+              'fill-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'depth'],
+                0.0,  '#BAE6FD',
+                0.15, '#38BDF8',
+                0.30, '#0284C7',
+                0.60, '#0369A1',
+                1.0,  '#0C4A6E'
+              ],
+              'fill-opacity': [
+                'interpolate',
+                ['linear'],
+                ['get', 'depth'],
+                0.0,  0.35,
+                0.30, 0.55,
+                1.0,  0.75
+              ],
+              'fill-outline-color': '#0284C7',
+            },
+          });
+
+          map.addLayer({
+            id: 'terra05-water-edge-layer',
+            type: 'line',
+            source: 'terra05-flood-src',
+            filter: ['==', ['get', 'layerType'], 'CORE_WATER'],
+            paint: {
+              'line-color': '#0284C7',
+              'line-width': 1.5,
+              'line-opacity': 0.8,
+            },
+          });
+
+          map.addLayer({
+            id: 'terra05-uncertainty-layer',
+            type: 'line',
+            source: 'terra05-flood-src',
+            filter: ['==', ['get', 'layerType'], 'UNCERTAINTY_BOUND'],
+            layout: {
+              visibility: layers.uncertainty ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#6366F1',
+              'line-width': 2.0,
+              'line-dasharray': [4, 3],
+              'line-opacity': 0.70,
+            },
+          });
+        }
+
+        // 3B: 2D Computational Runoff & Water Accumulation Grid
+        if (!map.getSource('terra05-sim-water-src')) {
+          map.addSource('terra05-sim-water-src', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          });
+
+          map.addLayer({
+            id: 'terra05-sim-water-layer',
+            type: 'fill',
+            source: 'terra05-sim-water-src',
+            layout: {
+              visibility: layers.floodDepth ? 'visible' : 'none',
+            },
+            paint: {
+              'fill-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'depth'],
+                0.005, 'rgba(186, 230, 253, 0.40)',
+                0.05,  'rgba(56, 189, 248, 0.60)',
+                0.15,  'rgba(2, 132, 199, 0.75)',
+                0.30,  'rgba(3, 105, 161, 0.85)',
+                0.60,  'rgba(12, 74, 110, 0.90)',
+                1.00,  'rgba(8, 47, 73, 0.95)'
+              ],
+              'fill-opacity': [
+                'interpolate',
+                ['linear'],
+                ['get', 'depth'],
+                0.005, 0.45,
+                0.10,  0.70,
+                0.50,  0.88,
+                1.00,  0.95
+              ],
+              'fill-outline-color': '#0284C7',
+            },
+          });
+
+          map.addLayer({
+            id: 'terra05-sim-water-edge-layer',
+            type: 'line',
+            source: 'terra05-sim-water-src',
+            layout: {
+              visibility: layers.floodDepth ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#0369A1',
+              'line-width': 1.0,
+              'line-opacity': 0.65,
+            },
+          });
+        }
+
+        // --- LAYER 4: MITHI RIVER NATURAL CHANNEL (Primary Landmark) ---
+        if (!map.getSource('mithi-river-src')) {
+          map.addSource('mithi-river-src', {
+            type: 'geojson',
+            data: MITHI_RIVER_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'mithi-river-casing',
+            type: 'line',
+            source: 'mithi-river-src',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#0369A1',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 7, 16, 17],
+              'line-opacity': 0.9,
+            },
+          });
+
+          map.addLayer({
+            id: 'mithi-river-core',
+            type: 'line',
+            source: 'mithi-river-src',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#38BDF8',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 16, 12],
+              'line-opacity': 1.0,
+            },
+          });
+        }
+
+        // --- LAYER 5: SURFACE RUNOFF OVERLAND FLOW PATHS ---
+        if (!map.getSource('runoff-flow-src')) {
+          map.addSource('runoff-flow-src', {
+            type: 'geojson',
+            data: RUNOFF_FLOW_PATHS_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'runoff-flow-layer',
+            type: 'line',
+            source: 'runoff-flow-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.runoffFlow ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#0284C7',
+              'line-width': 2.0,
+              'line-dasharray': [4, 2],
+              'line-opacity': 0.85,
+            },
+          });
+        }
+
+        // --- LAYER 6: BMC STORMWATER DRAINAGE (SWD) NETWORK (Rendered Above Water & Roads) ---
+        // 6A: Municipal Baseline Physical Network Casing & Core (All 34,711 Conduits Across Mumbai)
+        if (!map.getSource('bmc-drainage-src')) {
+          map.addSource('bmc-drainage-src', {
+            type: 'geojson',
+            data: BMC_DRAINAGE_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'bmc-drainage-casing',
+            type: 'line',
+            source: 'bmc-drainage-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.drainage ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#0F172A',
+              'line-width': [
+                'interpolate',
+                ['exponential', 1.3],
+                ['zoom'],
+                11, 1.4,
+                13, 2.4,
+                15, 3.8,
+                17, 5.6,
+                19, 7.5
+              ],
+              'line-opacity': selectedLocation ? 0.20 : 0.40,
+            },
+          });
+
+          map.addLayer({
+            id: 'bmc-drainage-layer',
+            type: 'line',
+            source: 'bmc-drainage-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.drainage ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#0891B2',
+              'line-width': [
+                'interpolate',
+                ['exponential', 1.3],
+                ['zoom'],
+                11, 0.8,
+                13, 1.6,
+                15, 2.6,
+                17, 4.0,
+                19, 5.5
+              ],
+              'line-opacity': selectedLocation ? 0.40 : 0.75,
+            },
+          });
+        }
+
+        // 6B: Location-Specific Focus & Active Hydraulic Flow Layer
+        if (!map.getSource('bmc-drainage-active-src')) {
+          map.addSource('bmc-drainage-active-src', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          });
+
+          map.addLayer({
+            id: 'bmc-drainage-active-casing',
+            type: 'line',
+            source: 'bmc-drainage-active-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.drainage ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#0F172A',
+              'line-width': [
+                'interpolate',
+                ['exponential', 1.3],
+                ['zoom'],
+                11, 2.2,
+                13, 3.6,
+                15, 5.2,
+                17, 7.2,
+                19, 9.5
+              ],
+              'line-opacity': 0.65,
+            },
+          });
+
+          map.addLayer({
+            id: 'bmc-drainage-active-layer',
+            type: 'line',
+            source: 'bmc-drainage-active-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.drainage ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#06B6D4',
+              'line-width': [
+                'interpolate',
+                ['exponential', 1.3],
+                ['zoom'],
+                11, 1.4,
+                13, 2.4,
+                15, 3.6,
+                17, 5.2,
+                19, 7.0
+              ],
+              'line-opacity': 0.95,
+            },
+          });
+        }
+
+        // --- LAYER 7: CRITICAL INFRASTRUCTURE & BMC CHRONIC FLOOD SPOTS (Points & Symbols On Top) ---
+        if (!map.getSource('critical-infra-src')) {
+          map.addSource('critical-infra-src', {
+            type: 'geojson',
+            data: CRITICAL_INFRASTRUCTURE_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'critical-infra-layer',
+            type: 'circle',
+            source: 'critical-infra-src',
+            layout: {
+              visibility: layers.criticalInfra ? 'visible' : 'none',
+            },
+            paint: {
+              'circle-radius': 6.0,
+              'circle-color': [
+                'match',
+                ['get', 'category'],
+                'HOSPITAL', '#DC2626',
+                'TRANSIT_HUB', '#2563EB',
+                'FIRE_STATION', '#D97706',
+                'SHELTER', '#059669',
+                '#64748B'
+              ],
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#FFFFFF',
+            },
+          });
+        }
+
+        if (!map.getSource('bmc-spots-src')) {
+          map.addSource('bmc-spots-src', {
+            type: 'geojson',
+            data: BMC_FLOOD_SPOTS_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'bmc-spots-layer',
+            type: 'circle',
+            source: 'bmc-spots-src',
+            layout: { visibility: layers.floodSpots ? 'visible' : 'none' },
+            paint: {
+              'circle-radius': 5.5,
+              'circle-color': '#B91C1C',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#FFFFFF',
+              'circle-opacity': 0.9,
             },
           });
         }
@@ -811,10 +876,13 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         floodSource.setData(updatedGeoJSON);
       }
 
-      // B. Baseline Municipal Drainage Network Display (Dormant physical conduits)
+      // B. Baseline Municipal Drainage Network Display (Solid physical conduits across Mumbai)
       if (map.getLayer('bmc-drainage-layer')) {
         map.setPaintProperty('bmc-drainage-layer', 'line-color', '#0891B2');
-        map.setPaintProperty('bmc-drainage-layer', 'line-opacity', selectedLocation ? 0.35 : 0.65);
+        map.setPaintProperty('bmc-drainage-layer', 'line-opacity', selectedLocation ? 0.40 : 0.75);
+      }
+      if (map.getLayer('bmc-drainage-casing')) {
+        map.setPaintProperty('bmc-drainage-casing', 'line-opacity', selectedLocation ? 0.20 : 0.40);
       }
 
       // C. Dynamically Update Road Inundation Colors
@@ -879,12 +947,16 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     });
 
     if (map.getLayer('bmc-drainage-active-layer')) {
-      let activeColor = '#0891B2'; // Standby / Optimal
-      let activeWidth = 2.5;
+      let activeColor = '#06B6D4'; // Focus network highlighted in clean cyan (Standby)
+      let activeWidth = 2.4;
 
-      if (timelineStep === 1) {
+      if (timelineStep === 0 && rainfall === 0) {
+        // Standby baseline: dry weather readiness, distinct from flowing/stressed conduits
+        activeColor = '#06B6D4';
+        activeWidth = 2.4;
+      } else if (timelineStep === 1 || timelineMetrics.drainStressState === 'OPTIMAL') {
         activeColor = '#0284C7'; // Inflow / Gravity Conveyance
-        activeWidth = 3.0;
+        activeWidth = 2.8;
       } else if (timelineMetrics.drainStressState === 'LOADING') {
         activeColor = '#0284C7';
         activeWidth = 3.2;
@@ -893,7 +965,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         activeWidth = 3.8;
       } else if (timelineMetrics.drainStressState === 'OVERLOADED') {
         activeColor = '#EA580C'; // Orange-Red
-        activeWidth = 4.5;
+        activeWidth = 4.4;
       } else if (timelineMetrics.drainStressState === 'SURCHARGING OVERFLOW') {
         activeColor = '#DC2626'; // Red (Surcharging)
         activeWidth = 5.2;
@@ -901,10 +973,22 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
 
       map.setPaintProperty('bmc-drainage-active-layer', 'line-color', activeColor);
       map.setPaintProperty('bmc-drainage-active-layer', 'line-width', [
-        'interpolate', ['linear'], ['zoom'],
-        12, activeWidth,
-        16, activeWidth * 1.8
+        'interpolate', ['exponential', 1.3], ['zoom'],
+        11, activeWidth * 0.7,
+        14, activeWidth * 1.0,
+        17, activeWidth * 1.5,
+        19, activeWidth * 2.0
       ]);
+
+      if (map.getLayer('bmc-drainage-active-casing')) {
+        map.setPaintProperty('bmc-drainage-active-casing', 'line-width', [
+          'interpolate', ['exponential', 1.3], ['zoom'],
+          11, activeWidth * 0.7 + 1.2,
+          14, activeWidth * 1.0 + 1.6,
+          17, activeWidth * 1.5 + 2.2,
+          19, activeWidth * 2.0 + 2.6
+        ]);
+      }
     }
   };
 
@@ -1006,7 +1090,9 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       }
     };
 
+    setVisibility('bmc-drainage-casing', layers.drainage);
     setVisibility('bmc-drainage-layer', layers.drainage);
+    setVisibility('bmc-drainage-active-casing', layers.drainage);
     setVisibility('bmc-drainage-active-layer', layers.drainage);
     setVisibility('runoff-flow-layer', layers.runoffFlow);
     setVisibility('mumbai-roads-layer', layers.roadsExposure);
@@ -1208,10 +1294,14 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
                   </span>
                 </div>
               )}
-              <div className="text-[9.5px] text-slate-400 pt-0.5 border-t border-slate-50">
+              <div className="text-[9.5px] text-slate-500 pt-0.5 border-t border-slate-100">
                 {hoveredFeature.isInsideFocusArea
-                  ? `Simulated Hydraulic Response: ${timelineMetrics.drainStressState}`
-                  : 'Baseline Municipal Infrastructure (Dormant outside focus)'}
+                  ? (timelineStep === 0 && rainfall === 0
+                      ? 'Focus Area Network (Standby / Normal Gravity Readiness)'
+                      : `Simulated Hydraulic Response: ${timelineMetrics.drainStressState}`)
+                  : (selectedLocation
+                      ? 'Municipal Baseline Infrastructure (Outside Selected Basin)'
+                      : 'Municipal Baseline SWD Network (Citywide)')}
               </div>
             </div>
           ) : (

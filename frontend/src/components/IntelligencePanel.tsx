@@ -141,9 +141,8 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   }
 
   return (
-    <aside 
-      aria-label="Flood Intelligence Panel"
-      className="w-80 md:w-[330px] h-full bg-white border-l border-gis-border flex flex-col justify-between overflow-y-auto select-none z-20 shadow-gis-sm shrink-0"
+    <div 
+      className="w-full h-full bg-white flex flex-col justify-between overflow-y-auto select-none"
     >
       <div className="p-3.5 space-y-3.5">
         {/* Compact Operational Alert Banner */}
@@ -571,6 +570,6 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
           <span className="flex-1 text-center py-0.5 rounded bg-sky-900 text-white font-medium">&gt;1m</span>
         </div>
       </div>
-    </aside>
+    </div>
   );
 };

@@ -366,7 +366,7 @@ export const App: React.FC = () => {
             </div>
           ) : (
             /* REALISTIC MUMBAI URBAN FLOOD DIGITAL TWIN VIEWPORT */
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full overflow-hidden">
               <MapboxMumbai
                 rainfall={rainfall}
                 timelineStep={timelineStep}
@@ -386,6 +386,7 @@ export const App: React.FC = () => {
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
                 onCameraPreset={(preset) => setCameraPreset(preset)}
+                className={`absolute top-3.5 ${isIntelligencePanelOpen ? 'right-4 sm:right-[356px]' : 'right-4'} z-20 select-none flex items-start space-x-2 transition-[right] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none`}
               />
 
               {/* Streamlined Floating Simulation Controller */}
@@ -624,54 +625,47 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Unobtrusive Edge Tab attached to right edge of map workspace to open Intelligence Sidebar */}
-              {!isIntelligencePanelOpen && (
-                <button
-                  onClick={() => setIsIntelligencePanelOpen(true)}
-                  aria-label="Open Intelligence Sidebar"
-                  aria-expanded={isIntelligencePanelOpen}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-white/95 hover:bg-white text-slate-700 hover:text-sky-700 border-l border-y border-gis-border rounded-l-xl shadow-float py-3 px-1.5 flex flex-col items-center gap-1.5 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 cursor-pointer"
-                  title="Open Flood Intelligence & Risk Advisory Panel"
+              {/* Collapsible Right Intelligence Sidebar Overlay */}
+              {selectedLocation && (
+                <aside
+                  aria-label="Flood Intelligence Panel"
+                  aria-hidden={!isIntelligencePanelOpen}
+                  className={`absolute top-0 right-0 h-full w-80 sm:w-[340px] z-30 flex transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
+                    isIntelligencePanelOpen ? 'translate-x-0' : 'translate-x-full'
+                  }`}
                 >
-                  <ChevronLeft className="w-4 h-4 text-slate-400 group-hover:text-sky-600 transition-transform group-hover:-translate-x-0.5" />
-                  <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-mono font-bold tracking-wider text-slate-500 group-hover:text-slate-900 uppercase select-none">
-                    INTELLIGENCE
-                  </span>
-                </button>
+                  {/* Single Persistent Non-Jumping Toggle Tab attached to Sidebar Left Edge */}
+                  <button
+                    onClick={() => setIsIntelligencePanelOpen(!isIntelligencePanelOpen)}
+                    aria-label={isIntelligencePanelOpen ? "Close Intelligence Sidebar" : "Open Intelligence Sidebar"}
+                    aria-expanded={isIntelligencePanelOpen}
+                    className="pointer-events-auto absolute -left-8 sm:-left-9 top-1/2 -translate-y-1/2 z-40 bg-white/95 hover:bg-white text-slate-700 hover:text-sky-700 border-l border-y border-gis-border rounded-l-xl shadow-float py-3 px-1.5 flex flex-col items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 cursor-pointer select-none"
+                    title={isIntelligencePanelOpen ? "Collapse Intelligence Sidebar" : "Open Flood Intelligence & Risk Advisory Panel"}
+                  >
+                    <ChevronLeft className={`w-4 h-4 text-slate-500 hover:text-sky-600 transition-transform duration-300 ${isIntelligencePanelOpen ? 'rotate-180' : ''}`} />
+                    <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-mono font-bold tracking-wider text-slate-500 hover:text-slate-900 uppercase">
+                      {isIntelligencePanelOpen ? 'CLOSE' : 'INTELLIGENCE'}
+                    </span>
+                  </button>
+
+                  {/* Panel Drawer Content */}
+                  <div className={`w-full h-full bg-white border-l border-gis-border shadow-float flex flex-col overflow-hidden transition-opacity duration-300 ${
+                    isIntelligencePanelOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                  }`}>
+                    <IntelligencePanel
+                      location={selectedLocation}
+                      rainfall={rainfall}
+                      timelineMetrics={timelineMetrics}
+                      simulationData={simulationData}
+                      simStepIndex={timelineStep}
+                      onClose={() => setIsIntelligencePanelOpen(false)}
+                    />
+                  </div>
+                </aside>
               )}
             </div>
           )}
         </main>
-
-        {/* Right Intelligence Panel with Smooth CSS Slide Transform */}
-        {selectedLocation && activeTab === 'overview' && (
-          <div 
-            className={`transition-all duration-300 ease-in-out h-full flex shrink-0 relative bg-white ${
-              isIntelligencePanelOpen
-                ? 'w-80 md:w-[340px] opacity-100 translate-x-0 border-l border-gis-border'
-                : 'w-0 opacity-0 translate-x-full pointer-events-none overflow-hidden border-l-0'
-            }`}
-          >
-            {/* Collapse button on left edge */}
-            <button
-              onClick={() => setIsIntelligencePanelOpen(false)}
-              className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 bg-white border border-gis-border shadow-gis-xs rounded-full p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 cursor-pointer"
-              title="Collapse Sidebar (Maximize Map)"
-              aria-label="Collapse Intelligence Sidebar"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-
-            <IntelligencePanel
-              location={selectedLocation}
-              rainfall={rainfall}
-              timelineMetrics={timelineMetrics}
-              simulationData={simulationData}
-              simStepIndex={timelineStep}
-              onClose={() => setIsIntelligencePanelOpen(false)}
-            />
-          </div>
-        )}
       </div>
 
       {/* Developer Map Diagnostics Modal */}
