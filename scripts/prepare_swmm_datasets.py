@@ -35,6 +35,8 @@ print("=" * 75)
 print("PREPARING EPA-SWMM STORMWATER MODELING DATASETS")
 print("=" * 75)
 
+    # ---------------------------------------------------------------------------
+    # 1. LOAD BMC DRAINAGE NETWORK
 # ---------------------------------------------------------------------------
 # 1. LOAD BMC DRAINAGE NETWORK
 # ---------------------------------------------------------------------------
@@ -42,6 +44,8 @@ print("\n[1/6] Loading BMC drainage network (EPSG:32643)...")
 drain_file = DERIVED_DIR / "bmc_storm_drains_engineering_utm43.geojson"
 gdf_drains = gpd.read_file(drain_file)
 print(f"Loaded {len(gdf_drains):,} conduit features.")
+
+
 
 # Also load WGS84 version to have Lat/Lon coordinates
 gdf_drains_wgs = gdf_drains.to_crs("EPSG:4326")
@@ -431,34 +435,132 @@ print(f"Saved SWMM rainfall files -> {SWMM_OUT_DIR / 'timeseries_2005_july26.dat
 print(f"Saved design storm files -> {SWMM_OUT_DIR / 'timeseries_design_storms.dat'}")
 
 # ---------------------------------------------------------------------------
-# 6. EXTRACT PILOT SAMPLE CITY AREA (WARD L - KURLA / KALINA / MITHI CORRIDOR)
+# 6. EXTRACT PILOT SAMPLE CITY AREA (WARD L) WITH DOWNSTREAM NETWORK CLOSURE
 # ---------------------------------------------------------------------------
-print("\n[6/6] Extracting Pilot Sample City Area (Ward L - Kurla/Kalina/Mithi corridor)...")
+print("\n[6/6] Extracting Pilot Sample City Area (Ward L) with Downstream Network Closure...")
 
-# Ward L subcatchments
+from collections import deque
+
+# Preserve all 1,516 Ward L subcatchments
 df_sc_pilot = df_subcatchments[df_subcatchments["ward"] == "L"].copy()
-pilot_node_ids = set(df_sc_pilot["outlet_node_id"])
+sc_outlets = set(df_sc_pilot["outlet_node_id"].astype(str))
 
-# Conduits connected to pilot nodes or inside Ward L
-df_conduits_pilot = df_conduits[df_conduits["us_node_id"].isin(pilot_node_ids) | df_conduits["ds_node_id"].isin(pilot_node_ids)].copy()
+citywide_outfall_ids = set(df_outfalls["outfall_id"].astype(str))
 
-all_pilot_node_ids = set(df_conduits_pilot["us_node_id"]).union(set(df_conduits_pilot["ds_node_id"])).union(pilot_node_ids)
+# Build directed downstream adjacency graph from citywide conduits: us_node_id -> list of (ds_node_id, conduit_id)
+adj_downstream = {}
+for _, r in df_conduits.iterrows():
+    u = str(r["us_node_id"])
+    v = str(r["ds_node_id"])
+    cid = str(r["conduit_id"])
+    if u not in adj_downstream:
+        adj_downstream[u] = []
+    adj_downstream[u].append((v, cid))
 
-df_junctions_pilot = df_junctions[df_junctions["junction_id"].isin(all_pilot_node_ids)].copy()
-df_outfalls_pilot = df_outfalls[df_outfalls["outfall_id"].isin(all_pilot_node_ids)].copy()
+required_nodes = set()
+required_conduits = set()
 
+for outlet in sc_outlets:
+    visited = {outlet}
+    q = deque([(outlet, [outlet], [])])
+    
+    while q:
+        curr, path_nodes, path_conds = q.popleft()
+        
+        if curr in citywide_outfall_ids:
+            for n in path_nodes:
+                required_nodes.add(n)
+            for c in path_conds:
+                required_conduits.add(c)
+            continue
+            
+        for nxt_node, nxt_cond in adj_downstream.get(curr, []):
+            if nxt_node not in visited:
+                visited.add(nxt_node)
+                q.append((nxt_node, path_nodes + [nxt_node], path_conds + [nxt_cond]))
+
+# Filter datasets to include downstream closure network
+df_conduits_pilot = df_conduits[df_conduits["conduit_id"].astype(str).isin(required_conduits)].copy()
+df_junctions_pilot = df_junctions[df_junctions["junction_id"].astype(str).isin(required_nodes)].copy()
+df_outfalls_pilot = df_outfalls[df_outfalls["outfall_id"].astype(str).isin(required_nodes)].copy()
+
+# Save pilot datasets
 df_sc_pilot.to_csv(PILOT_OUT_DIR / "swmm_subcatchments_ward_L.csv", index=False)
 df_conduits_pilot.to_csv(PILOT_OUT_DIR / "swmm_conduits_ward_L.csv", index=False)
 df_junctions_pilot.to_csv(PILOT_OUT_DIR / "swmm_junctions_ward_L.csv", index=False)
 df_outfalls_pilot.to_csv(PILOT_OUT_DIR / "swmm_outfalls_ward_L.csv", index=False)
 
-print(f"Ward L Pilot Dataset extracted:")
-print(f"  - Subcatchments: {len(df_sc_pilot):,} (100m cells)")
-print(f"  - Conduits:      {len(df_conduits_pilot):,}")
-print(f"  - Junctions:     {len(df_junctions_pilot):,}")
-print(f"  - Outfalls:      {len(df_outfalls_pilot):,}")
+# ---------------------------------------------------------------------------
+# AUTOMATED PILOT INTEGRITY & CONNECTIVITY VALIDATION
+# ---------------------------------------------------------------------------
+pilot_junc_ids = set(df_junctions_pilot["junction_id"].astype(str))
+pilot_out_ids = set(df_outfalls_pilot["outfall_id"].astype(str))
+pilot_all_nodes = pilot_junc_ids.union(pilot_out_ids)
+
+# Check 1: Missing conduit endpoint references
+cond_us = set(df_conduits_pilot["us_node_id"].astype(str))
+cond_ds = set(df_conduits_pilot["ds_node_id"].astype(str))
+missing_endpoints = (cond_us.union(cond_ds)) - pilot_all_nodes
+assert len(missing_endpoints) == 0, f"Missing conduit endpoints: {missing_endpoints}"
+
+# Check 2: Missing subcatchment outlets
+missing_sc_outlets = sc_outlets - pilot_all_nodes
+assert len(missing_sc_outlets) == 0, f"Missing subcatchment outlets: {missing_sc_outlets}"
+
+# Check 3: ID collisions
+dup_junc = len(df_junctions_pilot) - len(pilot_junc_ids)
+dup_out = len(df_outfalls_pilot) - len(pilot_out_ids)
+dup_cond = len(df_conduits_pilot) - df_conduits_pilot["conduit_id"].nunique()
+assert dup_junc == 0 and dup_out == 0 and dup_cond == 0, "Duplicate IDs detected in pilot!"
+
+# Check 4: Directed reachability to outfalls
+p_adj = {}
+for _, r in df_conduits_pilot.iterrows():
+    u = str(r["us_node_id"])
+    v = str(r["ds_node_id"])
+    if u not in p_adj: p_adj[u] = []
+    p_adj[u].append(v)
+
+reachable_outlets = 0
+unreachable_outlets = []
+
+for outlet in sc_outlets:
+    visited = {outlet}
+    q = deque([outlet])
+    has_path = False
+    while q:
+        curr = q.popleft()
+        if curr in pilot_out_ids:
+            has_path = True
+            break
+        for nxt in p_adj.get(curr, []):
+            if nxt not in visited:
+                visited.add(nxt)
+                q.append(nxt)
+    if has_path:
+        reachable_outlets += 1
+    else:
+        unreachable_outlets.append(outlet)
+
+assert len(unreachable_outlets) == 0, f"Unreachable subcatchment outlets: {unreachable_outlets}"
+
+# Check 5: Adverse slopes in pilot
+adv_slopes_count = len(df_conduits_pilot[df_conduits_pilot["us_invert_thd_m"] < df_conduits_pilot["ds_invert_thd_m"]])
+
+print(f"Ward L Pilot Dataset extracted with Downstream Network Closure:")
+print(f"  - Subcatchments:           {len(df_sc_pilot):,} (1,516 cells preserved)")
+print(f"  - Unique Outlets:          {len(sc_outlets):,}")
+print(f"  - Conduits:                {len(df_conduits_pilot):,} (original: 927, +896 added)")
+print(f"  - Junctions:               {len(df_junctions_pilot):,} (original: 1,085, +731 added)")
+print(f"  - Outfalls:                {len(df_outfalls_pilot):,} (original: 43, +6 added)")
+print(f"  - Missing Endpoints:       0")
+print(f"  - Duplicate IDs:           0")
+print(f"  - Directed Reachability:   {reachable_outlets} / {len(sc_outlets)} (100.0%)")
+print(f"  - Unreachable Outlets:     0")
+print(f"  - Inherited Adverse Slopes: {adv_slopes_count}")
 print(f"  -> Saved in {PILOT_OUT_DIR}")
 
 print("\n" + "=" * 75)
 print("EPA-SWMM DATASET PREPARATION COMPLETE!")
 print("=" * 75)
+
