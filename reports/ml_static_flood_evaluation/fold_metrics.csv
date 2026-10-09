@@ -1,0 +1,31 @@
+split,fold,feature_set,model,status,pr_auc,roc_auc,precision,recall,tn,fp,fn,tp,train_rows,validation_rows,buffer_excluded_rows,notes
+development_cv,0,static_geographic,prevalence_baseline,complete,0.04136858475894246,0.5,0.0,0.0,3082,0,133,0,21844,3215,305,
+development_cv,0,static_geographic,logistic_regression,complete,0.08700030694455224,0.7388547618234425,0.08648648648648649,0.7218045112781954,2068,1014,37,96,21844,3215,305,
+development_cv,0,static_geographic,shallow_regularized_tree,complete,0.03692402128584392,0.3460073773011373,0.040880503144654086,0.09774436090225563,2777,305,120,13,21844,3215,305,
+development_cv,0,static_geographic_plus_physics_proxies,prevalence_baseline,complete,0.04136858475894246,0.5,0.0,0.0,3082,0,133,0,21844,3215,305,
+development_cv,0,static_geographic_plus_physics_proxies,logistic_regression,complete,0.06882770147674297,0.694278688284631,0.06650544135429262,0.8270676691729323,1538,1544,23,110,21844,3215,305,
+development_cv,0,static_geographic_plus_physics_proxies,shallow_regularized_tree,complete,0.0400512513684616,0.437308797626773,0.0297951582867784,0.12030075187969924,2561,521,117,16,21844,3215,305,
+development_cv,1,static_geographic,prevalence_baseline,complete,0.045746785361028684,0.5,0.0,0.0,3859,0,185,0,20710,4044,610,
+development_cv,1,static_geographic,logistic_regression,complete,0.10786799277236914,0.7497419160544323,0.05558930741190766,0.9891891891891892,750,3109,2,183,20710,4044,610,
+development_cv,1,static_geographic,shallow_regularized_tree,complete,0.05399456590253478,0.5795346784981406,0.05414398064125832,0.9675675675675676,732,3127,6,179,20710,4044,610,
+development_cv,1,static_geographic_plus_physics_proxies,prevalence_baseline,complete,0.045746785361028684,0.5,0.0,0.0,3859,0,185,0,20710,4044,610,
+development_cv,1,static_geographic_plus_physics_proxies,logistic_regression,complete,0.11332342203227987,0.7523948929494408,0.053904428904428904,1.0,612,3247,0,185,20710,4044,610,
+development_cv,1,static_geographic_plus_physics_proxies,shallow_regularized_tree,complete,0.053566319167271184,0.5763144071773251,0.05356622998544396,0.9945945945945946,608,3251,1,184,20710,4044,610,
+development_cv,2,static_geographic,prevalence_baseline,complete,0.05834272829763247,0.5,0.0,0.0,6682,0,414,0,16806,7096,1462,
+development_cv,2,static_geographic,logistic_regression,complete,0.12953839131725065,0.7589403068594407,0.09997230684021047,0.8719806763285024,3432,3250,53,361,16806,7096,1462,
+development_cv,2,static_geographic,shallow_regularized_tree,complete,0.11569368632205564,0.7352932458244588,0.12894850713976633,0.7198067632850241,4669,2013,116,298,16806,7096,1462,
+development_cv,2,static_geographic_plus_physics_proxies,prevalence_baseline,complete,0.05834272829763247,0.5,0.0,0.0,6682,0,414,0,16806,7096,1462,
+development_cv,2,static_geographic_plus_physics_proxies,logistic_regression,complete,0.14142046388504179,0.7817743826879338,0.11117936117936118,0.8743961352657005,3788,2894,52,362,16806,7096,1462,
+development_cv,2,static_geographic_plus_physics_proxies,shallow_regularized_tree,complete,0.1207442797245353,0.7660751648021146,0.1000257135510414,0.9396135265700483,3182,3500,25,389,16806,7096,1462,
+development_cv,3,static_geographic,prevalence_baseline,complete,0.03306385684440004,0.5,0.0,0.0,10645,0,364,0,13432,11009,923,
+development_cv,3,static_geographic,logistic_regression,complete,0.1657254295327431,0.8630908077361811,0.11077694235588972,0.6071428571428571,8871,1774,143,221,13432,11009,923,
+development_cv,3,static_geographic,shallow_regularized_tree,complete,0.08421116858394856,0.7821178234635257,0.1055299539170507,0.6291208791208791,8704,1941,135,229,13432,11009,923,
+development_cv,3,static_geographic_plus_physics_proxies,prevalence_baseline,complete,0.03306385684440004,0.5,0.0,0.0,10645,0,364,0,13432,11009,923,
+development_cv,3,static_geographic_plus_physics_proxies,logistic_regression,complete,0.13198263588291873,0.861679888922726,0.11398963730569948,0.6043956043956044,8935,1710,144,220,13432,11009,923,
+development_cv,3,static_geographic_plus_physics_proxies,shallow_regularized_tree,complete,0.10322019412082944,0.8411903385482532,0.1127580730545262,0.5851648351648352,8969,1676,151,213,13432,11009,923,
+development_cv_aggregate,macro,static_geographic,prevalence_baseline,complete,0.04463048881550091,0.5,0.0,0.0,24268,0,1096,0,,25364,,Metric scores are macro-averaged over folds; confusion counts are summed.
+development_cv_aggregate,macro,static_geographic,logistic_regression,complete,0.12253303014172878,0.7776569481183742,0.08820626077362359,0.7975293084846861,15121,9147,235,861,,25364,,Metric scores are macro-averaged over folds; confusion counts are summed.
+development_cv_aggregate,macro,static_geographic,shallow_regularized_tree,complete,0.07270586052359572,0.6107382812718156,0.08237573621068237,0.6035598927189316,16882,7386,377,719,,25364,,Metric scores are macro-averaged over folds; confusion counts are summed.
+development_cv_aggregate,macro,static_geographic_plus_physics_proxies,prevalence_baseline,complete,0.04463048881550091,0.5,0.0,0.0,24268,0,1096,0,,25364,,Metric scores are macro-averaged over folds; confusion counts are summed.
+development_cv_aggregate,macro,static_geographic_plus_physics_proxies,logistic_regression,complete,0.11388855581924584,0.7725319632111829,0.08639471718594555,0.8264648522085593,14873,9395,219,877,,25364,,Metric scores are macro-averaged over folds; confusion counts are summed.
+development_cv_aggregate,macro,static_geographic_plus_physics_proxies,shallow_regularized_tree,complete,0.07939551109527437,0.6552221770386164,0.07403629371944749,0.6599184270522943,15320,8948,294,802,,25364,,Metric scores are macro-averaged over folds; confusion counts are summed.

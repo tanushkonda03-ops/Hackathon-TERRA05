@@ -1,0 +1,29 @@
+{
+  "experiment": "development-only static mapped-flood susceptibility model improvement",
+  "dataset_path": "data\\ml_ready\\ml_master_spatial_features.csv",
+  "dataset_sha256": "d80af47d84f2f34a146d03a8772bbd3fb7ab522a3cd776aa74ac5ff0c141b8a6",
+  "saved_development_assignment_sha256": "b922175914c876cb1078b0a62072273d7bafa1ae2dccda29f1411264e274e039",
+  "rows_used": 25364,
+  "positive_count_used": 1096,
+  "positive_rate_used": 0.04321085002365557,
+  "folds_used": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "fold_4_used": false,
+  "seed": 20261009,
+  "scikit_learn_version": "1.9.1",
+  "logistic_regularization_grid_C": [
+    0.1,
+    1.0,
+    10.0
+  ],
+  "random_forest_and_extra_trees_settings": {
+    "n_estimators": 200,
+    "max_depth": 12,
+    "min_samples_leaf": 20,
+    "max_features": "sqrt"
+  }
+}

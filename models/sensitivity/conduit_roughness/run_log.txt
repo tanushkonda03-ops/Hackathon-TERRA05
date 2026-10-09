@@ -1,0 +1,10 @@
+Ward L conduit roughness sensitivity analysis; not calibration or validation.
+Baseline INP SHA-256: 42985ae66e2e188e41f0f035ed7efc55cd61d3d55f402990b97194e0b7f894e3
+Verified input: baseline; multiplier=1.0; changed=0; roughness_min=0.013; roughness_max=0.025; roughness-only=True
+Verified input: lower_roughness; multiplier=0.8; changed=1823; roughness_min=0.0104; roughness_max=0.02; roughness-only=True
+Verified input: higher_roughness; multiplier=1.2; changed=1823; roughness_min=0.0156; roughness_max=0.03; roughness-only=True
+baseline: complete; eligible=true; errors=none
+lower_roughness: complete; eligible=true; errors=none
+higher_roughness: complete; eligible=true; errors=none
+Protected original INP/RPT/OUT hashes unchanged: True
+Comparison CSV: C:\Users\tarun\Downloads\Tanush work\TERRA05\Hackathon-TERRA05\models\sensitivity\conduit_roughness\roughness_sensitivity_comparison.csv

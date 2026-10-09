@@ -1,0 +1,5 @@
+fold,validation_rows,ranking_pr_auc,ranking_roc_auc,threshold,false_positive_count_at_threshold,false_negative_count_at_threshold,false_discovery_rate_of_predicted_positives,false_negative_rate_of_actual_positives,false_positive_zero_overlap_count,false_positive_any_polygon_overlap_count,false_positive_1_to_5_percent_overlap_count,false_negative_polygon_mismatch_count
+0,3215,0.08715569777486855,0.7388279264026385,0.5,1007,36,0.9121376811594203,0.2706766917293233,958,49,30,0
+1,4044,0.10729377773015163,0.7498021473144563,0.5,3089,2,0.9440709046454768,0.010810810810810811,3012,77,53,0
+2,7096,0.13034647470626318,0.76199559852918,0.5,3222,54,0.8994974874371859,0.13043478260869565,3162,60,36,0
+3,11009,0.16463025633279474,0.8636159988438052,0.5,1771,144,0.8895027624309392,0.3956043956043956,1731,40,24,0

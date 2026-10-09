@@ -1,2 +1,2 @@
-event_id,station,event_end_timestamp_utc,rainfall_3h_mm,rainfall_6h_mm,rainfall_12h_mm,rainfall_24h_mm,source
-E001,Santacruz,2005-07-27 03:00:00,48.2,59.2,276.5,944.2,Derived from rainfall_observations_v1
+event_id,station,event_end_timestamp_utc,rainfall_24h_start_timestamp_utc,rainfall_24h_end_timestamp_utc,rainfall_3h_mm,rainfall_6h_mm,rainfall_12h_mm,rainfall_24h_mm,rainfall_27h_reconstruction_start_timestamp_utc,rainfall_27h_reconstruction_end_timestamp_utc,rainfall_27h_reconstruction_mm,source
+E001,Santacruz,2005-07-27 03:00:00,2005-07-26 03:00:00,2005-07-27 03:00:00,48.2,59.2,276.5,943.3,2005-07-26,2005-07-27 03:00:00,944.2,Derived from rainfall_observations_v1

@@ -1,0 +1,17 @@
+fold,error_type,coverage_bin,count,share_of_error_type,median_distance_to_nearest_polygon_m
+0,false_positive,0_to_1_percent,19,0.018867924528301886,0.0
+0,false_positive,1_to_5_percent,30,0.029791459781529295,0.0
+0,false_positive,zero_overlap,958,0.9513406156901688,181.69954170167134
+0,false_negative,over_5_percent,36,1.0,0.0
+1,false_positive,0_to_1_percent,24,0.007769504694075753,0.0
+1,false_positive,1_to_5_percent,53,0.01715765619941729,0.0
+1,false_positive,zero_overlap,3012,0.975072839106507,283.7850625617982
+1,false_negative,over_5_percent,2,1.0,0.0
+2,false_positive,0_to_1_percent,24,0.0074487895716946,0.0
+2,false_positive,1_to_5_percent,36,0.0111731843575419,0.0
+2,false_positive,zero_overlap,3162,0.9813780260707635,453.74995000008494
+2,false_negative,over_5_percent,54,1.0,0.0
+3,false_positive,0_to_1_percent,16,0.009034443817052512,0.0
+3,false_positive,1_to_5_percent,24,0.01355166572557877,0.0
+3,false_positive,zero_overlap,1731,0.9774138904573687,456.1989000155008
+3,false_negative,over_5_percent,144,1.0,0.0

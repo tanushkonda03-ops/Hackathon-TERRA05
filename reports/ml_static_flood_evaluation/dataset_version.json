@@ -1,0 +1,112 @@
+{
+  "buffer_meters": 500.0,
+  "columns": 31,
+  "dataset": "data\\ml_ready\\ml_master_spatial_features.csv",
+  "development_folds": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "feature_sets": {
+    "static_geographic": [
+      "elevation_mean",
+      "slope_mean",
+      "built_up_fraction",
+      "vegetation_fraction",
+      "water_fraction",
+      "mangrove_fraction",
+      "distance_to_water",
+      "building_count",
+      "building_density",
+      "road_length_m",
+      "has_railway",
+      "has_hospital",
+      "is_critical_asset_cell"
+    ],
+    "static_geographic_plus_physics_proxies": [
+      "elevation_mean",
+      "slope_mean",
+      "built_up_fraction",
+      "vegetation_fraction",
+      "water_fraction",
+      "mangrove_fraction",
+      "distance_to_water",
+      "building_count",
+      "building_density",
+      "road_length_m",
+      "has_railway",
+      "has_hospital",
+      "is_critical_asset_cell",
+      "flow_accumulation",
+      "flow_accumulation_area_km2",
+      "flow_accumulation_log",
+      "drain_density",
+      "distance_to_drain",
+      "clay_percent",
+      "sand_percent",
+      "silt_percent",
+      "soil_class",
+      "infiltration_proxy",
+      "topographic_wetness_index",
+      "drain_capacity_proxy_m2",
+      "drainage_stress_index"
+    ]
+  },
+  "final_test_fold": 4,
+  "fold_counts": {
+    "0": {
+      "buffer_excluded_training_cells": 305,
+      "negative": 3082,
+      "positive": 133,
+      "rows": 3215
+    },
+    "1": {
+      "buffer_excluded_training_cells": 610,
+      "negative": 3859,
+      "positive": 185,
+      "rows": 4044
+    },
+    "2": {
+      "buffer_excluded_training_cells": 1462,
+      "negative": 6682,
+      "positive": 414,
+      "rows": 7096
+    },
+    "3": {
+      "buffer_excluded_training_cells": 923,
+      "negative": 10645,
+      "positive": 364,
+      "rows": 11009
+    },
+    "4": {
+      "buffer_excluded_training_cells": 1217,
+      "negative": 21537,
+      "positive": 857,
+      "rows": 22394
+    }
+  },
+  "grid_geojson_sha256": "f16b57db35cb6496b09a1416021f8264fcdb975f0bc786951accece0f8e87a32",
+  "polygon_grouping": {
+    "polygon_components_with_positive_cells": 180,
+    "positive_cells_reassigned_to_keep_polygon_groups_together": 17,
+    "positive_cells_without_polygon_association": 2,
+    "source_polygon_count": 332
+  },
+  "positive_count": 1953,
+  "positive_rate": 0.04089367226433268,
+  "rows": 47758,
+  "seed": 20261009,
+  "selected_approach": {
+    "development_macro_pr_auc": 0.12253303014172878,
+    "feature_set": "static_geographic",
+    "model": "logistic_regression",
+    "selection_rule": "Highest macro-average PR-AUC across development folds 0-3; no fold-4 metric accessed during selection."
+  },
+  "sha256": "d80af47d84f2f34a146d03a8772bbd3fb7ab522a3cd776aa74ac5ff0c141b8a6",
+  "sklearn_available": true,
+  "sklearn_version": "1.9.1",
+  "source_flood_polygons_sha256": "376aab2734da04bd0fbaf83f5f7f6bfbbe883a2ad42f7393e93ed5aa8ec3dbd6",
+  "spatial_assignment_sha256": "b922175914c876cb1078b0a62072273d7bafa1ae2dccda29f1411264e274e039",
+  "target": "flood_label"
+}

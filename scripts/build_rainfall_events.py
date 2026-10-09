@@ -8,23 +8,28 @@ events = [
     {
         "event_id": "E001",
         "event_name": "Mumbai Extreme Rainfall and Flood Event - July 2005",
-        "event_start": "2005-07-26 00:00",
+        "event_start": "2005-07-26 03:00",
         "event_end": "2005-07-27 03:00",
         "primary_station": "Santacruz",
         "secondary_station": "Colaba",
-        "rainfall_24h_mm": 944.2,
+        "rainfall_24h_mm": 943.3,
+        "rainfall_27h_reconstruction_mm": 944.2,
+        "rainfall_27h_reconstruction_start": "2005-07-26 00:00",
+        "rainfall_27h_reconstruction_end": "2005-07-27 03:00",
         "rainfall_1h_mm": None,
         "rainfall_3h_mm": None,
         "rainfall_6h_mm": None,
         "rainfall_12h_mm": None,
         "rainfall_48h_mm": None,
         "rainfall_source": "IMD MAUSAM",
-        "source_quality": "verified",
-        "event_role": "primary_validation",
+        "source_quality": "derived_local_interval_candidate",
+        "event_role": "candidate_for_simulation",
         "notes": (
-            "IMD reports 944.2 mm at Santacruz for the 24 hours "
-            "ending 0300 UTC on 27 July 2005. "
-            "Detailed 3-hour observation table is available in IMD publication."
+            "The local cumulative observation table's eight 3-hour increments "
+            "from 0300 UTC 26 July through 0300 UTC 27 July sum arithmetically "
+            "to 943.3 mm. This is a derived candidate, not independent verification "
+            "of the official historical rainfall total. The legacy nine-block "
+            "27-hour reconstruction totals 944.2 mm and is retained separately."
         ),
     },
 

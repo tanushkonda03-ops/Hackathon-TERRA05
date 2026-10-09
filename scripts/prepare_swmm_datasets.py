@@ -19,6 +19,7 @@ import pandas as pd
 import geopandas as gpd
 from scipy.spatial import cKDTree
 import rasterio
+from rainfall_hyetograph import disaggregate_3h_intervals, render_swmm_series
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -343,8 +344,8 @@ print(f"Saved {len(df_subcatchments):,} subcatchments -> {SWMM_OUT_DIR / 'swmm_s
 # ---------------------------------------------------------------------------
 print("\n[5/6] Generating 15-minute rainfall hyetographs for 2005 event and design storm scenarios...")
 
-# (A) 26 July 2005 944.2 mm Event (Reconstructed 15-minute hyetograph from IMD 3h increments)
-# Verified IMD 3-hour increments:
+# (A) Local July 2005 rainfall reconstructions (not independent verification of the historical total)
+# Local 3-hour increments:
 # 03:00 - 0.9 mm
 # 06:00 - 0.0 mm
 # 09:00 - 17.5 mm
@@ -354,9 +355,9 @@ print("\n[5/6] Generating 15-minute rainfall hyetographs for 2005 event and desi
 # 21:00 - 116.1 mm
 # 00:00 - 11.0 mm
 # 03:00 - 48.2 mm
-# Total: 944.2 mm
+# Nine-block diagnostic total: 944.2 mm; eight-block 24-hour candidate total: 943.3 mm
 
-intervals_3h = [
+intervals_3h_27h = [
     ("2005-07-26 00:00", "2005-07-26 03:00", 0.9),
     ("2005-07-26 03:00", "2005-07-26 06:00", 0.0),
     ("2005-07-26 06:00", "2005-07-26 09:00", 17.5),
@@ -368,33 +369,45 @@ intervals_3h = [
     ("2005-07-27 00:00", "2005-07-27 03:00", 48.2)
 ]
 
-# Triangular 12-step weight profile within each 3h block (12 * 15min = 3 hours)
-w = np.array([0.02, 0.04, 0.06, 0.09, 0.13, 0.16, 0.16, 0.13, 0.09, 0.06, 0.04, 0.02])
-w = w / w.sum()
+intervals_3h_24h = intervals_3h_27h[1:]
+legacy_blocks = [(pd.Timestamp(start), pd.Timestamp(end), amount) for start, end, amount in intervals_3h_27h]
+candidate_blocks = [(pd.Timestamp(start), pd.Timestamp(end), amount) for start, end, amount in intervals_3h_24h]
+legacy_records = disaggregate_3h_intervals(legacy_blocks)
+candidate_records = disaggregate_3h_intervals(candidate_blocks, conserve_block_totals=True)
 
-ts_lines = [";SWMM 15-Minute Rainfall Timeseries: Mumbai 26 July 2005 (944.2 mm Total)",
-            ";Date       Time     Rainfall_mm"]
+legacy_text = render_swmm_series(
+    "TS_2005_JULY26",
+    legacy_records,
+    "SWMM 15-Minute Rainfall Timeseries: Mumbai 26 July 2005 (944.2 mm 27-hour reconstruction)",
+)
+diagnostic_text = render_swmm_series(
+    "TS_2005_JULY26_27H_DIAGNOSTIC",
+    legacy_records,
+    "SWMM Diagnostic Rainfall Series: July 2005 27-hour reconstruction (944.2 mm)",
+)
+candidate_text = render_swmm_series(
+    "TS_2005_JULY26_24H_CANDIDATE",
+    candidate_records,
+    "SWMM 24-hour Candidate: eight local 3-hour increments (943.3 mm arithmetic total)",
+)
+
+(SWMM_OUT_DIR / "timeseries_2005_july26.dat").write_text(legacy_text)
+(SWMM_OUT_DIR / "timeseries_2005_july26_27h_diagnostic.dat").write_text(diagnostic_text)
+(SWMM_OUT_DIR / "timeseries_2005_july26_24h_candidate.dat").write_text(candidate_text)
 
 hyetograph_records = []
-current_time = pd.Timestamp("2005-07-26 00:00")
-
-for start_str, end_str, block_mm in intervals_3h:
-    sub_15min_mm = block_mm * w
-    for step_mm in sub_15min_mm:
-        date_str = current_time.strftime("%m/%d/%Y")
-        time_str = current_time.strftime("%H:%M")
-        val = round(float(step_mm), 3)
-        ts_lines.append(f"TS_2005_JULY26 {date_str} {time_str} {val}")
+for series_id, records in (
+    ("TS_2005_JULY26", legacy_records),
+    ("TS_2005_JULY26_27H_DIAGNOSTIC", legacy_records),
+    ("TS_2005_JULY26_24H_CANDIDATE", candidate_records),
+):
+    for timestamp, value in records:
         hyetograph_records.append({
-            "timeseries_id": "TS_2005_JULY26",
-            "datetime": current_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "rainfall_15min_mm": val,
-            "intensity_mm_per_hr": round(val * 4.0, 2)
+            "timeseries_id": series_id,
+            "datetime": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "rainfall_15min_mm": value,
+            "intensity_mm_per_hr": round(value * 4.0, 2),
         })
-        current_time += pd.Timedelta(minutes=15)
-
-with open(SWMM_OUT_DIR / "timeseries_2005_july26.dat", "w") as f:
-    f.write("\n".join(ts_lines) + "\n")
 
 # (B) Design Storm Hyetographs (for Warning Levels: Yellow 25mm/h, Orange 50mm/h, Red 100mm/h, Cloudburst 150mm/h)
 design_storms = {
@@ -431,7 +444,9 @@ with open(SWMM_OUT_DIR / "timeseries_design_storms.dat", "w") as f:
     f.write("\n".join(design_ts_lines) + "\n")
 
 pd.DataFrame(hyetograph_records).to_csv(SWMM_OUT_DIR / "swmm_rainfall_catalog.csv", index=False)
-print(f"Saved SWMM rainfall files -> {SWMM_OUT_DIR / 'timeseries_2005_july26.dat'}")
+print(f"Saved legacy SWMM rainfall file -> {SWMM_OUT_DIR / 'timeseries_2005_july26.dat'}")
+print(f"Saved labelled 27-hour diagnostic -> {SWMM_OUT_DIR / 'timeseries_2005_july26_27h_diagnostic.dat'}")
+print(f"Saved corrected 24-hour candidate -> {SWMM_OUT_DIR / 'timeseries_2005_july26_24h_candidate.dat'}")
 print(f"Saved design storm files -> {SWMM_OUT_DIR / 'timeseries_design_storms.dat'}")
 
 # ---------------------------------------------------------------------------

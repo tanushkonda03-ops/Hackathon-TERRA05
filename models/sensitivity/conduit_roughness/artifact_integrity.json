@@ -1,0 +1,57 @@
+{
+  "experiment": "conduit Manning roughness sensitivity analysis",
+  "interpretation": "Sensitivity analysis only; not calibration or validation.",
+  "baseline_reference": {
+    "node_flooding_volume_ml": 636.459,
+    "flooded_node_count": 208,
+    "runoff_continuity_error_pct": -0.084,
+    "routing_continuity_error_pct": -0.058
+  },
+  "protected_original_hashes_before": {
+    "ward_L_kurla.inp": "42985ae66e2e188e41f0f035ed7efc55cd61d3d55f402990b97194e0b7f894e3",
+    "ward_L_kurla.rpt": "e7c225629e78650c3bd36939b664ec24d5bf3d27f42b02c731df69623634f697",
+    "ward_L_kurla.out": "944766482a68b6ddd1f6d3233e15ac54f32da57e9a9351633d4c338740906dd0"
+  },
+  "protected_original_hashes_after": {
+    "ward_L_kurla.inp": "42985ae66e2e188e41f0f035ed7efc55cd61d3d55f402990b97194e0b7f894e3",
+    "ward_L_kurla.rpt": "e7c225629e78650c3bd36939b664ec24d5bf3d27f42b02c731df69623634f697",
+    "ward_L_kurla.out": "944766482a68b6ddd1f6d3233e15ac54f32da57e9a9351633d4c338740906dd0"
+  },
+  "protected_originals_unchanged": true,
+  "inputs": [
+    {
+      "scenario_name": "baseline",
+      "roughness_multiplier": 1.0,
+      "conduits_changed": 0,
+      "roughness_min": 0.013,
+      "roughness_max": 0.025,
+      "roughness_only_verified": true,
+      "input_path": "models\\sensitivity\\conduit_roughness\\baseline\\ward_L_kurla.inp"
+    },
+    {
+      "scenario_name": "lower_roughness",
+      "roughness_multiplier": 0.8,
+      "conduits_changed": 1823,
+      "roughness_min": 0.0104,
+      "roughness_max": 0.02,
+      "roughness_only_verified": true,
+      "input_path": "models\\sensitivity\\conduit_roughness\\lower_roughness\\ward_L_kurla.inp"
+    },
+    {
+      "scenario_name": "higher_roughness",
+      "roughness_multiplier": 1.2,
+      "conduits_changed": 1823,
+      "roughness_min": 0.0156,
+      "roughness_max": 0.03,
+      "roughness_only_verified": true,
+      "input_path": "models\\sensitivity\\conduit_roughness\\higher_roughness\\ward_L_kurla.inp"
+    }
+  ],
+  "simulation_statuses": {
+    "baseline": "complete",
+    "lower_roughness": "complete",
+    "higher_roughness": "complete"
+  },
+  "baseline_reference_check": "PASS",
+  "comparison_csv": "models\\sensitivity\\conduit_roughness\\roughness_sensitivity_comparison.csv"
+}

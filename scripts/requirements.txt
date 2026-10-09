@@ -4,6 +4,7 @@ numpy
 shapely
 rasterio
 scipy
+scikit-learn
 requests
 pyproj
 fiona

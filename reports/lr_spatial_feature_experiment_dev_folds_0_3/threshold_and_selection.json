@@ -1,0 +1,16 @@
+{
+  "model": {
+    "name": "LogisticRegression",
+    "C": 0.1,
+    "class_weight": "balanced",
+    "seed": 20261009
+  },
+  "threshold_selection": {
+    "method": "nested development-fold inner OOF threshold selection",
+    "objective": "maximize F2 within each outer fold's training data; choose ties by precision then threshold",
+    "outer_validation_fold_is_excluded_from_threshold_selection": true,
+    "fold_4_used": false
+  },
+  "saved_assignment_sha256": "b922175914c876cb1078b0a62072273d7bafa1ae2dccda29f1411264e274e039",
+  "dataset_sha256": "d80af47d84f2f34a146d03a8772bbd3fb7ab522a3cd776aa74ac5ff0c141b8a6"
+}

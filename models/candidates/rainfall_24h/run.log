@@ -1,0 +1,33 @@
+Controlled rainfall-duration candidate; sensitivity/input-definition experiment, not calibration or validation.
+The raw rainfall_observations_v1.csv is read only and is not regenerated.
+$ python scripts\build_rainfall_events.py
+============================================================
+ MUMBAI FLOOD EVENT CATALOGUE
+============================================================
+Events: 5
+Output: C:\Users\tarun\Downloads\Tanush work\TERRA05\Hackathon-TERRA05\data\processed\mumbai_flood_events_v1.csv
+
+event_id                                          event_name primary_station  rainfall_24h_mm                   source_quality               event_role
+    E001 Mumbai Extreme Rainfall and Flood Event - July 2005       Santacruz            943.3 derived_local_interval_candidate candidate_for_simulation
+    E002             Mumbai Heavy Rainfall Event - July 2020       Santacruz            106.0                 verified_partial      training_validation
+    E003           Mumbai Heavy Rainfall Spell - August 2020       Santacruz              NaN    event_verified_values_pending      training_validation
+    E004             Mumbai Heavy Rainfall Spell - July 2021       Santacruz              NaN    event_verified_values_pending      training_validation
+    E005                  Mumbai Major Rainfall Event - 2019       Santacruz              NaN                        candidate          candidate_event
+$ python scripts\build_rainfall_feature.py
+======================================================================
+ MUMBAI RAINFALL FEATURES v1
+======================================================================
+Input : C:\Users\tarun\Downloads\Tanush work\TERRA05\Hackathon-TERRA05\data\processed\rainfall_observations_v1.csv
+Output: C:\Users\tarun\Downloads\Tanush work\TERRA05\Hackathon-TERRA05\data\processed\rainfall_features_v1.csv
+Rows  : 1
+
+FEATURES:
+event_id   station event_end_timestamp_utc rainfall_24h_start_timestamp_utc rainfall_24h_end_timestamp_utc  rainfall_3h_mm  rainfall_6h_mm  rainfall_12h_mm  rainfall_24h_mm rainfall_27h_reconstruction_start_timestamp_utc rainfall_27h_reconstruction_end_timestamp_utc  rainfall_27h_reconstruction_mm                                source
+    E001 Santacruz     2005-07-27 03:00:00              2005-07-26 03:00:00            2005-07-27 03:00:00            48.2            59.2            276.5            943.3                                      2005-07-26                           2005-07-27 03:00:00                           944.2 Derived from rainfall_observations_v1
+Candidate series: 96 intervals, 943.300 mm; legacy diagnostic: 108 intervals, 944.200 mm.
+Candidate INP difference audit: PASS (rainfall series/reference/title and start/report timing only).
+Baseline reference metrics: PASS.
+Candidate simulation status: complete; errors: none.
+Original model/raw observation/legacy series hashes unchanged: True.
+Existing sensitivity experiments unchanged: True.
+Comparison CSV: C:\Users\tarun\Downloads\Tanush work\TERRA05\Hackathon-TERRA05\models\candidates\rainfall_24h\baseline_vs_rainfall_24h_candidate.csv

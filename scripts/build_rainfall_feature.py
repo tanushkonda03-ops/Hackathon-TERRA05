@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,19 +58,40 @@ for (event_id, station), group in df_ts.groupby(
     rainfall_6h = rainfall.iloc[-2:].sum()
     rainfall_12h = rainfall.iloc[-4:].sum()
 
-    # For the complete E001 event, use the verified cumulative
-    # total represented by the full observation sequence.
-    rainfall_24h = rainfall.sum()
+    if event_id == "E001":
+        if len(group) != 9 or group.iloc[0]["timestamp"] != pd.Timestamp("2005-07-26 03:00"):
+            raise ValueError("E001 expected nine 3-hour records beginning at 2005-07-26 03:00")
+        rainfall_24h_intervals = group.iloc[1:]
+        rainfall_24h = rainfall_24h_intervals["rainfall_mm"].sum()
+        rainfall_24h_start = rainfall_24h_intervals.iloc[0]["timestamp"] - timedelta(hours=3)
+        rainfall_24h_end = rainfall_24h_intervals.iloc[-1]["timestamp"]
+        rainfall_27h = rainfall.sum()
+        rainfall_27h_start = group.iloc[0]["timestamp"] - timedelta(hours=3)
+        rainfall_27h_end = group.iloc[-1]["timestamp"]
+    else:
+        rainfall_24h = rainfall.sum()
+        rainfall_24h_start = group.iloc[0]["timestamp"]
+        rainfall_24h_end = group.iloc[-1]["timestamp"]
+        rainfall_27h = None
+        rainfall_27h_start = None
+        rainfall_27h_end = None
 
     results.append({
         "event_id": event_id,
         "station": station,
         "event_end_timestamp_utc": group.iloc[-1]["timestamp"],
+        "rainfall_24h_start_timestamp_utc": rainfall_24h_start,
+        "rainfall_24h_end_timestamp_utc": rainfall_24h_end,
 
         "rainfall_3h_mm": round(float(rainfall_3h), 2),
         "rainfall_6h_mm": round(float(rainfall_6h), 2),
         "rainfall_12h_mm": round(float(rainfall_12h), 2),
         "rainfall_24h_mm": round(float(rainfall_24h), 2),
+        "rainfall_27h_reconstruction_start_timestamp_utc": rainfall_27h_start,
+        "rainfall_27h_reconstruction_end_timestamp_utc": rainfall_27h_end,
+        "rainfall_27h_reconstruction_mm": (
+            round(float(rainfall_27h), 2) if rainfall_27h is not None else None
+        ),
 
         "source": "Derived from rainfall_observations_v1",
     })

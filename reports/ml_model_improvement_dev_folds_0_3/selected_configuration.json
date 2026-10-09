@@ -1,0 +1,47 @@
+{
+  "selected_model": {
+    "model": "logistic_regression",
+    "config_id": "logistic_regression_C_0.1",
+    "feature_set": "static_geographic",
+    "parameters": {
+      "C": 0.1,
+      "class_weight": "balanced",
+      "max_iter": 2000
+    },
+    "development_macro_pr_auc": 0.12235655163601952,
+    "development_pr_auc_sd": 0.03325102629870728,
+    "development_pr_auc_se": 0.01662551314935364,
+    "best_macro_pr_auc": 0.12549609845014778,
+    "one_standard_error_cutoff": 0.09553392281033375,
+    "one_se_eligible_configurations": [
+      "logistic_regression_C_0.1/static_geographic",
+      "logistic_regression_C_0.1/static_geographic_plus_physics_proxies",
+      "logistic_regression_C_1/static_geographic",
+      "logistic_regression_C_1/static_geographic_plus_physics_proxies",
+      "logistic_regression_C_10/static_geographic",
+      "logistic_regression_C_10/static_geographic_plus_physics_proxies",
+      "random_forest_conservative/static_geographic",
+      "random_forest_conservative/static_geographic_plus_physics_proxies",
+      "extra_trees_conservative/static_geographic",
+      "extra_trees_conservative/static_geographic_plus_physics_proxies"
+    ],
+    "selection_rule": "Identify the highest development macro PR-AUC; retain configurations within one standard error of it; select the fewest predictors, then lowest predeclared model-complexity rank, then lowest fold PR-AUC SD. Fold 4 is not loaded or scored."
+  },
+  "operating_threshold": {
+    "selection_data": "pooled out-of-fold predictions from development folds 0-3 only",
+    "objective": "maximize F2 = 5 * precision * recall / (4 * precision + recall), prioritizing recall while retaining a precision penalty; ties choose higher precision then higher threshold",
+    "threshold": 0.6683593258453616,
+    "f2": 0.3191050623775647,
+    "oof_metrics_at_selected_threshold": {
+      "pr_auc": 0.11743623155367101,
+      "roc_auc": 0.7796825728874285,
+      "precision": 0.11646284101599247,
+      "recall": 0.5647810218978102,
+      "tn": 19572,
+      "fp": 4696,
+      "fn": 477,
+      "tp": 619
+    },
+    "caveat": "The threshold and its displayed OOF metrics are selected and assessed on the same development OOF predictions; this is a development operating point, not an unbiased final performance estimate."
+  }
+}
