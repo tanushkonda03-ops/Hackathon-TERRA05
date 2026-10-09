@@ -823,10 +823,22 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       zoom: 15.0,
       pitch: 25, // Clean, non-extreme perspective
       bearing: 0,
-      speed: 1.1,
+      speed: 1.2,
       essential: true,
     });
   };
+
+  // Auto-fly camera whenever selectedLocation changes (from header or sidebar)
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || !selectedLocation) return;
+    mapRef.current.flyTo({
+      center: [selectedLocation.lng, selectedLocation.lat],
+      zoom: 14.8,
+      pitch: 28,
+      speed: 1.2,
+      essential: true,
+    });
+  }, [selectedLocation?.id, mapLoaded]);
 
   // 6. Camera Presets (3D / 2D Top / Reset)
   useEffect(() => {
@@ -869,9 +881,9 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       <div className="absolute top-3 left-4 z-20 flex items-center space-x-2">
         <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-lg shadow-gis px-3 py-1.5 flex items-center space-x-2 text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-sky-600" />
-          <span className="font-bold text-slate-900">MITHI RIVER BASIN</span>
+          <span className="font-bold text-slate-900 uppercase">{selectedLocation?.subDistrict || "MUMBAI METROPOLITAN"}</span>
           <span className="text-slate-300">|</span>
-          <span className="text-slate-600 font-medium">KURLA–SION CORRIDOR</span>
+          <span className="text-slate-600 font-medium uppercase">{selectedLocation?.ward || "CITYWIDE"}</span>
         </div>
 
         {/* Compact Dropdown Selector */}
