@@ -3,7 +3,8 @@ import * as maplibregl from 'maplibre-gl';
 import { Map as MapLibreMap, NavigationControl, ScaleControl, GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, TimelineImpactMetrics, createLocationFromGridFeature } from '../data/locations';
+import type { FeatureCollection, LineString, Feature } from 'geojson';
+import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, TimelineImpactMetrics, createLocationFromGridFeature, getLocationCatchmentBounds } from '../data/locations';
 import { 
   MITHI_RIVER_GEOJSON, 
   BMC_DRAINAGE_GEOJSON, 
@@ -63,6 +64,8 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   const rainCanvasRef = useRef<HTMLCanvasElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const fullDrainageNetworkRef = useRef<FeatureCollection | null>(null);
   const [hoveredFeature, setHoveredFeature] = useState<{
     x: number;
     y: number;
@@ -72,7 +75,33 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     maxDepth?: number;
     builtUp?: number;
     isSimCell?: boolean;
+    isSWD?: boolean;
+    isInsideFocusArea?: boolean;
+    swdWidth?: number;
+    swdHeight?: number;
+    swdLength?: number;
+    invertElevation?: number;
   } | null>(null);
+
+  // Close location dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationDropdownRef.current && !locationDropdownRef.current.contains(e.target as Node)) {
+        setIsLocationDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsLocationDropdownOpen(false);
+    };
+    if (isLocationDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isLocationDropdownOpen]);
 
   // 1. Initialize MapLibre GL Instance (Strictly SINGLE instance lifecycle, zero token required)
   useEffect(() => {
@@ -173,6 +202,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         }
 
         // --- LAYER 3: BMC STORMWATER DRAINAGE NETWORK ---
+        // 3A: Municipal Baseline Physical Network (all existing conduits across Mumbai)
         if (!map.getSource('bmc-drainage-src')) {
           map.addSource('bmc-drainage-src', {
             type: 'geojson',
@@ -190,8 +220,33 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
             },
             paint: {
               'line-color': '#0891B2',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 2.5, 16, 5],
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.8, 16, 3.5],
+              'line-opacity': selectedLocation ? 0.35 : 0.65,
               'line-dasharray': [2, 1],
+            },
+          });
+        }
+
+        // 3B: Location-Specific Active Hydraulic Drainage Flow Layer (Selected Catchment Focus)
+        if (!map.getSource('bmc-drainage-active-src')) {
+          map.addSource('bmc-drainage-active-src', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          });
+
+          map.addLayer({
+            id: 'bmc-drainage-active-layer',
+            type: 'line',
+            source: 'bmc-drainage-active-src',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.drainage ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#0891B2',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 3.0, 16, 6.5],
+              'line-opacity': 0.95,
             },
           });
         }
@@ -558,6 +613,54 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           }
         });
 
+        // SWD Active Conduits Hover
+        map.on('mousemove', 'bmc-drainage-active-layer', (e) => {
+          if (e.features && e.features[0]) {
+            const props = e.features[0].properties;
+            map.getCanvas().style.cursor = 'pointer';
+            setHoveredFeature({
+              x: e.point.x,
+              y: e.point.y,
+              name: `SWD Conduit ${props?.US_NODE_ID ? `#${props.US_NODE_ID} → #${props.DS_NODE_ID}` : 'Municipal Drain'}`,
+              swdWidth: typeof props?.CONDUIT_WI === 'number' ? props.CONDUIT_WI : undefined,
+              swdHeight: typeof props?.CONDUIT_HE === 'number' ? props.CONDUIT_HE : undefined,
+              swdLength: typeof props?.CONDUIT_LE === 'number' ? props.CONDUIT_LE : undefined,
+              invertElevation: typeof props?.US_INVERT === 'number' ? props.US_INVERT : undefined,
+              isSWD: true,
+              isInsideFocusArea: true,
+            });
+          }
+        });
+
+        map.on('mouseleave', 'bmc-drainage-active-layer', () => {
+          map.getCanvas().style.cursor = '';
+          setHoveredFeature(null);
+        });
+
+        // SWD Baseline Network Hover
+        map.on('mousemove', 'bmc-drainage-layer', (e) => {
+          if (e.features && e.features[0]) {
+            const props = e.features[0].properties;
+            map.getCanvas().style.cursor = 'pointer';
+            setHoveredFeature({
+              x: e.point.x,
+              y: e.point.y,
+              name: `SWD Conduit ${props?.US_NODE_ID ? `#${props.US_NODE_ID} → #${props.DS_NODE_ID}` : 'Municipal Drain'}`,
+              swdWidth: typeof props?.CONDUIT_WI === 'number' ? props.CONDUIT_WI : undefined,
+              swdHeight: typeof props?.CONDUIT_HE === 'number' ? props.CONDUIT_HE : undefined,
+              swdLength: typeof props?.CONDUIT_LE === 'number' ? props.CONDUIT_LE : undefined,
+              invertElevation: typeof props?.US_INVERT === 'number' ? props.US_INVERT : undefined,
+              isSWD: true,
+              isInsideFocusArea: false,
+            });
+          }
+        });
+
+        map.on('mouseleave', 'bmc-drainage-layer', () => {
+          map.getCanvas().style.cursor = '';
+          setHoveredFeature(null);
+        });
+
         console.info('[TERRA05][MAP LAYERS] Setup completed successfully.');
       } catch (err) {
         console.error('[TERRA05][SETUP LAYERS ERROR]', err);
@@ -707,15 +810,10 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         floodSource.setData(updatedGeoJSON);
       }
 
-      // B. Dynamically Update Stormwater Drain Stress Color (Thin Line -> Amber -> Red)
+      // B. Baseline Municipal Drainage Network Display (Dormant physical conduits)
       if (map.getLayer('bmc-drainage-layer')) {
-        let drainColor = '#0891B2'; // Optimal (Blue-cyan)
-        if (timelineMetrics.drainStressState === 'HIGH LOAD') drainColor = '#D97706'; // Stressed (Amber)
-        else if (timelineMetrics.drainStressState === 'OVERLOADED') drainColor = '#EA580C'; // Overloaded (Orange-Red)
-        else if (timelineMetrics.drainStressState === 'SURCHARGING OVERFLOW') drainColor = '#DC2626'; // Overflow (Red)
-
-        map.setPaintProperty('bmc-drainage-layer', 'line-color', drainColor);
-        map.setPaintProperty('bmc-drainage-layer', 'line-width', timelineStep >= 3 ? 4.0 : 2.5);
+        map.setPaintProperty('bmc-drainage-layer', 'line-color', '#0891B2');
+        map.setPaintProperty('bmc-drainage-layer', 'line-opacity', selectedLocation ? 0.35 : 0.65);
       }
 
       // C. Dynamically Update Road Inundation Colors
@@ -730,7 +828,84 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     } catch (updateErr) {
       console.error('[TERRA05][SIMULATION UPDATE ERROR]', updateErr);
     }
-  }, [rainfall, timelineStep, layers.uncertainty, timelineMetrics, mapLoaded]);
+  }, [rainfall, timelineStep, layers.uncertainty, timelineMetrics, mapLoaded, selectedLocation]);
+
+  // Helper to update location-specific active SWD features and dynamic hydraulic stress styling
+  const updateActiveDrainage = (
+    network: FeatureCollection | null,
+    location: MumbaiLocation | null
+  ) => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+    const activeSrc = map.getSource('bmc-drainage-active-src') as GeoJSONSource | undefined;
+    if (!activeSrc) return;
+
+    const net = network || fullDrainageNetworkRef.current || BMC_DRAINAGE_GEOJSON;
+    if (!net || !net.features || net.features.length === 0) return;
+
+    if (!location) {
+      activeSrc.setData({ type: 'FeatureCollection', features: [] });
+      return;
+    }
+
+    const bounds = getLocationCatchmentBounds(location);
+    let localizedFeatures: Feature[] = [];
+
+    if (bounds) {
+      localizedFeatures = net.features.filter((feat) => {
+        if (!feat.geometry) return false;
+        if (feat.geometry.type === 'LineString') {
+          const coords = feat.geometry.coordinates;
+          return coords.some(([lng, lat]) =>
+            lng >= bounds.minLng && lng <= bounds.maxLng &&
+            lat >= bounds.minLat && lat <= bounds.maxLat
+          );
+        }
+        if (feat.geometry.type === 'MultiLineString') {
+          const coords = feat.geometry.coordinates;
+          return coords.some((line) => line.some(([lng, lat]) =>
+            lng >= bounds.minLng && lng <= bounds.maxLng &&
+            lat >= bounds.minLat && lat <= bounds.maxLat
+          ));
+        }
+        return false;
+      });
+    }
+
+    activeSrc.setData({
+      type: 'FeatureCollection',
+      features: localizedFeatures,
+    });
+
+    if (map.getLayer('bmc-drainage-active-layer')) {
+      let activeColor = '#0891B2'; // Standby / Optimal
+      let activeWidth = 2.5;
+
+      if (timelineStep === 1) {
+        activeColor = '#0284C7'; // Inflow / Gravity Conveyance
+        activeWidth = 3.0;
+      } else if (timelineMetrics.drainStressState === 'LOADING') {
+        activeColor = '#0284C7';
+        activeWidth = 3.2;
+      } else if (timelineMetrics.drainStressState === 'HIGH LOAD') {
+        activeColor = '#D97706'; // Amber (Stressed)
+        activeWidth = 3.8;
+      } else if (timelineMetrics.drainStressState === 'OVERLOADED') {
+        activeColor = '#EA580C'; // Orange-Red
+        activeWidth = 4.5;
+      } else if (timelineMetrics.drainStressState === 'SURCHARGING OVERFLOW') {
+        activeColor = '#DC2626'; // Red (Surcharging)
+        activeWidth = 5.2;
+      }
+
+      map.setPaintProperty('bmc-drainage-active-layer', 'line-color', activeColor);
+      map.setPaintProperty('bmc-drainage-active-layer', 'line-width', [
+        'interpolate', ['linear'], ['zoom'],
+        12, activeWidth,
+        16, activeWidth * 1.8
+      ]);
+    }
+  };
 
   // Replace the small demo drainage sketch with the full municipal network when the API is available.
   useEffect(() => {
@@ -741,16 +916,28 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     const controller = new AbortController();
     getDrainageNetwork(controller.signal)
       .then((network) => {
-        if (network.features?.length) source.setData(network);
+        if (network.features?.length) {
+          fullDrainageNetworkRef.current = network;
+          source.setData(network);
+          updateActiveDrainage(network, selectedLocation);
+        }
       })
       .catch((error: unknown) => {
         if ((error as { name?: string })?.name !== 'AbortError') {
           console.warn('[TERRA05][DRAINAGE] Full network unavailable; using demo network:', error);
+          fullDrainageNetworkRef.current = BMC_DRAINAGE_GEOJSON;
+          updateActiveDrainage(BMC_DRAINAGE_GEOJSON, selectedLocation);
         }
       });
 
     return () => controller.abort();
   }, [mapLoaded]);
+
+  // Update localized SWD layer when selectedLocation, timelineStep, or stress state changes
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    updateActiveDrainage(fullDrainageNetworkRef.current, selectedLocation);
+  }, [selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, timelineStep, timelineMetrics.drainStressState, mapLoaded]);
 
   // 3B. Update 2D Computational Hydrodynamic Simulation Water Layer GeoJSON
   useEffect(() => {
@@ -819,6 +1006,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     };
 
     setVisibility('bmc-drainage-layer', layers.drainage);
+    setVisibility('bmc-drainage-active-layer', layers.drainage);
     setVisibility('runoff-flow-layer', layers.runoffFlow);
     setVisibility('mumbai-roads-layer', layers.roadsExposure);
     setVisibility('critical-infra-layer', layers.criticalInfra);
@@ -897,79 +1085,95 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         className="w-full h-full absolute inset-0 pointer-events-none z-10"
       />
 
-      {/* Top Left: Compact Focus Area Indicator & Dropdown */}
-      <div className="absolute top-3 left-4 z-20 flex items-center space-x-2">
-        <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-lg shadow-gis px-3 py-1.5 flex items-center space-x-2 text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-sky-600" />
-          <span className="font-bold text-slate-900 uppercase">{selectedLocation?.subDistrict || "MUMBAI METROPOLITAN"}</span>
-          <span className="text-slate-300">|</span>
-          <span className="text-slate-600 font-medium uppercase">{selectedLocation?.ward || "CITYWIDE"}</span>
-        </div>
+      {/* Top Map HUD Bar: Responsive Unified Header Container */}
+      <div className="absolute top-3 left-3 sm:left-4 right-3 sm:right-4 z-20 pointer-events-none flex items-start justify-between gap-3">
+        {/* Left: Focus Area Indicator & Dropdown */}
+        <div className="pointer-events-auto flex items-center flex-wrap gap-2 shrink-0">
+          <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-gis px-3 py-1.5 flex items-center space-x-2 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-sky-600 shrink-0" />
+            <span className="font-bold text-slate-900 uppercase truncate max-w-[120px] sm:max-w-none">
+              {selectedLocation?.subDistrict || "MUMBAI METROPOLITAN"}
+            </span>
+            <span className="text-slate-300">|</span>
+            <span className="text-slate-600 font-medium uppercase">
+              {selectedLocation?.ward || "CITYWIDE"}
+            </span>
+          </div>
 
-        {/* Compact Dropdown Selector */}
-        <div className="relative">
-          <button
-            onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
-            className="bg-white/95 backdrop-blur-md border border-gis-border hover:border-slate-400 px-3 py-1.5 rounded-lg shadow-gis text-xs font-mono font-bold text-slate-800 flex items-center space-x-1.5 transition-all"
-          >
-            <span>FOCUS AREA: {selectedLocation?.name || 'Select'}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </button>
+          {/* Basin Selector Dropdown */}
+          <div className="relative" ref={locationDropdownRef}>
+            <button
+              onClick={() => setIsLocationDropdownOpen(!isLocationDropdownOpen)}
+              className="bg-white/95 backdrop-blur-md border border-gis-border hover:border-slate-400 px-3 py-1.5 rounded-xl shadow-gis text-xs font-mono font-bold text-slate-800 flex items-center space-x-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+            >
+              <span className="truncate max-w-[150px] sm:max-w-none">
+                FOCUS AREA: {selectedLocation?.name || 'Select'}
+              </span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-          {isLocationDropdownOpen && (
-            <div className="absolute left-0 mt-1.5 w-60 bg-white border border-gis-border rounded-lg shadow-float py-1 z-30 font-mono text-xs">
-              <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
-                SELECT BASIN FOCUS
+            {isLocationDropdownOpen && (
+              <div className="absolute left-0 mt-1.5 w-64 bg-white border border-gis-border rounded-xl shadow-float py-1.5 z-30 font-mono text-xs max-h-72 overflow-y-auto">
+                <div className="px-3 py-1.5 text-[9.5px] uppercase font-bold text-slate-400 border-b border-slate-100 tracking-wider">
+                  SELECT BASIN FOCUS
+                </div>
+                {MUMBAI_GEO_LOCATIONS.map((loc) => {
+                  const isSelected = selectedLocation?.id === loc.id;
+                  const sc = loc.scenarios[rainfall] || loc.scenarios[100];
+                  return (
+                    <button
+                      key={loc.id}
+                      onClick={() => flyToLocation(loc)}
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50 transition-colors ${
+                        isSelected ? 'bg-sky-50 text-sky-900 font-bold border-l-2 border-sky-600' : 'text-slate-700'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-xs">{loc.name}</div>
+                        <div className="text-[10px] text-slate-400 font-normal">{loc.ward}</div>
+                      </div>
+                      <span className="text-[10px] text-sky-800 font-mono font-semibold bg-slate-100 px-1.5 py-0.5 rounded">
+                        {sc.depthM.toFixed(2)}m
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              {MUMBAI_GEO_LOCATIONS.map((loc) => {
-                const isSelected = selectedLocation?.id === loc.id;
-                const sc = loc.scenarios[rainfall] || loc.scenarios[100];
-                return (
-                  <button
-                    key={loc.id}
-                    onClick={() => flyToLocation(loc)}
-                    className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                      isSelected ? 'bg-sky-50 text-sky-900 font-bold' : 'text-slate-700'
-                    }`}
-                  >
-                    <span>{loc.name}</span>
-                    <span className="text-[10px] text-slate-500 font-normal">
-                      {sc.depthM.toFixed(2)}m
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {/* Center: Scenario Event Status Pill (Desktop & Laptop) */}
+        <div className="pointer-events-auto hidden md:flex items-center min-w-0 mx-auto px-2">
+          <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-full shadow-gis px-3.5 py-1.5 flex items-center space-x-2 text-xs font-mono whitespace-nowrap">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              timelineStep === 0 ? 'bg-slate-400' :
+              timelineStep === 4 ? 'bg-rose-600 animate-pulse' :
+              timelineStep > 4 ? 'bg-amber-500' : 'bg-sky-600'
+            }`} />
+            <span className="font-bold text-slate-900">
+              {timelineStep === 4 ? 'PEAK INUNDATION EVENT' :
+               timelineStep > 4 ? 'RECESSION PHASE' :
+               timelineStep === 0 ? 'SCENARIO STANDBY' : 'WATER PROPAGATION ACTIVE'}
+            </span>
+            <span className="text-slate-300 font-normal">|</span>
+            <span className="text-slate-600">{rainfall} mm/hr</span>
+            <span className="text-slate-300 font-normal">|</span>
+            <span className="font-bold text-sky-700">T+0{timelineStep}</span>
+          </div>
+        </div>
+
+        {/* Right Reserve Space for MapLayersControl (which is ~240px wide at top-right) */}
+        <div className="w-[230px] shrink-0 pointer-events-none hidden lg:block" />
       </div>
 
-      {/* Top Center: Clean Scenario Event Status Pill */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-full shadow-gis px-4 py-1.5 flex items-center space-x-2 text-xs font-mono">
-          <span className={`w-2 h-2 rounded-full ${
-            timelineStep === 0 ? 'bg-slate-400' :
-            timelineStep === 4 ? 'bg-rose-600 animate-pulse' :
-            timelineStep > 4 ? 'bg-amber-500' : 'bg-sky-600'
-          }`} />
-          <span className="font-bold text-slate-900">
-            {timelineStep === 4 ? 'PEAK INUNDATION EVENT' :
-             timelineStep > 4 ? 'RECESSION PHASE' :
-             timelineStep === 0 ? 'SCENARIO STANDBY' : 'WATER PROPAGATION ACTIVE'}
-          </span>
+      {/* Bottom Left: Repositioned Mithi River Channel Status Pill (Safely above bottom simulation controller) */}
+      <div className="absolute bottom-[148px] sm:bottom-[156px] left-3 sm:left-4 z-20 pointer-events-none">
+        <div className="bg-white/95 backdrop-blur-md border border-gis-border text-slate-900 text-[10.5px] font-mono font-bold px-3 py-1.5 rounded-lg shadow-gis flex items-center space-x-2 pointer-events-auto">
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+          <span className="tracking-wide">MITHI RIVER</span>
           <span className="text-slate-300 font-normal">|</span>
-          <span className="text-slate-600">{rainfall} mm/hr</span>
-          <span className="text-slate-300 font-normal">|</span>
-          <span className="font-bold text-sky-700">T+0{timelineStep}</span>
-        </div>
-      </div>
-
-      {/* Bottom Left: River Status Pill */}
-      <div className="absolute bottom-24 left-4 z-20 pointer-events-none">
-        <div className="bg-white/95 backdrop-blur-md border border-gis-border text-slate-900 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg shadow-gis flex items-center space-x-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
-          <span>MITHI RIVER</span>
-          <span className="text-slate-400 font-normal">| Stress: <strong className={timelineMetrics.mithiRiverStatus === 'BANKFULL / OVERFLOW' ? 'text-rose-600' : 'text-sky-700'}>{timelineMetrics.mithiRiverStatus}</strong></span>
+          <span className="text-slate-500 font-normal">Status: <strong className={timelineMetrics.mithiRiverStatus === 'BANKFULL / OVERFLOW' ? 'text-rose-600' : 'text-sky-700'}>{timelineMetrics.mithiRiverStatus}</strong></span>
         </div>
       </div>
 
@@ -982,34 +1186,78 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           <div className="font-bold text-slate-900 border-b border-slate-100 pb-1">
             {hoveredFeature.name}
           </div>
-          {hoveredFeature.depth !== undefined && (
-            <div className="flex justify-between space-x-4 text-[11px]">
-              <span className="text-slate-500">Current Depth:</span>
-              <span className="font-bold text-sky-700">{hoveredFeature.depth.toFixed(2)}m</span>
+          {hoveredFeature.isSWD ? (
+            <div className="space-y-1 text-[11px]">
+              <div className="flex justify-between text-slate-500">
+                <span>Catchment Scope:</span>
+                <span className="font-semibold text-slate-800">
+                  {hoveredFeature.isInsideFocusArea
+                    ? `${selectedLocation?.name || 'Selected'} Catchment`
+                    : 'Municipal Baseline'}
+                </span>
+              </div>
+              {hoveredFeature.swdWidth && (
+                <div className="flex justify-between text-slate-500">
+                  <span>Conduit Size:</span>
+                  <span className="font-bold text-sky-800">
+                    {hoveredFeature.swdWidth}mm × {hoveredFeature.swdHeight || hoveredFeature.swdWidth}mm
+                  </span>
+                </div>
+              )}
+              {hoveredFeature.invertElevation !== undefined && (
+                <div className="flex justify-between text-slate-500">
+                  <span>Invert Level:</span>
+                  <span className="font-semibold text-slate-700">
+                    {hoveredFeature.invertElevation}m MSL
+                  </span>
+                </div>
+              )}
+              {hoveredFeature.swdLength && (
+                <div className="flex justify-between text-slate-500">
+                  <span>Conduit Run:</span>
+                  <span className="font-semibold text-slate-700">
+                    {hoveredFeature.swdLength}m
+                  </span>
+                </div>
+              )}
+              <div className="text-[9.5px] text-slate-400 pt-0.5 border-t border-slate-50">
+                {hoveredFeature.isInsideFocusArea
+                  ? `Simulated Hydraulic Response: ${timelineMetrics.drainStressState}`
+                  : 'Baseline Municipal Infrastructure (Dormant outside focus)'}
+              </div>
             </div>
+          ) : (
+            <>
+              {hoveredFeature.depth !== undefined && (
+                <div className="flex justify-between space-x-4 text-[11px]">
+                  <span className="text-slate-500">Current Depth:</span>
+                  <span className="font-bold text-sky-700">{hoveredFeature.depth.toFixed(2)}m</span>
+                </div>
+              )}
+              {hoveredFeature.maxDepth !== undefined && (
+                <div className="flex justify-between space-x-4 text-[11px]">
+                  <span className="text-slate-500">Peak Simulated:</span>
+                  <span className="font-bold text-slate-800">{hoveredFeature.maxDepth.toFixed(2)}m</span>
+                </div>
+              )}
+              {hoveredFeature.elevation !== undefined && (
+                <div className="flex justify-between space-x-4 text-[11px]">
+                  <span className="text-slate-500">Elevation:</span>
+                  <span className="font-bold text-slate-800">{hoveredFeature.elevation}m MSL</span>
+                </div>
+              )}
+              {hoveredFeature.builtUp !== undefined && (
+                <div className="flex justify-between space-x-4 text-[11px]">
+                  <span className="text-slate-500">Impervious Cover:</span>
+                  <span className="font-bold text-slate-700">{hoveredFeature.builtUp}%</span>
+                </div>
+              )}
+              <div className="text-[9px] text-sky-700 pt-0.5 border-t border-slate-100 flex items-center justify-between">
+                <span>{hoveredFeature.isSimCell ? '2D Hydrodynamic Accumulation Cell' : 'TERRA05 Spatial Cell'}</span>
+                <span className="text-slate-400">Click to select</span>
+              </div>
+            </>
           )}
-          {hoveredFeature.maxDepth !== undefined && (
-            <div className="flex justify-between space-x-4 text-[11px]">
-              <span className="text-slate-500">Peak Simulated:</span>
-              <span className="font-bold text-slate-800">{hoveredFeature.maxDepth.toFixed(2)}m</span>
-            </div>
-          )}
-          {hoveredFeature.elevation !== undefined && (
-            <div className="flex justify-between space-x-4 text-[11px]">
-              <span className="text-slate-500">Elevation:</span>
-              <span className="font-bold text-slate-800">{hoveredFeature.elevation}m MSL</span>
-            </div>
-          )}
-          {hoveredFeature.builtUp !== undefined && (
-            <div className="flex justify-between space-x-4 text-[11px]">
-              <span className="text-slate-500">Impervious Cover:</span>
-              <span className="font-bold text-slate-700">{hoveredFeature.builtUp}%</span>
-            </div>
-          )}
-          <div className="text-[9px] text-sky-700 pt-0.5 border-t border-slate-100 flex items-center justify-between">
-            <span>{hoveredFeature.isSimCell ? '2D Hydrodynamic Accumulation Cell' : 'TERRA05 Spatial Cell'}</span>
-            <span className="text-slate-400">Click to select</span>
-          </div>
         </div>
       )}
     </div>

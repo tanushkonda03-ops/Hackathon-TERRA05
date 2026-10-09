@@ -23,13 +23,13 @@ export const LayerControls: React.FC<LayerControlsProps> = ({
   ];
 
   return (
-    <div className="absolute top-4 right-4 z-10 w-64 bg-command-900/90 backdrop-blur-md border border-command-700/80 rounded-lg p-3 shadow-hud select-none">
-      <div className="flex items-center justify-between border-b border-command-700/60 pb-2 mb-2">
-        <div className="flex items-center space-x-1.5 text-xs font-tech font-bold text-slate-200">
-          <Layers className="w-3.5 h-3.5 text-cyan-400" />
+    <div className="absolute top-4 right-4 z-10 w-68 bg-white/95 backdrop-blur-md border border-gis-border rounded-xl p-3.5 shadow-float select-none">
+      <div className="flex items-center justify-between border-b border-gis-border pb-2.5 mb-2.5">
+        <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
+          <Layers className="w-3.5 h-3.5 text-sky-700" />
           <span>GEOSPATIAL LAYERS</span>
         </div>
-        <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/20">
+        <span className="text-[10px] font-mono text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 font-bold">
           GIS ENGINE
         </span>
       </div>
@@ -41,26 +41,26 @@ export const LayerControls: React.FC<LayerControlsProps> = ({
             <button
               key={item.key}
               onClick={() => onToggleLayer(item.key)}
-              className={`w-full flex items-center justify-between p-2 rounded text-left transition-all ${
+              className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all ${
                 isActive
-                  ? 'bg-command-800/80 border border-cyan-500/30 text-slate-100'
-                  : 'bg-command-950/50 border border-transparent text-slate-400 hover:text-slate-300 hover:bg-command-850/60'
+                  ? 'bg-sky-50/80 border border-sky-200 text-sky-950 shadow-gis-xs'
+                  : 'bg-slate-50 border border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               <div className="flex items-start space-x-2">
-                <div className={`mt-0.5 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
+                <div className={`mt-0.5 ${isActive ? 'text-sky-700' : 'text-slate-400'}`}>
                   {isActive ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                 </div>
                 <div>
-                  <div className="text-xs font-medium flex items-center space-x-1.5">
+                  <div className="text-xs font-semibold flex items-center space-x-1.5">
                     <span>{item.label}</span>
                     {item.badge && (
-                      <span className="text-[9px] font-mono px-1 rounded bg-command-700 text-cyan-300">
+                      <span className="text-[9px] font-mono px-1 rounded bg-slate-200 text-slate-700">
                         {item.badge}
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] text-slate-400 leading-tight">
+                  <div className="text-[10px] text-slate-500 leading-tight mt-0.5">
                     {item.desc}
                   </div>
                 </div>

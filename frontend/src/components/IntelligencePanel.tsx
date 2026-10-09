@@ -13,7 +13,8 @@ import {
   RefreshCw,
   AlertCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Info
 } from 'lucide-react';
 import { MumbaiLocation, TimelineImpactMetrics } from '../data/locations';
 import { getPrediction, PredictionResponse, SimulationResponse } from '../services/api';
@@ -120,54 +121,63 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   const simMaxDepth = simCell?.max_depth_m;
 
   // Determine current timeline alert color styling
-  let alertBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+  let alertBadgeClass = 'bg-slate-50 text-slate-700 border-slate-200';
+  let alertIconColor = 'text-slate-600';
   if (timelineMetrics.alertLevel === 'SEVERE FLOOD EMERGENCY') {
     alertBadgeClass = 'bg-rose-50 text-rose-800 border-rose-300';
+    alertIconColor = 'text-rose-600';
   } else if (timelineMetrics.alertLevel === 'FLOOD WARNING') {
     alertBadgeClass = 'bg-amber-50 text-amber-800 border-amber-300';
+    alertIconColor = 'text-amber-600';
   } else if (timelineMetrics.alertLevel === 'FLOOD WATCH') {
     alertBadgeClass = 'bg-amber-50/70 text-amber-700 border-amber-200';
+    alertIconColor = 'text-amber-500';
   } else if (timelineMetrics.alertLevel === 'ADVISORY') {
-    alertBadgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+    alertBadgeClass = 'bg-sky-50 text-sky-800 border-sky-200';
+    alertIconColor = 'text-sky-600';
   }
 
   return (
-    <aside className="w-80 h-full bg-white border-l border-gis-border flex flex-col justify-between overflow-y-auto select-none z-20">
-      <div className="p-4 space-y-4">
-        {/* Compact Alert Bar */}
-        <div className={`px-3 py-2 rounded-lg border text-xs font-mono font-bold flex items-center justify-between ${alertBadgeClass}`}>
+    <aside 
+      aria-label="Flood Intelligence Panel"
+      className="w-80 md:w-[330px] h-full bg-white border-l border-gis-border flex flex-col justify-between overflow-y-auto select-none z-20 shadow-gis-sm shrink-0"
+    >
+      <div className="p-3.5 space-y-3.5">
+        {/* Compact Operational Alert Banner */}
+        <div className={`px-3 py-2 rounded-lg border text-xs font-mono font-bold flex items-center justify-between shadow-gis-xs transition-colors ${alertBadgeClass}`}>
           <div className="flex items-center space-x-1.5">
-            <ShieldAlert className="w-4 h-4 shrink-0 text-current" />
-            <span className="tracking-wide">{timelineMetrics.alertLevel}</span>
+            <ShieldAlert className={`w-4 h-4 shrink-0 ${alertIconColor}`} />
+            <span className="tracking-wide text-[11px]">{timelineMetrics.alertLevel}</span>
           </div>
-          <span className="text-[10px] font-semibold text-slate-600 bg-white/70 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] font-semibold text-slate-600 bg-white/80 border border-slate-200/80 px-1.5 py-0.5 rounded shadow-gis-xs">
             {timelineMetrics.stage}
           </span>
         </div>
 
         {/* Location Title & Subtitle */}
-        <div>
+        <div className="border-b border-slate-100 pb-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-gis-muted font-bold">
+            <span className="text-[9.5px] font-mono uppercase tracking-wider text-slate-400 font-bold">
               SELECTED AREA
             </span>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
               {prediction?.ward ? `Ward ${prediction.ward}` : location.ward}
             </span>
           </div>
-          <h2 className="text-base font-display font-bold text-gis-text mt-0.5">
+          <h2 className="text-base font-bold text-slate-900 mt-0.5 tracking-tight">
             {location.name}
           </h2>
-          <div className="text-xs text-gis-muted flex items-center space-x-1 mt-0.5">
-            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <div className="text-xs text-slate-500 flex items-center space-x-1 mt-0.5">
+            <MapPin className="w-3.5 h-3.5 text-sky-600 shrink-0" />
             <span className="truncate">{location.subDistrict}</span>
           </div>
         </div>
 
         {/* Layman Action & Guidance Cards */}
         {location.citizenAdvice && (
-          <div className="p-2.5 rounded-lg bg-sky-50 border border-sky-200 text-xs space-y-1 shadow-xs">
-            <div className="flex items-center space-x-1.5 text-sky-900 font-bold">
+          <div className="p-2.5 rounded-lg bg-sky-50/70 border border-sky-200/80 text-xs space-y-1 shadow-gis-xs">
+            <div className="flex items-center space-x-1.5 text-sky-900 font-bold text-[11px]">
+              <Info className="w-3 h-3 text-sky-700 shrink-0" />
               <span>Citizen Advisory</span>
             </div>
             <p className="text-[11px] text-slate-700 leading-relaxed">
@@ -177,8 +187,9 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
         )}
 
         {location.authorityAction && (
-          <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs space-y-1 shadow-xs">
-            <div className="flex items-center space-x-1.5 text-amber-900 font-bold">
+          <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/80 text-xs space-y-1 shadow-gis-xs">
+            <div className="flex items-center space-x-1.5 text-amber-900 font-bold text-[11px]">
+              <AlertTriangle className="w-3 h-3 text-amber-700 shrink-0" />
               <span>Municipal (BMC) Deployment</span>
             </div>
             <p className="text-[11px] text-slate-700 leading-relaxed">
@@ -188,7 +199,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
         )}
 
         {/* ML Flood Susceptibility Card (FastAPI Backend Model) */}
-        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+        <div className="p-3 rounded-lg bg-slate-50/80 border border-slate-200 shadow-gis-xs space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5">
               <Cpu className="w-3.5 h-3.5 text-sky-700" />
@@ -228,10 +239,10 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
             <div>
               <div className="flex items-baseline justify-between">
                 <div>
-                  <div className="text-2xl font-display font-bold text-slate-900">
+                  <div className="text-2xl font-mono font-bold text-slate-900 tracking-tight">
                     {prediction.susceptibility_score.toFixed(4)}
                   </div>
-                  <div className="text-[10px] font-mono font-bold text-slate-700 mt-0.5">
+                  <div className="text-[10px] font-semibold text-slate-700 mt-0.5">
                     Historical Susceptibility Score
                   </div>
                   <div className="text-[9px] font-mono text-slate-500">
@@ -239,7 +250,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                  <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded border inline-block ${
                     prediction.susceptibility_score >= 0.15
                       ? 'bg-rose-50 text-rose-700 border-rose-200'
                       : prediction.susceptibility_score >= 0.05
@@ -255,12 +266,12 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
               </div>
 
               {/* Explicit scientific disclosure banner */}
-              <div className="text-[9px] font-mono text-amber-800 bg-amber-50/90 border border-amber-200 px-2 py-1 rounded mt-2">
+              <div className="text-[9px] font-mono text-amber-800 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded mt-2">
                 <strong>Notice:</strong> Historical flood susceptibility score — not a flood probability.
               </div>
 
               {/* Model Artifact Tag */}
-              <div className="text-[9px] font-mono text-slate-500 mt-2 pt-1.5 border-t border-slate-200/60 flex items-center justify-between">
+              <div className="text-[9px] font-mono text-slate-500 mt-2 pt-1.5 border-t border-slate-200/70 flex items-center justify-between">
                 <span className="truncate max-w-[190px]" title={prediction.model_version}>
                   Pipeline: {prediction.model_version.replace('.joblib', '')}
                 </span>
@@ -302,16 +313,16 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
         </div>
 
         {/* Primary Metrics: Water Depth & Inundated Domain Extent */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-            <span className="text-[10px] uppercase font-mono text-gis-muted block">
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 shadow-gis-xs">
+            <span className="text-[9.5px] uppercase font-mono text-slate-400 font-bold block">
               {simDepth !== undefined ? 'SIMULATED DEPTH' : 'EXPECTED DEPTH'}
             </span>
-            <div className="text-xl font-display font-bold text-sky-800 mt-0.5">
+            <div className="text-xl font-mono font-bold text-sky-800 mt-0.5">
               {simDepth !== undefined ? simDepth.toFixed(2) : scenarioData.depthM.toFixed(2)}{' '}
-              <span className="text-xs font-normal text-gis-muted">m</span>
+              <span className="text-xs font-normal text-slate-500 font-sans">m</span>
             </div>
-            <div className="text-[9px] text-gis-muted font-mono mt-0.5">
+            <div className="text-[9px] text-slate-500 font-mono mt-0.5">
               {simMaxDepth !== undefined ? (
                 <>Peak: <strong>{simMaxDepth.toFixed(2)}m</strong></>
               ) : (
@@ -320,11 +331,11 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-            <span className="text-[10px] uppercase font-mono text-gis-muted block">
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 shadow-gis-xs">
+            <span className="text-[9.5px] uppercase font-mono text-slate-400 font-bold block">
               {currentSimStepMetrics ? 'INUNDATED AREA' : 'SIMULATION EXTENT'}
             </span>
-            <div className="text-xl font-display font-bold text-slate-900 mt-0.5">
+            <div className="text-xl font-mono font-bold text-slate-900 mt-0.5">
               {currentSimStepMetrics ? (
                 <>
                   {currentSimStepMetrics.inundated_area_km2.toFixed(2)}{' '}
@@ -334,11 +345,11 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                 <>{scenarioData.probability}%</>
               )}
             </div>
-            <div className="text-[9px] text-gis-muted font-mono mt-0.5">
+            <div className="text-[9px] text-slate-500 font-mono mt-0.5">
               {currentSimStepMetrics ? (
                 <span>{currentSimStepMetrics.inundated_cells_count} active cells</span>
               ) : (
-                <div className="w-full bg-slate-200 h-1 rounded-full mt-1.5 overflow-hidden">
+                <div className="w-full bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
                   <div
                     className="bg-sky-600 h-full rounded-full"
                     style={{ width: `${scenarioData.probability}%` }}
@@ -350,27 +361,27 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
         </div>
 
         {/* Dynamic Impact Summary */}
-        <div className="space-y-2 pt-1 border-t border-slate-100">
-          <div className="flex items-center justify-between text-[10px] font-mono text-gis-muted uppercase font-bold">
+        <div className="space-y-1.5 pt-1 border-t border-slate-100">
+          <div className="flex items-center justify-between text-[9.5px] font-mono text-slate-400 uppercase font-bold">
             <span>URBAN IMPACT ESTIMATE</span>
-            <span className="text-sky-700">{timelineMetrics.stageName}</span>
+            <span className="text-sky-700 font-semibold">{timelineMetrics.stageName}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-            <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">STRUCTURES</span>
+            <div className="p-2 rounded bg-slate-50/90 border border-slate-200">
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">STRUCTURES</span>
               <span className="font-bold text-slate-800">{timelineMetrics.affectedStructures} units</span>
             </div>
-            <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">POPULATION</span>
+            <div className="p-2 rounded bg-slate-50/90 border border-slate-200">
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">POPULATION</span>
               <span className="font-bold text-slate-800">~{timelineMetrics.populationAtRisk.toLocaleString()}</span>
             </div>
-            <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">ROADS AT RISK</span>
+            <div className="p-2 rounded bg-slate-50/90 border border-slate-200">
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">ROADS AT RISK</span>
               <span className="font-bold text-slate-800">{timelineMetrics.affectedRoadSegments} segments</span>
             </div>
-            <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">CRITICAL ASSETS</span>
+            <div className="p-2 rounded bg-slate-50/90 border border-slate-200">
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">CRITICAL ASSETS</span>
               <span className="font-bold text-slate-800">{timelineMetrics.criticalFacilitiesExposed} facilities</span>
             </div>
           </div>
@@ -378,7 +389,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
 
         {/* Stormwater Conduit Capacity */}
         <div className="space-y-1.5 pt-1 border-t border-slate-100">
-          <div className="flex items-center justify-between text-[10px] font-mono text-gis-muted uppercase font-bold">
+          <div className="flex items-center justify-between text-[9.5px] font-mono text-slate-400 uppercase font-bold">
             <span>STORMWATER NETWORK</span>
             <span className={`text-[10px] font-bold ${
               timelineMetrics.drainStressState === 'SURCHARGING OVERFLOW' ? 'text-rose-600' :
@@ -389,15 +400,15 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
           </div>
           <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] font-mono">
             <div className="p-1.5 rounded bg-slate-50 border border-slate-200">
-              <span className="text-gis-muted block text-[8px]">STRESSED</span>
+              <span className="text-slate-400 block text-[8px] uppercase font-bold">STRESSED</span>
               <span className="font-bold text-slate-800">{timelineMetrics.stressedDrainsCount}</span>
             </div>
             <div className="p-1.5 rounded bg-slate-50 border border-slate-200">
-              <span className="text-gis-muted block text-[8px]">OVERLOADED</span>
+              <span className="text-slate-400 block text-[8px] uppercase font-bold">OVERLOADED</span>
               <span className="font-bold text-slate-800">{timelineMetrics.overloadedSegmentsCount}</span>
             </div>
             <div className="p-1.5 rounded bg-slate-50 border border-slate-200">
-              <span className="text-gis-muted block text-[8px]">OVERFLOW</span>
+              <span className="text-slate-400 block text-[8px] uppercase font-bold">OVERFLOW</span>
               <span className="font-bold text-slate-800">{timelineMetrics.overflowZonesCount}</span>
             </div>
           </div>
@@ -405,15 +416,15 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
 
         {/* Hydrology & Water Balance Section */}
         <div className="space-y-1.5 pt-1 border-t border-slate-100">
-          <div className="flex items-center justify-between text-[10px] font-mono text-gis-muted uppercase font-bold">
+          <div className="flex items-center justify-between text-[9.5px] font-mono text-slate-400 uppercase font-bold">
             <span>HYDROLOGY & WATER BALANCE</span>
-            <span className="text-[10px] font-bold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
+            <span className="text-[9.5px] font-bold text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
               {currentSimStepMetrics ? '2D SIMULATION' : 'SCENARIO ESTIMATE'}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-1.5 text-xs font-mono">
             <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">RUNOFF EXCESS</span>
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">RUNOFF EXCESS</span>
               <span className="font-bold text-slate-800">
                 {currentSimStepMetrics
                   ? `${currentSimStepMetrics.rainfall_excess_mm.toFixed(1)} mm`
@@ -421,7 +432,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
               </span>
             </div>
             <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">INFILTRATION</span>
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">INFILTRATION</span>
               <span className="font-bold text-slate-800">
                 {currentSimStepMetrics
                   ? `${currentSimStepMetrics.infiltrated_depth_mm.toFixed(1)} mm`
@@ -429,7 +440,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
               </span>
             </div>
             <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">DRAIN REMOVAL</span>
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">DRAIN REMOVAL</span>
               <span className="font-bold text-slate-800">
                 {currentSimStepMetrics
                   ? `${Math.round(currentSimStepMetrics.drainage_removed_volume_m3).toLocaleString()} m³`
@@ -437,7 +448,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
               </span>
             </div>
             <div className="p-2 rounded bg-slate-50 border border-slate-200">
-              <span className="text-[9px] text-gis-muted block">SURFACE STORAGE</span>
+              <span className="text-[8.5px] text-slate-400 block uppercase font-bold">SURFACE STORAGE</span>
               <span className="font-bold text-sky-800">
                 {currentSimStepMetrics
                   ? `${Math.round(currentSimStepMetrics.surface_storage_volume_m3).toLocaleString()} m³`
@@ -454,10 +465,10 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
         </div>
 
         {/* Model Explanation: WHY THIS AREA? */}
-        <div className="space-y-2 pt-1 border-t border-slate-100">
-          <div className="flex items-center justify-between text-[10px] font-mono text-gis-muted uppercase font-bold">
+        <div className="space-y-1.5 pt-1 border-t border-slate-100">
+          <div className="flex items-center justify-between text-[9.5px] font-mono text-slate-400 uppercase font-bold">
             <span className="flex items-center space-x-1">
-              <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
+              <HelpCircle className="w-3 h-3 text-slate-400" />
               <span>WHY THIS AREA?</span>
             </span>
             <span className="text-slate-500 font-normal">Conf: {scenarioData.confidencePercent}%</span>
@@ -469,8 +480,8 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                 <span>Elevation ({location.elevationM}m MSL)</span>
                 <span className="font-bold text-slate-900">{xai.elevationContribution}%</span>
               </div>
-              <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden mt-0.5">
-                <div className="bg-sky-700 h-full rounded-full" style={{ width: `${xai.elevationContribution}%` }} />
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-0.5">
+                <div className="bg-sky-700 h-full rounded-full transition-all duration-300" style={{ width: `${xai.elevationContribution}%` }} />
               </div>
             </div>
 
@@ -479,8 +490,8 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                 <span>Drain Distance ({location.drainDistanceM}m)</span>
                 <span className="font-bold text-slate-900">{xai.drainageContribution}%</span>
               </div>
-              <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden mt-0.5">
-                <div className="bg-sky-600 h-full rounded-full" style={{ width: `${xai.drainageContribution}%` }} />
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-0.5">
+                <div className="bg-sky-600 h-full rounded-full transition-all duration-300" style={{ width: `${xai.drainageContribution}%` }} />
               </div>
             </div>
 
@@ -489,8 +500,8 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                 <span>Impervious ({Math.round(location.imperviousRatio * 100)}%)</span>
                 <span className="font-bold text-slate-900">{xai.imperviousContribution}%</span>
               </div>
-              <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden mt-0.5">
-                <div className="bg-sky-500 h-full rounded-full" style={{ width: `${xai.imperviousContribution}%` }} />
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-0.5">
+                <div className="bg-sky-500 h-full rounded-full transition-all duration-300" style={{ width: `${xai.imperviousContribution}%` }} />
               </div>
             </div>
 
@@ -499,8 +510,8 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
                 <span>Rainfall ({rainfall} mm/hr)</span>
                 <span className="font-bold text-slate-900">{xai.rainfallContribution}%</span>
               </div>
-              <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden mt-0.5">
-                <div className="bg-sky-400 h-full rounded-full" style={{ width: `${xai.rainfallContribution}%` }} />
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-0.5">
+                <div className="bg-sky-400 h-full rounded-full transition-all duration-300" style={{ width: `${xai.rainfallContribution}%` }} />
               </div>
             </div>
           </div>
@@ -509,22 +520,22 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
         {/* 90% Prediction Interval */}
         <div className="space-y-1.5 pt-1 border-t border-slate-100">
           <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-[10px] text-gis-muted uppercase font-bold">PREDICTION INTERVAL (90%)</span>
+            <span className="text-[9.5px] text-slate-400 uppercase font-bold">PREDICTION INTERVAL (90%)</span>
             <span className="text-xs font-bold text-slate-800">
               {scenarioData.interval90[0].toFixed(2)}m — {scenarioData.interval90[1].toFixed(2)}m
             </span>
           </div>
 
-          <div className="relative h-2 bg-slate-100 rounded border border-slate-200 flex items-center px-1">
+          <div className="relative h-2.5 bg-slate-100 rounded border border-slate-200 flex items-center px-1">
             <div
-              className="absolute h-1 bg-sky-200 border-l border-r border-sky-600"
+              className="absolute h-1.5 bg-sky-200 border-l-2 border-r-2 border-sky-600 rounded-xs"
               style={{
                 left: `${Math.min(75, Math.max(10, scenarioData.interval90[0] * 50))}%`,
                 right: `${Math.max(5, 100 - scenarioData.interval90[1] * 65)}%`,
               }}
             />
             <div
-              className="absolute w-1.5 h-2 bg-sky-800 rounded-xs"
+              className="absolute w-2 h-2.5 bg-sky-800 rounded-xs shadow-gis-xs -translate-x-1"
               style={{ left: `${Math.min(85, Math.max(15, scenarioData.depthM * 60))}%` }}
             />
           </div>
@@ -533,12 +544,12 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
 
       {/* Flood Depth Scale Footnote */}
       <div className="p-3 bg-slate-50 border-t border-slate-200 text-xs">
-        <div className="text-[9px] font-mono text-gis-muted font-bold uppercase mb-1.5 flex justify-between">
+        <div className="text-[9px] font-mono text-slate-400 font-bold uppercase mb-1.5 flex justify-between">
           <span>WATER DEPTH SURFACE COLOR</span>
           <span>0m — 1m+</span>
         </div>
         <div className="flex items-center space-x-1 text-[9px] font-mono">
-          <span className="flex-1 text-center py-0.5 rounded bg-sky-100 text-sky-900 font-medium">&lt;5cm</span>
+          <span className="flex-1 text-center py-0.5 rounded bg-sky-100 text-sky-900 font-medium border border-sky-200/50">&lt;5cm</span>
           <span className="flex-1 text-center py-0.5 rounded bg-sky-300 text-sky-950 font-medium">15cm</span>
           <span className="flex-1 text-center py-0.5 rounded bg-sky-500 text-white font-medium">30cm</span>
           <span className="flex-1 text-center py-0.5 rounded bg-sky-700 text-white font-medium">60cm</span>

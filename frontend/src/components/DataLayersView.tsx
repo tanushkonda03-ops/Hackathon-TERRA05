@@ -52,7 +52,7 @@ export const DataLayersView: React.FC = () => {
       name: 'Rainfall Observations & Radar Telemetry',
       type: 'Time Series Scenario Grid',
       status: 'SYNTHETIC SCENARIO INGESTION',
-      statusColor: 'cyan',
+      statusColor: 'sky',
       resolution: '15-min Intervals',
       lastUpdated: 'Real-time Scenario Engine',
       provider: 'IMD Mumbai Colaba / Santacruz Radar Interface',
@@ -69,26 +69,26 @@ export const DataLayersView: React.FC = () => {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6 select-none">
-      <div className="flex items-center justify-between border-b border-command-700/80 pb-4">
+    <div className="flex-1 overflow-y-auto p-6 space-y-6 select-none bg-slate-50/50 min-h-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gis-border pb-4 bg-white p-5 rounded-xl shadow-gis-xs border">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-bold">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-sky-50 text-sky-700 border border-sky-200 font-bold">
               DATA PIPELINE
             </span>
-            <span className="text-xs font-mono text-slate-400">WHAT THE MAP USES</span>
+            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">WHAT THE MAP USES</span>
           </div>
-          <h1 className="text-xl font-tech font-bold text-white mt-1">
+          <h1 className="text-xl font-bold text-slate-900 mt-1 tracking-tight">
             Information used by the map
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             These are the sources that help the app estimate where flood water may collect.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 text-xs font-mono text-slate-400 bg-command-850 px-3 py-1.5 rounded-lg border border-command-700">
-          <HardDrive className="w-4 h-4 text-cyan-400" />
-          <span>7 / 7 CATALOGS READY</span>
+        <div className="flex items-center space-x-2 text-xs font-mono text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 shadow-gis-xs">
+          <HardDrive className="w-4 h-4 text-sky-700" />
+          <span className="font-bold">7 / 7 CATALOGS READY</span>
         </div>
       </div>
 
@@ -97,30 +97,34 @@ export const DataLayersView: React.FC = () => {
         {sources.map((item, idx) => (
           <div
             key={idx}
-            className="p-4 rounded-lg bg-command-900 border border-command-700 hover:border-cyan-500/40 transition-colors shadow-hud space-y-2.5"
+            className="p-4 rounded-xl bg-white border border-gis-border hover:border-sky-300 transition-colors shadow-gis-xs space-y-3"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="text-xs font-tech font-bold text-slate-100">{item.name}</h3>
-                <span className="text-[10px] font-mono text-slate-400">{item.provider}</span>
+                <h3 className="text-xs font-bold text-slate-900">{item.name}</h3>
+                <span className="text-[10px] font-mono text-slate-500">{item.provider}</span>
               </div>
-              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/30">
+              <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded shrink-0 border ${
+                item.statusColor === 'emerald'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-sky-50 text-sky-700 border-sky-200'
+              }`}>
                 {item.status}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono bg-command-950/60 p-2 rounded">
+            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono bg-slate-50 p-2.5 rounded-lg border border-slate-100">
               <div>
-                <span className="text-slate-500">FORMAT:</span>{' '}
-                <span className="text-slate-300">{item.type}</span>
+                <span className="text-slate-400 font-bold">FORMAT:</span>{' '}
+                <span className="text-slate-700">{item.type}</span>
               </div>
               <div>
-                <span className="text-slate-500">GRANULARITY:</span>{' '}
-                <span className="text-cyan-300">{item.resolution}</span>
+                <span className="text-slate-400 font-bold">GRANULARITY:</span>{' '}
+                <span className="text-sky-800 font-semibold">{item.resolution}</span>
               </div>
-              <div className="col-span-2">
-                <span className="text-slate-500">BENCHMARK CYCLE:</span>{' '}
-                <span className="text-slate-300">{item.lastUpdated}</span>
+              <div className="col-span-2 pt-1 border-t border-slate-200/60">
+                <span className="text-slate-400 font-bold">BENCHMARK CYCLE:</span>{' '}
+                <span className="text-slate-700">{item.lastUpdated}</span>
               </div>
             </div>
           </div>
@@ -128,8 +132,8 @@ export const DataLayersView: React.FC = () => {
       </div>
 
       {/* Architecture Disclaimer */}
-      <div className="p-4 rounded-lg bg-command-850 border border-command-700 text-xs text-slate-400 leading-relaxed font-sans">
-        <strong className="text-cyan-400 font-tech uppercase block mb-1">Architecture Integration Note:</strong>
+      <div className="p-4 rounded-xl bg-sky-50/70 border border-sky-200 text-xs text-slate-700 leading-relaxed shadow-gis-xs">
+        <strong className="text-sky-900 font-bold uppercase block mb-1">Architecture Integration Note:</strong>
         This prototype renders spatial slices locally. In production, these layers connect directly to BMC’s enterprise GIS, WMS/WFS map servers, and live IMD Doppler radar webhooks via an asynchronous spatial indexing engine.
       </div>
     </div>

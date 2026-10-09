@@ -22,14 +22,13 @@ import {
   Pause, 
   RotateCcw, 
   CloudRain, 
-  Clock, 
   Info, 
   MapPin, 
   Terminal,
   Activity,
   X,
-  Server,
-  Droplets
+  PanelRightOpen,
+  ChevronRight
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -62,6 +61,9 @@ export const App: React.FC = () => {
 
   // Camera preset mode
   const [cameraPreset, setCameraPreset] = useState<'3D' | 'TOP' | 'RESET'>('3D');
+
+  // Panel collapse toggle for wide map exploration
+  const [isIntelligencePanelOpen, setIsIntelligencePanelOpen] = useState<boolean>(true);
 
   // Dynamic Mapbox status
   const [mapStatus, setMapStatus] = useState<'CONNECTING' | 'ONLINE' | 'ERROR'>('CONNECTING');
@@ -254,60 +256,64 @@ export const App: React.FC = () => {
   const currentSimStepMetrics = simulationData?.timesteps?.[Math.min(timelineStep, (simulationData?.timesteps?.length || 1) - 1)];
 
   return (
-    <div className="w-screen h-screen flex flex-col bg-gis-bg text-gis-text overflow-hidden font-sans select-none">
-      {/* Top Header */}
-      <header className="h-11 bg-white border-b border-gis-border px-4 flex items-center justify-between z-30 shadow-xs">
+    <div className="w-screen h-screen flex flex-col bg-gis-bg text-slate-900 overflow-hidden font-sans select-none">
+      {/* Top Application Header */}
+      <header className="h-12 bg-white border-b border-gis-border px-4 flex items-center justify-between z-30 shadow-gis-xs shrink-0">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            <span className="font-display font-bold text-sm tracking-widest text-slate-900">TERRA05</span>
-            <span className="text-[10px] font-mono font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+            <span className="font-mono font-bold text-sm tracking-wider text-slate-950">TERRA05</span>
+            <span className="text-[10px] font-mono font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 shadow-gis-xs">
               MUMBAI URBAN FLOOD TWIN
             </span>
           </div>
 
           <span className="text-slate-300">|</span>
 
+          {/* Location Area Selector */}
           <div className="flex items-center space-x-1.5 text-xs">
             <MapPin className="w-3.5 h-3.5 text-sky-600 shrink-0" />
-            <span className="text-[11px] font-bold text-slate-700 hidden md:inline">AREA TO CHECK:</span>
+            <span className="text-[10.5px] font-mono font-bold text-slate-500 uppercase tracking-wider hidden md:inline">
+              AREA TO CHECK:
+            </span>
             <select
               value={selectedLocation?.id || ""}
               onChange={(e) => {
                 const loc = MUMBAI_GEO_LOCATIONS.find(l => l.id === e.target.value);
                 if (loc) setSelectedLocation(loc);
               }}
-              className="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded px-2.5 py-1 hover:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-xs cursor-pointer"
+              aria-label="Select Mumbai locality or ward to inspect"
+              className="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 hover:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 shadow-gis-xs cursor-pointer transition-colors"
             >
               {MUMBAI_GEO_LOCATIONS.map((loc) => (
                 <option key={loc.id} value={loc.id}>
-                  {loc.name}
+                  {loc.name} ({loc.ward})
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
           {/* Backend Status Indicator */}
-          <div className={`flex items-center space-x-1.5 text-xs font-mono px-2 py-0.5 rounded border ${
+          <div className={`flex items-center space-x-1.5 text-xs font-mono px-2.5 py-1 rounded-lg border shadow-gis-xs ${
             backendStatus === 'READY'
-              ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+              ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
               : backendStatus === 'DEGRADED'
-              ? 'text-amber-700 bg-amber-50 border-amber-200'
+              ? 'text-amber-800 bg-amber-50 border-amber-200'
               : backendStatus === 'CONNECTING'
-              ? 'text-sky-700 bg-sky-50 border-sky-200 animate-pulse'
+              ? 'text-sky-800 bg-sky-50 border-sky-200 animate-pulse'
               : 'text-slate-600 bg-slate-100 border-slate-200'
-          }`} title={systemStatus?.model?.detail || 'FastAPI Service'}>
+          }`} title={systemStatus?.model?.detail || 'FastAPI Service at 127.0.0.1:8000'}>
             <span className={`w-1.5 h-1.5 rounded-full ${
               backendStatus === 'READY'
-                ? 'bg-emerald-500'
+                ? 'bg-emerald-500 ring-2 ring-emerald-200'
                 : backendStatus === 'DEGRADED'
-                ? 'bg-amber-500'
+                ? 'bg-amber-500 ring-2 ring-amber-200'
                 : backendStatus === 'CONNECTING'
                 ? 'bg-sky-500'
                 : 'bg-slate-400'
             }`} />
-            <span className="text-[11px] font-semibold">
+            <span className="text-[10.5px] font-semibold">
               {backendStatus === 'READY' ? 'API & MODEL ONLINE' :
                backendStatus === 'DEGRADED' ? 'API DEGRADED' :
                backendStatus === 'CONNECTING' ? 'CONNECTING API...' : 'BACKEND OFFLINE'}
@@ -315,72 +321,71 @@ export const App: React.FC = () => {
           </div>
 
           {/* GIS Engine Status Indicator */}
-          <div className={`flex items-center space-x-1.5 text-xs font-mono px-2 py-0.5 rounded border ${
+          <div className={`hidden sm:flex items-center space-x-1.5 text-xs font-mono px-2.5 py-1 rounded-lg border shadow-gis-xs ${
             mapStatus === 'ONLINE'
-              ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+              ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
               : mapStatus === 'CONNECTING'
-              ? 'text-amber-700 bg-amber-50 border-amber-200 animate-pulse'
-              : 'text-rose-700 bg-rose-50 border-rose-200'
+              ? 'text-amber-800 bg-amber-50 border-amber-200 animate-pulse'
+              : 'text-rose-800 bg-rose-50 border-rose-200'
           }`}>
             <span className={`w-1.5 h-1.5 rounded-full ${
-              mapStatus === 'ONLINE' ? 'bg-emerald-500' : mapStatus === 'CONNECTING' ? 'bg-amber-500' : 'bg-rose-500'
+              mapStatus === 'ONLINE' ? 'bg-emerald-500 ring-2 ring-emerald-200' : mapStatus === 'CONNECTING' ? 'bg-amber-500' : 'bg-rose-500'
             }`} />
-            <span className="text-[11px] font-semibold">
+            <span className="text-[10.5px] font-semibold">
               {mapStatus === 'ONLINE' ? 'GIS ENGINE ONLINE' : mapStatus === 'CONNECTING' ? 'CONNECTING...' : 'ERROR'}
             </span>
           </div>
 
+          {/* Utility Dialog Buttons */}
           <button
             onClick={() => setShowHowItWorks(true)}
-            className="flex items-center space-x-1 text-xs font-semibold text-sky-800 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1 rounded transition-colors"
+            className="flex items-center space-x-1 text-xs font-mono font-bold text-sky-800 hover:text-sky-900 bg-sky-50 hover:bg-sky-100/80 border border-sky-200 px-2.5 py-1 rounded-lg shadow-gis-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
           >
-            <Info className="w-3 h-3" />
-            <span className="hidden md:inline">HOW TO USE</span>
+            <Info className="w-3.5 h-3.5" />
+            <span className="hidden md:inline text-[11px]">HOW TO USE</span>
           </button>
 
           <button
             onClick={() => setShowDecisionSupport(true)}
-            className="flex items-center space-x-1 text-xs font-semibold text-rose-800 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded transition-colors"
+            className="flex items-center space-x-1 text-xs font-mono font-bold text-rose-800 hover:text-rose-900 bg-rose-50 hover:bg-rose-100/80 border border-rose-200 px-2.5 py-1 rounded-lg shadow-gis-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
           >
-            <Activity className="w-3 h-3" />
-            <span className="hidden md:inline">RESPONSE PLAN</span>
+            <Activity className="w-3.5 h-3.5 text-rose-700" />
+            <span className="hidden md:inline text-[11px]">RESPONSE PLAN</span>
           </button>
 
           {/* Dev Diagnostics Toggle */}
           <button
             onClick={() => setShowDevDiagnostics(!showDevDiagnostics)}
-            className="flex items-center space-x-1 text-xs font-mono text-slate-500 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 border border-gis-border px-2 py-0.5 rounded transition-colors"
-            title="Toggle Developer Diagnostics Panel"
+            className={`flex items-center space-x-1 text-xs font-mono px-2 py-1 rounded-lg border shadow-gis-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+              showDevDiagnostics ? 'bg-slate-900 text-white border-slate-900' : 'text-slate-600 bg-slate-50 hover:bg-slate-100 border-gis-border'
+            }`}
+            title="Toggle System Diagnostics Telemetry"
           >
-            <Terminal className="w-3 h-3 text-slate-400" />
-            <span className="hidden lg:inline text-[11px]">TECH DETAILS</span>
+            <Terminal className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline text-[11px] font-semibold">TECH DETAILS</span>
           </button>
 
           {/* Prototype Notice Modal Trigger */}
           <button
             onClick={() => setShowDisclaimer(true)}
-            className="flex items-center space-x-1 text-xs font-mono text-slate-600 bg-slate-50 hover:bg-slate-100 border border-gis-border px-2 py-0.5 rounded transition-colors"
+            className="flex items-center space-x-1 text-xs font-mono text-slate-600 bg-slate-50 hover:bg-slate-100 border border-gis-border px-2 py-1 rounded-lg shadow-gis-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
           >
-            <Info className="w-3 h-3 text-slate-400" />
-            <span className="hidden md:inline text-[11px]">ABOUT THIS DEMO</span>
+            <Info className="w-3.5 h-3.5 text-slate-400" />
+            <span className="hidden md:inline text-[11px] font-semibold">ABOUT THIS DEMO</span>
           </button>
         </div>
       </header>
 
-      {/* Main Workspace */}
+      {/* Main Workspace Area */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Thin 64px Icon Rail */}
+        {/* Left Operational Navigation Rail */}
         <NavigationRail
           activeTab={activeTab}
-          onSelectTab={(tab) => {
-            setActiveTab(tab);
-            if (tab === 'drainage') setLayers((prev) => ({ ...prev, drainage: true }));
-            if (tab === 'uncertainty') setLayers((prev) => ({ ...prev, uncertainty: true }));
-          }}
+          onSelectTab={(tab) => setActiveTab(tab)}
         />
 
-        {/* Central Map Viewport (75-80% screen real estate) */}
-        <main className="flex-1 relative h-full w-full overflow-hidden">
+        {/* Central Map / Viewport Workspace */}
+        <main className="flex-1 relative h-full w-full overflow-hidden bg-slate-100">
           {activeTab === 'validation' ? (
             <div className="h-full bg-gis-bg overflow-y-auto">
               <HistoricalValidationView />
@@ -394,7 +399,7 @@ export const App: React.FC = () => {
               <ArchitectureView />
             </div>
           ) : (
-            /* REALISTIC MUMBAI URBAN FLOOD DIGITAL TWIN */
+            /* REALISTIC MUMBAI URBAN FLOOD DIGITAL TWIN VIEWPORT */
             <div className="relative w-full h-full">
               <MapboxMumbai
                 rainfall={rainfall}
@@ -410,7 +415,7 @@ export const App: React.FC = () => {
                 onDiagnosticsUpdate={(d) => setDiagnostics((prev) => ({ ...prev, ...d }))}
               />
 
-              {/* Map Layers & 2D/3D Buttons */}
+              {/* Map Layers & 2D/3D Controls */}
               <MapLayersControl
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
@@ -418,11 +423,11 @@ export const App: React.FC = () => {
               />
 
               {/* Redesigned Floating Simulation Controller */}
-              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-48px)] max-w-4xl z-30 pointer-events-none">
-                <div className="pointer-events-auto bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-float px-5 py-3 flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-5">
+              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-36px)] max-w-4xl z-30 pointer-events-none">
+                <div className="pointer-events-auto bg-white/95 backdrop-blur-md border border-gis-border rounded-2xl shadow-float px-5 py-3 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-4">
                     {/* Segmented Rainfall Selector */}
-                    <div className="flex items-center space-x-2 border-r border-slate-200 pr-4">
+                    <div className="flex items-center space-x-2 border-r border-slate-200 pr-4 shrink-0">
                       <div className="text-[10px] uppercase font-mono text-slate-400 font-bold flex items-center space-x-1">
                         <CloudRain className="w-3.5 h-3.5 text-sky-600" />
                         <span>RAIN</span>
@@ -439,9 +444,9 @@ export const App: React.FC = () => {
                                               rate === 100 ? 'DESIGN_RED_100MM' : 'DESIGN_CLOUDBURST_150MM';
                               setSelectedScenarioId(matchId);
                             }}
-                            className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all ${
-                              rainfall === rate && selectedScenarioId !== 'TS_2005_JULY26'
-                                ? 'bg-slate-900 text-white shadow-xs'
+                            className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold transition-all ${
+                              rainfall === rate && selectedScenarioId !== 'TS_2005_JULY26' && selectedScenarioId !== 'CUSTOM'
+                                ? 'bg-slate-900 text-white shadow-gis-xs'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -455,9 +460,9 @@ export const App: React.FC = () => {
                             setRainfall(150);
                             setSelectedScenarioId('TS_2005_JULY26');
                           }}
-                          className={`px-2 py-1 rounded text-[11px] font-mono font-bold transition-all ml-0.5 ${
+                          className={`px-2 py-1 rounded-md text-[10.5px] font-mono font-bold transition-all ml-0.5 ${
                             selectedScenarioId === 'TS_2005_JULY26'
-                              ? 'bg-rose-700 text-white shadow-xs'
+                              ? 'bg-rose-700 text-white shadow-gis-xs'
                               : 'text-rose-700 hover:bg-rose-50'
                           }`}
                           title="Historical 26 July 2005 Extreme Storm (944mm total depth, 276mm/hr peak)"
@@ -468,18 +473,18 @@ export const App: React.FC = () => {
                     </div>
 
                     {/* Physical Timestep Progression */}
-                    <div className="flex-1 flex flex-col space-y-1.5 px-1">
+                    <div className="flex-1 flex flex-col space-y-1.5 px-1 min-w-0">
                       <div className="flex items-center justify-between text-xs font-mono">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-bold text-slate-900">
+                        <div className="flex items-center space-x-2 truncate">
+                          <span className="font-bold text-slate-950">
                             {currentPhase.code}
                           </span>
-                          <span className="text-slate-400">·</span>
-                          <span className="font-medium text-slate-700">
-                            {currentPhase.name.toUpperCase()}
+                          <span className="text-slate-300">·</span>
+                          <span className="font-semibold text-slate-700 uppercase text-[11px]">
+                            {currentPhase.name}
                           </span>
                           {currentSimStepMetrics && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-sky-50 text-sky-800 border border-sky-200">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-50 text-sky-800 border border-sky-200">
                               {currentSimStepMetrics.rainfall_intensity_mm_per_hr.toFixed(0)} mm/hr
                             </span>
                           )}
@@ -489,7 +494,7 @@ export const App: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center space-x-3 text-[10px] text-slate-500 font-mono">
+                        <div className="flex items-center space-x-3 text-[10.5px] text-slate-500 font-mono shrink-0">
                           <span>
                             Flooded area: <strong className="text-slate-800">
                               {currentSimStepMetrics
@@ -503,7 +508,7 @@ export const App: React.FC = () => {
                             </span>
                           )}
                           {currentSimStepMetrics && (
-                            <span className="hidden sm:inline">
+                            <span className="hidden lg:inline">
                               Water held: <strong className="text-slate-700">{Math.round(currentSimStepMetrics.surface_storage_volume_m3).toLocaleString()} m³</strong>
                             </span>
                           )}
@@ -511,7 +516,7 @@ export const App: React.FC = () => {
                       </div>
 
                       {/* Timeline Scrubbing Bar */}
-                      <div className="flex items-center space-x-1 overflow-x-auto">
+                      <div className="flex items-center space-x-1 overflow-x-auto py-0.5">
                         {timelinePhases.slice(0, 16).map((phase) => {
                           const isCurrent = timelineStep === phase.step;
                           const isPast = timelineStep > phase.step;
@@ -522,11 +527,11 @@ export const App: React.FC = () => {
                                 setIsSimulating(false);
                                 setTimelineStep(phase.step);
                               }}
-                              className={`flex-1 py-1 px-1 rounded text-[10px] font-mono font-semibold transition-all text-center whitespace-nowrap ${
+                              className={`flex-1 py-1 px-1.5 rounded text-[10px] font-mono font-semibold transition-all text-center whitespace-nowrap ${
                                 isCurrent
-                                  ? 'bg-sky-800 text-white shadow-xs ring-1 ring-sky-900'
+                                  ? 'bg-sky-800 text-white shadow-gis-xs ring-1 ring-sky-900 font-bold'
                                   : isPast
-                                  ? 'bg-sky-50 text-sky-900 hover:bg-sky-100'
+                                  ? 'bg-sky-50 text-sky-900 hover:bg-sky-100 border border-sky-100'
                                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                               }`}
                               title={`${phase.code}: ${phase.name} (Rain: ${phase.intensity?.toFixed(0) ?? 0}mm/h)`}
@@ -537,67 +542,71 @@ export const App: React.FC = () => {
                         })}
                         <button
                           onClick={() => setSelectedScenarioId('CUSTOM')}
-                          className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all ${
+                          className={`px-2 py-1 rounded text-xs font-mono font-bold transition-all shrink-0 ${
                             selectedScenarioId === 'CUSTOM'
-                              ? 'bg-sky-700 text-white shadow-xs'
-                              : 'text-sky-700 hover:bg-sky-50'
+                              ? 'bg-sky-700 text-white shadow-gis-xs'
+                              : 'text-sky-700 hover:bg-sky-50 border border-sky-200/50'
                           }`}
                         >
                           CUSTOM
                         </button>
                       </div>
-                      {selectedScenarioId === 'CUSTOM' && (
-                        <div className="flex items-center gap-2 text-[11px] text-slate-600">
-                          <label className="flex items-center gap-1">
-                            Duration
-                            <input
-                              type="number"
-                              min="0.25"
-                              max="168"
-                              step="0.25"
-                              value={customDurationHours}
-                              onChange={(event) => setCustomDurationHours(Number(event.target.value))}
-                              className="w-16 rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900"
-                            />
-                            hours
-                          </label>
-                          <label className="flex items-center gap-1">
-                            Total rain
-                            <input
-                              type="number"
-                              min="0.1"
-                              max="5000"
-                              step="0.1"
-                              value={customTotalDepthMm}
-                              onChange={(event) => setCustomTotalDepthMm(Number(event.target.value))}
-                              className="w-20 rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900"
-                            />
-                            mm
-                          </label>
-                          <span className="text-slate-500">
-                            ({(customTotalDepthMm / customDurationHours).toFixed(2)} mm/hr average)
-                          </span>
-                        </div>
-                      )}
-                      <label className="flex items-center gap-1 text-[11px] text-slate-600 whitespace-nowrap">
-                        Tide
-                        <select
-                          value={tideLevel}
-                          onChange={(event) => setTideLevel(event.target.value as 'normal' | 'high' | 'extreme')}
-                          className="rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900"
-                        >
-                          <option value="normal">Normal</option>
-                          <option value="high">High</option>
-                          <option value="extreme">Extreme</option>
-                        </select>
-                      </label>
+
+                      {/* Custom inputs & Tide settings */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                        {selectedScenarioId === 'CUSTOM' && (
+                          <div className="flex items-center gap-2 text-[11px] text-slate-600 font-mono">
+                            <label className="flex items-center gap-1">
+                              Duration:
+                              <input
+                                type="number"
+                                min="0.25"
+                                max="168"
+                                step="0.25"
+                                value={customDurationHours}
+                                onChange={(event) => setCustomDurationHours(Number(event.target.value))}
+                                className="w-16 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-900"
+                              />
+                              h
+                            </label>
+                            <label className="flex items-center gap-1">
+                              Total rain:
+                              <input
+                                type="number"
+                                min="0.1"
+                                max="5000"
+                                step="0.1"
+                                value={customTotalDepthMm}
+                                onChange={(event) => setCustomTotalDepthMm(Number(event.target.value))}
+                                className="w-20 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-900"
+                              />
+                              mm
+                            </label>
+                            <span className="text-slate-400">
+                              ({(customTotalDepthMm / customDurationHours).toFixed(2)} mm/hr avg)
+                            </span>
+                          </div>
+                        )}
+                        <label className="flex items-center gap-1.5 text-[11px] text-slate-600 font-mono ml-auto">
+                          <span className="text-slate-400 font-semibold uppercase text-[10px]">Tide condition:</span>
+                          <select
+                            value={tideLevel}
+                            onChange={(event) => setTideLevel(event.target.value as 'normal' | 'high' | 'extreme')}
+                            className="rounded-md border border-slate-300 px-2 py-0.5 text-xs text-slate-900 bg-white"
+                          >
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="extreme">Extreme</option>
+                          </select>
+                        </label>
+                      </div>
                     </div>
 
                     {/* Play / Pause / Reset Controls */}
-                    <div className="flex items-center space-x-2 border-l border-slate-200 pl-4">
+                    <div className="flex items-center space-x-1.5 border-l border-slate-200 pl-4 shrink-0">
                       <button
                         onClick={handleToggleSimulation}
-                        className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-mono font-bold tracking-wide transition-all shadow-xs ${
+                        className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold tracking-wide transition-all shadow-gis-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                           isSimulating
                             ? 'bg-amber-600 hover:bg-amber-700 text-white'
                             : 'bg-slate-900 hover:bg-slate-800 text-white'
@@ -611,14 +620,14 @@ export const App: React.FC = () => {
                         ) : (
                           <>
                             <Play className="w-3.5 h-3.5 fill-current" />
-                            <span>{timelineStep >= maxSteps ? 'REPLAY' : 'RUN SCENARIO'}</span>
+                            <span>{timelineStep >= maxSteps ? 'REPLAY' : 'RUN'}</span>
                           </>
                         )}
                       </button>
 
                       <button
                         onClick={handleResetSimulation}
-                        className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all"
+                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-gis-xs"
                         title="Reset Timeline to Rainfall Onset (T+00)"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
@@ -627,7 +636,7 @@ export const App: React.FC = () => {
                   </div>
 
                   {/* Scenario Metadata & Scientific Notice Footer */}
-                  <div className="border-t border-slate-100 pt-1 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                  <div className="border-t border-slate-100 pt-1.5 flex items-center justify-between text-[10px] font-mono text-slate-500">
                     <div className="flex items-center space-x-2">
                       <span className="text-slate-400 font-semibold uppercase">SCENARIO:</span>
                       <span className="font-bold text-slate-800">
@@ -653,40 +662,63 @@ export const App: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Re-open Intelligence Panel Floating Button if collapsed */}
+              {!isIntelligencePanelOpen && selectedLocation && (
+                <button
+                  onClick={() => setIsIntelligencePanelOpen(true)}
+                  className="absolute right-4 top-16 z-30 bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-gis px-3 py-2 text-xs font-mono font-bold text-slate-700 hover:text-slate-900 hover:border-slate-300 flex items-center space-x-1.5 transition-all"
+                  title="Expand Intelligence Panel"
+                >
+                  <PanelRightOpen className="w-4 h-4 text-sky-700" />
+                  <span>INTELLIGENCE PANEL</span>
+                </button>
+              )}
             </div>
           )}
         </main>
 
-        {/* Right Intelligence Panel (Fixed 320px width) */}
-        {selectedLocation && activeTab !== 'validation' && activeTab !== 'data' && activeTab !== 'architecture' && (
-          <IntelligencePanel
-            location={selectedLocation}
-            rainfall={rainfall}
-            timelineMetrics={timelineMetrics}
-            simulationData={simulationData}
-            simStepIndex={timelineStep}
-          />
+        {/* Right Intelligence Panel with Smooth Collapse Toggle */}
+        {selectedLocation && activeTab !== 'validation' && activeTab !== 'data' && activeTab !== 'architecture' && isIntelligencePanelOpen && (
+          <div className="relative h-full flex shrink-0">
+            {/* Collapse button on left edge */}
+            <button
+              onClick={() => setIsIntelligencePanelOpen(false)}
+              className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 bg-white border border-gis-border shadow-gis-xs rounded-full p-1 text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+              title="Collapse Panel (Maximize Map)"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+
+            <IntelligencePanel
+              location={selectedLocation}
+              rainfall={rainfall}
+              timelineMetrics={timelineMetrics}
+              simulationData={simulationData}
+              simStepIndex={timelineStep}
+            />
+          </div>
         )}
       </div>
 
       {/* Developer Map Diagnostics Modal */}
       {showDevDiagnostics && (
-        <div className="fixed bottom-24 right-84 z-50 w-88 bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-float p-4 font-mono text-xs">
-          <div className="flex items-center justify-between border-b border-gis-border pb-2 mb-3">
+        <div className="fixed bottom-20 right-6 z-50 w-84 bg-white/95 backdrop-blur-md border border-gis-border rounded-2xl shadow-float p-4 font-mono text-xs">
+          <div className="flex items-center justify-between border-b border-gis-border pb-2.5 mb-3">
             <span className="font-bold text-slate-900 flex items-center space-x-1.5">
               <Activity className="w-3.5 h-3.5 text-sky-700" />
               <span>SYSTEM DIAGNOSTICS</span>
             </span>
             <button
               onClick={() => setShowDevDiagnostics(false)}
-              className="text-slate-400 hover:text-slate-700"
+              className="text-slate-400 hover:text-slate-700 p-0.5 rounded"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           <div className="space-y-1.5 text-[11px]">
-            <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">FRONTEND & GIS</div>
+            <div className="text-[9.5px] uppercase font-bold text-slate-400 mb-1">FRONTEND & GIS</div>
             <div className="flex justify-between">
               <span className="text-slate-500">Map Engine:</span>
               <span className="font-bold text-emerald-600">MapLibre GL v4+</span>
@@ -706,7 +738,7 @@ export const App: React.FC = () => {
               </span>
             </div>
 
-            <div className="border-t border-slate-100 pt-2 text-[10px] uppercase font-bold text-slate-400 mt-2 mb-1">
+            <div className="border-t border-slate-100 pt-2 text-[9.5px] uppercase font-bold text-slate-400 mt-2 mb-1">
               FASTAPI BACKEND & ML
             </div>
             <div className="flex justify-between">
@@ -751,29 +783,46 @@ export const App: React.FC = () => {
                 Offline (Using 2D Hydrodynamic Surface Runoff Prototype)
               </span>
             </div>
+            {simulationError && (
+              <div className="flex justify-between text-rose-600">
+                <span>Simulation Diagnostic:</span>
+                <span className="font-bold">{simulationError}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+              <span>GIS Canvas:</span>
+              <span>{diagnostics.mapLoaded ? 'Rendered' : 'Initializing'} · {diagnostics.containerWidth > 0 ? `${diagnostics.containerWidth}x${diagnostics.containerHeight}` : 'Active'}</span>
+            </div>
           </div>
         </div>
       )}
 
       {/* Prototype Notice Modal */}
       {showDisclaimer && (
-        <div className="fixed inset-0 z-50 bg-slate-900/30 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-float border border-gis-border max-w-md w-full p-5 space-y-4 font-mono">
-            <div className="flex items-center justify-between border-b border-gis-border pb-2">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDisclaimer(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white rounded-2xl shadow-float border border-gis-border max-w-md w-full p-5 space-y-4 font-mono">
+            <div className="flex items-center justify-between border-b border-gis-border pb-2.5">
               <span className="font-bold text-slate-900 text-sm">PROTOTYPE NOTICE</span>
               <button
                 onClick={() => setShowDisclaimer(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 p-0.5 rounded"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
               TERRA05 is an integrated urban stormwater flood susceptibility and digital twin system for the Mithi River catchment corridor, powered by a FastAPI backend and MapLibre GL frontend.
             </p>
 
-            <div className="p-3 bg-slate-50 rounded-lg text-[11px] text-slate-700 space-y-1">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-700 space-y-1.5 font-mono">
               <div>• <strong>FastAPI Backend:</strong> Real-time REST API at http://127.0.0.1:8000.</div>
               <div>• <strong>ML Susceptibility:</strong> Random Forest spatial model on 47,758 grid cells; uncalibrated historical susceptibility score (not a rainfall event probability).</div>
               <div>• <strong>Rainfall Catalogue:</strong> 9 validated scenarios (historical 2005 + design storms).</div>
@@ -782,7 +831,7 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => setShowDisclaimer(false)}
-              className="w-full py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 transition-colors"
+              className="w-full py-2.5 bg-slate-900 text-white text-xs font-mono font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-gis-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
             >
               UNDERSTOOD
             </button>

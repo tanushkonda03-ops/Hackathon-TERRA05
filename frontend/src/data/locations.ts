@@ -1987,3 +1987,54 @@ export function createLocationFromGridFeature(props: any, lng: number, lat: numb
     },
   };
 }
+
+// MCGM 24 Administrative Ward Hydrological Catchment Bounding Boxes (with connectivity buffer)
+export interface CatchmentBounds {
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
+}
+
+export const WARD_CATCHMENT_BOUNDS: Record<string, CatchmentBounds> = {
+  "A": { minLng: 72.79754, minLat: 18.88673, maxLng: 72.85283, maxLat: 18.95579 },
+  "B": { minLng: 72.82575, minLat: 18.94137, maxLng: 72.85514, maxLat: 18.9709 },
+  "C": { minLng: 72.81292, minLat: 18.93546, maxLng: 72.83966, maxLat: 18.96787 },
+  "D": { minLng: 72.78567, minLat: 18.93315, maxLng: 72.8325, maxLat: 18.98634 },
+  "E": { minLng: 72.81259, minLat: 18.95567, maxLng: 72.8619, maxLat: 18.99449 },
+  "F/N": { minLng: 72.83681, minLat: 19.00229, maxLng: 72.89101, maxLat: 19.05831 },
+  "F/S": { minLng: 72.82689, minLat: 18.97238, maxLng: 72.87569, maxLat: 19.02292 },
+  "G/N": { minLng: 72.82208, minLat: 19.0014, maxLng: 72.87419, maxLat: 19.06035 },
+  "G/S": { minLng: 72.80213, minLat: 18.97205, maxLng: 72.84236, maxLat: 19.0337 },
+  "H/E": { minLng: 72.83315, minLat: 19.04464, maxLng: 72.88219, maxLat: 19.10189 },
+  "H/W": { minLng: 72.81151, minLat: 19.0345, maxLng: 72.84882, maxLat: 19.09798 },
+  "K/E": { minLng: 72.83682, minLat: 19.07253, maxLng: 72.89444, maxLat: 19.15007 },
+  "K/W": { minLng: 72.77466, minLat: 19.07183, maxLng: 72.85616, maxLat: 19.16673 },
+  "L": { minLng: 72.86026, minLat: 19.0359, maxLng: 72.91401, maxLat: 19.13532 },
+  "M/E": { minLng: 72.88881, minLat: 18.9885, maxLng: 72.96853, maxLat: 19.08174 },
+  "M/W": { minLng: 72.87133, minLat: 18.99052, maxLng: 72.91901, maxLat: 19.07969 },
+  "N": { minLng: 72.88496, minLat: 19.05359, maxLng: 72.96536, maxLat: 19.12358 },
+  "P/N": { minLng: 72.77263, minLat: 19.13448, maxLng: 72.90627, maxLat: 19.23091 },
+  "P/S": { minLng: 72.80964, minLat: 19.12331, maxLng: 72.90097, maxLat: 19.18579 },
+  "R/C": { minLng: 72.77011, minLat: 19.19569, maxLng: 72.91992, maxLat: 19.27106 },
+  "R/N": { minLng: 72.82907, minLat: 19.23088, maxLng: 72.88764, maxLat: 19.27622 },
+  "R/S": { minLng: 72.80022, minLat: 19.1791, maxLng: 72.91051, maxLat: 19.22249 },
+  "S": { minLng: 72.87833, minLat: 19.09513, maxLng: 72.97932, maxLat: 19.17323 },
+  "T": { minLng: 72.87957, minLat: 19.13088, maxLng: 72.98697, maxLat: 19.22358 },
+};
+
+export const getLocationCatchmentBounds = (location?: MumbaiLocation | null): CatchmentBounds | null => {
+  if (!location) return null;
+  const wardClean = location.ward?.replace(/ward/i, '').trim().toUpperCase();
+  if (wardClean && WARD_CATCHMENT_BOUNDS[wardClean]) {
+    return WARD_CATCHMENT_BOUNDS[wardClean];
+  }
+  // Geographic fallback based on coordinate envelope with hydrologic connectivity buffer
+  return {
+    minLng: location.lng - 0.015,
+    minLat: location.lat - 0.015,
+    maxLng: location.lng + 0.015,
+    maxLat: location.lat + 0.015,
+  };
+};
+
