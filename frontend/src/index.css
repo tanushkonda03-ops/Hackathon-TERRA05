@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --gis-bg: #F8FAFC;
+  --gis-surface: #FFFFFF;
+  --gis-border: #E2E8F0;
+  --gis-text: #0F172A;
+  --gis-muted: #64748B;
+  --gis-brand: #0284C7;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Crisp Clean GIS Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Light Theme Clean GIS Panel Styles */
+.gis-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+}
+
+.gis-card-subtle {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+}
+
+.gis-glass {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #E2E8F0;
+}
+
+/* Refined MapLibre GL Controls Integration */
+.maplibregl-ctrl-group {
+  border-radius: 8px !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.08) !important;
+  background-color: #FFFFFF !important;
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-group button {
+  width: 28px !important;
+  height: 28px !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+}
+
+.maplibregl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+
+.maplibregl-ctrl-scale {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid #CBD5E1 !important;
+  border-top: none !important;
+  color: #334155 !important;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 1px 6px !important;
+  border-radius: 0 0 4px 4px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+.maplibregl-ctrl-bottom-right {
+  right: 14px !important;
+  bottom: 24px !important;
+}
+
+.maplibregl-ctrl-bottom-left {
+  left: 14px !important;
+  bottom: 16px !important;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
