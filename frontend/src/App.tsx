@@ -246,9 +246,23 @@ export const App: React.FC = () => {
 
           <span className="text-slate-300">|</span>
 
-          <div className="hidden sm:flex items-center space-x-1.5 text-xs text-slate-500 font-mono">
-            <MapPin className="w-3.5 h-3.5 text-slate-400" />
-            <span>Mithi River Basin Corridor (72.88°E, 19.07°N)</span>
+          <div className="flex items-center space-x-1.5 text-xs">
+            <MapPin className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+            <span className="text-[11px] font-bold text-slate-700 hidden md:inline">HOTSPOT:</span>
+            <select
+              value={selectedLocation?.id || ""}
+              onChange={(e) => {
+                const loc = MUMBAI_GEO_LOCATIONS.find(l => l.id === e.target.value);
+                if (loc) setSelectedLocation(loc);
+              }}
+              className="text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded px-2.5 py-1 hover:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-xs cursor-pointer"
+            >
+              {MUMBAI_GEO_LOCATIONS.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

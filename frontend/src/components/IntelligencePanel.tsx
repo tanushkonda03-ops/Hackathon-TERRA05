@@ -164,6 +164,29 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
           </div>
         </div>
 
+        {/* Layman Action & Guidance Cards */}
+        {location.citizenAdvice && (
+          <div className="p-2.5 rounded-lg bg-sky-50 border border-sky-200 text-xs space-y-1 shadow-xs">
+            <div className="flex items-center space-x-1.5 text-sky-900 font-bold">
+              <span>Citizen Advisory</span>
+            </div>
+            <p className="text-[11px] text-slate-700 leading-relaxed">
+              {location.citizenAdvice}
+            </p>
+          </div>
+        )}
+
+        {location.authorityAction && (
+          <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-xs space-y-1 shadow-xs">
+            <div className="flex items-center space-x-1.5 text-amber-900 font-bold">
+              <span>Municipal (BMC) Deployment</span>
+            </div>
+            <p className="text-[11px] text-slate-700 leading-relaxed">
+              {location.authorityAction}
+            </p>
+          </div>
+        )}
+
         {/* ML Flood Susceptibility Card (FastAPI Backend Model) */}
         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
           <div className="flex items-center justify-between">
