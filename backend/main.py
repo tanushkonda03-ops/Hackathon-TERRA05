@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings
@@ -18,14 +19,28 @@ from .schemas import (
     SwmmRunRequest,
     SwmmRunResponse,
     SwmmStatusResponse,
+    SwmmSimulationRequest,
+    SwmmSimulationResponse,
+    SwmmComparisonRequest,
+    SwmmComparisonResponse,
+    ScenarioRunRequest,
+    ScenarioJobResponse,
+    ScenarioResultsResponse,
     SystemStatusResponse,
 )
 from .services import BackendDataService
+from .swmm_physics import SwmmPhysicsService, SwmmScenario
+from .ml_service import Phase3MLService
+from .schemas import MLPhase3PredictRequest
+from .scenario_service import ScenarioService
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 LOGGER = logging.getLogger(__name__)
 settings = Settings.from_environment()
 service = BackendDataService(settings)
+swmm_physics_service = SwmmPhysicsService(settings.root / "data" / "swmm_phase2")
+phase3_ml_service = Phase3MLService(settings.root)
+scenario_service = ScenarioService(settings.root, swmm_physics_service, phase3_ml_service)
 
 app = FastAPI(title="TERRA05 Flood Susceptibility API", version="1.0.0")
 app.add_middleware(
@@ -79,26 +94,63 @@ def predict(request: PredictRequest) -> dict:
         grid_id = request.grid_id
         if grid_id is None:
             grid_id = service.grid_id_for_coordinates(request.latitude, request.longitude)
-        score, location = service.model_prediction(grid_id)
+        result = phase3_ml_service.predict(grid_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail={"error": "location_not_found", "message": str(exc)}) from exc
-    except (ImportError, OSError, RuntimeError, ValueError) as exc:
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={"error": "unsupported_ml_scenario", "message": str(exc)}) from exc
+    except (ImportError, OSError, RuntimeError, KeyError) as exc:
         raise unavailable("susceptibility_model", exc) from exc
     return {
-        **location,
-        "susceptibility_score": score,
-        "uncertainty_score": 0.25,
-        "prediction_interval": (max(0.0, score - 0.125), min(1.0, score + 0.125)),
-        "model": "RandomForestClassifier susceptibility pipeline",
-        "model_version": service.settings.model_path.name,
-        "score_semantics": "Uncalibrated model susceptibility score for historical flood-label overlap; not a flood probability or event forecast",
-        "limitations": [
-            "Historical spatial susceptibility only; this endpoint does not forecast a specific rainfall event.",
-            "No real-time rainfall ingestion or hydraulic simulation is applied.",
-            "The saved artifact was trained with scikit-learn 1.9.0 and may warn under a different installed version.",
-            "Uncertainty is a decision-support range, not a calibrated confidence interval; calibration requires multiple observed flood events.",
-        ],
+        "grid_id": result["grid_id"],
+        "ward": result["ward"],
+        "susceptibility_score": result["risk_score"],
+        "model": "TERRA05 Phase 3 XGBoost",
+        "model_version": result["model_version"],
+        "score_semantics": result["risk_score_semantics"],
+        "limitations": result["limitations"],
     }
+
+
+@app.post("/api/v1/ml/predict")
+def predict_phase3(request: MLPhase3PredictRequest) -> dict:
+    """Predict historical-label waterlogging score without running SWMM."""
+    try:
+        return phase3_ml_service.predict(request.grid_id, request.scenario_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail={"error": "grid_not_found", "message": str(exc)}) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={"error": "unsupported_ml_scenario", "message": str(exc)}) from exc
+    except (ImportError, OSError, RuntimeError, KeyError) as exc:
+        raise unavailable("phase3_ml", exc) from exc
+
+
+@app.post("/api/v1/scenario/run", response_model=ScenarioJobResponse, status_code=202)
+def create_scenario(request: ScenarioRunRequest) -> dict:
+    try:
+        return scenario_service.submit(request.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={"error": "invalid_scenario", "message": str(exc)}) from exc
+    except (ImportError, OSError, RuntimeError) as exc:
+        raise unavailable("scenario_engine", exc) from exc
+
+
+@app.get("/api/v1/scenario/{simulation_id}", response_model=ScenarioJobResponse)
+def scenario_status(simulation_id: str) -> dict:
+    try:
+        return scenario_service.status(simulation_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail={"error": "scenario_not_found", "message": str(exc)}) from exc
+
+
+@app.get("/api/v1/scenario/{simulation_id}/results", response_model=ScenarioResultsResponse)
+def scenario_results(simulation_id: str) -> dict:
+    try:
+        return scenario_service.results(simulation_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail={"error": "scenario_not_found", "message": str(exc)}) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail={"error": "scenario_not_ready", "message": str(exc)}) from exc
 
 
 @app.get("/api/v1/risk-map", response_model=RiskMapResponse)
@@ -190,3 +242,50 @@ def post_swmm_sample_run(request: SwmmRunRequest | None = None) -> dict:
         raise HTTPException(status_code=503, detail={"error": "swmm_engine_unavailable", "message": str(exc)}) from exc
     except Exception as exc:
         raise unavailable("swmm_runner", exc) from exc
+
+
+@app.post("/api/v1/simulation/swmm", response_model=SwmmSimulationResponse, status_code=202)
+def submit_swmm_simulation(request: SwmmSimulationRequest, response: Response) -> dict:
+    """Queue a reusable SWMM run; the HTTP request never waits for EPA SWMM."""
+    try:
+        result = swmm_physics_service.submit(SwmmScenario(
+            scenario_id=request.scenario_id,
+            rainfall_multiplier=request.rainfall_multiplier,
+            infrastructure_mode=request.infrastructure_mode,
+            tide_mode=request.tide_mode,
+            rainfall_profile_mm=tuple(request.rainfall_profile_mm) if request.rainfall_profile_mm is not None else None,
+        ))
+        response.status_code = 200 if result.get("status") == "completed" else 202
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={"error": "invalid_swmm_scenario", "message": str(exc)}) from exc
+
+
+@app.get("/api/v1/simulation/swmm/{simulation_id}", response_model=SwmmSimulationResponse)
+def swmm_simulation_status(simulation_id: str) -> dict:
+    try:
+        return swmm_physics_service.status(simulation_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail={"error": "simulation_not_found", "message": str(exc)}) from exc
+
+
+@app.get("/api/v1/simulation/swmm/{simulation_id}/results/{table}")
+def swmm_simulation_result(simulation_id: str, table: str) -> FileResponse:
+    try:
+        result = swmm_physics_service.results(simulation_id, table)
+        media = "application/json" if result.suffix == ".json" else "text/csv"
+        return FileResponse(result, media_type=media, filename=result.name)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail={"error": "simulation_result_not_found", "message": str(exc)}) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail={"error": "simulation_not_ready", "message": str(exc)}) from exc
+
+
+@app.post("/api/v1/simulation/swmm/compare", response_model=SwmmComparisonResponse)
+def compare_swmm_simulations(request: SwmmComparisonRequest) -> dict:
+    try:
+        return swmm_physics_service.compare(request.scenario_a, request.scenario_b)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail={"error": "simulation_not_found", "message": str(exc)}) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail={"error": "simulation_not_ready", "message": str(exc)}) from exc

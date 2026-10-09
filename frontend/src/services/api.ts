@@ -67,6 +67,46 @@ export interface PredictionResponse {
   limitations: string[];
 }
 
+export interface Phase3MLPredictionResponse {
+  grid_id: number;
+  ward: string;
+  scenario_id: string;
+  model_version: string;
+  prediction_mode: 'physics_supported' | 'citywide_gis_only';
+  physics_supported: boolean;
+  risk_score: number;
+  risk_score_semantics: string;
+  risk_level: 'LOW' | 'MODERATE' | 'HIGH' | 'VERY_HIGH';
+  predicted_label: number;
+  target_definition: string;
+  limitations: string[];
+}
+
+export interface ScenarioJob {
+  simulation_id: string; scenario_id: string; mode: string; status: string; cache_hit: boolean;
+  created_at: string; updated_at: string; rainfall_source: string; rainfall_hash: string;
+  rainfall_total_mm: number; duration_minutes: number; physics_supported: boolean;
+  prediction_mode: string; validation_status: string; progress?: number; error?: string;
+  risk_summary?: { grid_cells: number; peak_risk_score: number | null; high_or_very_high_cells: number; critical_asset_cells: number };
+}
+export interface ScenarioRiskCell {
+  grid_id: number; ward: string; risk_score: number; risk_level: string; physics_supported: boolean;
+  prediction_mode: string; predicted_label: number | null; hydraulic_depth_proxy_m: number | null;
+}
+export interface ScenarioResults {
+  scenario_id: string; event_id: string | null; rainfall_source: string; prediction_semantics: string;
+  target_provenance: string; risk_map: ScenarioRiskCell[]; critical_assets: ScenarioRiskCell[];
+  physics_supported_cells: number; prediction_mode_counts: Record<string, number>;
+  summary: { grid_cells: number; peak_risk_score: number | null; high_or_very_high_cells: number; critical_asset_cells: number };
+  decision_support: string[]; performance: Record<string, unknown>;
+}
+
+export async function runScenario(input: { mode: 'custom' | 'historical_replay'; event_id?: string; total_rainfall_mm?: number; duration_minutes?: number; profile_mm?: number[] }): Promise<ScenarioJob> {
+  return fetchJson<ScenarioJob>('/api/v1/scenario/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
+}
+export async function getScenarioJob(id: string): Promise<ScenarioJob> { return fetchJson<ScenarioJob>(`/api/v1/scenario/${id}`); }
+export async function getScenarioResults(id: string): Promise<ScenarioResults> { return fetchJson<ScenarioResults>(`/api/v1/scenario/${id}/results`); }
+
 export interface RiskGridProperties {
   grid_id: number;
   ward: string;
@@ -351,6 +391,18 @@ export async function getPrediction(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
+    signal,
+  });
+}
+
+export async function getPhase3MLPrediction(
+  gridId: number,
+  signal?: AbortSignal
+): Promise<Phase3MLPredictionResponse> {
+  return fetchJson<Phase3MLPredictionResponse>('/api/v1/ml/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ grid_id: gridId, scenario_id: 'historical_2005' }),
     signal,
   });
 }

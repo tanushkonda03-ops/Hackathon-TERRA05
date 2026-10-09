@@ -7,7 +7,13 @@ scipy
 requests
 pyproj
 fiona
+networkx
+pyswmm==2.2.0
+swmm-toolkit==0.17.0
 fastapi
 uvicorn
+httpx
+pytest
 joblib
 scikit-learn==1.9.1
+xgboost==3.4.1

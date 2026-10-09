@@ -17,7 +17,7 @@ import {
   MUMBAI_MUNICIPAL_SHELTERS_GEOJSON,
   getRealisticFloodPolygonsGeoJSON 
 } from '../data/mumbaiGeojson';
-import { getDrainageNetwork, getRiskMap, transformRiskMapToGeoJSON4326, SimulationResponse, simulationDataToGeoJSON } from '../services/api';
+import { getDrainageNetwork, getRiskMap, transformRiskMapToGeoJSON4326, SimulationResponse, ScenarioRiskCell, simulationDataToGeoJSON } from '../services/api';
 import { ChevronDown } from 'lucide-react';
 
 // Configure MapLibre Web Worker for Vite
@@ -40,10 +40,12 @@ interface MapboxMumbaiProps {
     historical2019: boolean;
     terrain3D: boolean;
     riskGrid: boolean;
+    scenarioRisk: boolean;
     evacuationRoutes?: boolean;
   };
   cameraPreset: '3D' | 'TOP' | 'RESET';
   simulationData?: SimulationResponse | null;
+  scenarioRiskMap?: ScenarioRiskCell[] | null;
   simStepIndex?: number;
   interventions?: {
     mobilePumps: boolean;
@@ -62,6 +64,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   layers,
   cameraPreset,
   simulationData,
+  scenarioRiskMap,
   simStepIndex,
   interventions,
   onStatusChange,
@@ -71,9 +74,11 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   const mapRef = useRef<MapLibreMap | null>(null);
   const rainCanvasRef = useRef<HTMLCanvasElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [riskGridLoaded, setRiskGridLoaded] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   const fullDrainageNetworkRef = useRef<FeatureCollection | null>(null);
+  const riskGridGeometryRef = useRef<Feature[]>([]);
   const [hoveredFeature, setHoveredFeature] = useState<{
     x: number;
     y: number;
@@ -223,6 +228,17 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
               'line-opacity': 0.35,
             },
           });
+        }
+
+        if (!map.getSource('terra05-scenario-risk-src')) {
+          map.addSource('terra05-scenario-risk-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+          map.addLayer({ id: 'terra05-scenario-risk-fill', type: 'fill', source: 'terra05-scenario-risk-src',
+            layout: { visibility: layers.scenarioRisk ? 'visible' : 'none' },
+            paint: { 'fill-color': ['interpolate', ['linear'], ['coalesce', ['get', 'scenario_risk_score'], 0],
+              0, '#22C55E', 0.25, '#EAB308', 0.5, '#F97316', 0.75, '#EF4444', 1, '#7F1D1D'], 'fill-opacity': 0.56 } });
+          map.addLayer({ id: 'terra05-scenario-risk-line', type: 'line', source: 'terra05-scenario-risk-src',
+            layout: { visibility: layers.scenarioRisk ? 'visible' : 'none' },
+            paint: { 'line-color': '#7F1D1D', 'line-width': 0.6, 'line-opacity': 0.55 } });
         }
 
         // 1B: Historical July 2019 Benchmark Replay
@@ -933,6 +949,8 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         .then((data) => {
           if (!mapRef.current) return;
           const geojson = transformRiskMapToGeoJSON4326(data);
+          riskGridGeometryRef.current = geojson.features;
+          setRiskGridLoaded(true);
           const src = mapRef.current.getSource('terra05-risk-grid-src') as GeoJSONSource;
           if (src) {
             src.setData(geojson);
@@ -1300,12 +1318,60 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     setVisibility('historical-2019-layer', layers.historical2019);
     setVisibility('terra05-risk-grid-fill', layers.riskGrid);
     setVisibility('terra05-risk-grid-line', layers.riskGrid);
+    setVisibility('terra05-scenario-risk-fill', layers.scenarioRisk);
+    setVisibility('terra05-scenario-risk-line', layers.scenarioRisk);
     const evacVisible = layers.evacuationRoutes !== false;
     setVisibility('evacuation-corridors-casing', evacVisible);
     setVisibility('evacuation-corridors-line', evacVisible);
     setVisibility('evacuation-shelters-pulse', evacVisible);
     setVisibility('evacuation-shelters-point', evacVisible);
   }, [layers, mapLoaded, simulationData]);
+
+  useEffect(() => {
+    const source = mapRef.current?.getSource('terra05-scenario-risk-src') as GeoJSONSource | undefined;
+    if (!source) return;
+    if (!scenarioRiskMap?.length) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      return;
+    }
+    const byGrid = new Map(scenarioRiskMap.map((cell) => [cell.grid_id, cell]));
+    const features = riskGridGeometryRef.current.map((feature) => {
+      const properties = feature.properties as Record<string, unknown> | null;
+      const cell = byGrid.get(Number(properties?.grid_id));
+      return cell ? { ...feature, properties: { ...properties, scenario_risk_score: cell.risk_score,
+        scenario_risk_level: cell.risk_level, scenario_prediction_mode: cell.prediction_mode,
+        scenario_physics_supported: cell.physics_supported } } as Feature : null;
+    }).filter((feature): feature is Feature => feature !== null);
+    source.setData({ type: 'FeatureCollection', features });
+    console.info(`[TERRA05] Scenario risk geometry joined: ${features.length}/${riskGridGeometryRef.current.length} cells`);
+    // Keep the scenario result above advisory and demo overlays so its legend matches the visible map.
+    const map = mapRef.current;
+    if (map?.getLayer('terra05-scenario-risk-fill')) map.moveLayer('terra05-scenario-risk-fill');
+    if (map?.getLayer('terra05-scenario-risk-line')) map.moveLayer('terra05-scenario-risk-line');
+    if (map && features.length) {
+      const positions: number[][] = [];
+      const collectPositions = (coords: unknown): void => {
+        if (!Array.isArray(coords)) return;
+        if (typeof coords[0] === 'number' && typeof coords[1] === 'number') positions.push(coords as number[]);
+        else coords.forEach(collectPositions);
+      };
+      const collectGeometryPositions = (geometry: Feature['geometry']): void => {
+        if ('coordinates' in geometry) collectPositions(geometry.coordinates);
+        else geometry.geometries.forEach(collectGeometryPositions);
+      };
+      features.forEach((feature) => collectGeometryPositions(feature.geometry));
+      if (positions.length) {
+        const bounds = positions.reduce(
+          (value, point) => [
+            Math.min(value[0], point[0]), Math.min(value[1], point[1]),
+            Math.max(value[2], point[0]), Math.max(value[3], point[1]),
+          ],
+          [Infinity, Infinity, -Infinity, -Infinity],
+        );
+        map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], { padding: 60, maxZoom: 12, duration: 700 });
+      }
+    }
+  }, [scenarioRiskMap, mapLoaded, riskGridLoaded]);
 
   // 5. Smooth camera flyTo when a user explicitly selects a focus area
   const flyToLocation = (loc: MumbaiLocation) => {

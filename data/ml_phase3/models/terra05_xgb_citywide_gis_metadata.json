@@ -1,0 +1,88 @@
+{
+  "model_version": "terra05-xgb-v1.0.0",
+  "model_type": "XGBoostClassifier",
+  "prediction_mode": "citywide_gis_only",
+  "features": [
+    "elevation_mean",
+    "slope_mean",
+    "flow_accumulation",
+    "flow_accumulation_area_km2",
+    "flow_accumulation_log",
+    "drain_density",
+    "distance_to_drain",
+    "distance_to_water",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "water_fraction",
+    "mangrove_fraction",
+    "building_count",
+    "building_density",
+    "clay_percent",
+    "sand_percent",
+    "silt_percent",
+    "infiltration_proxy",
+    "topographic_wetness_index",
+    "drain_capacity_proxy_m2",
+    "drainage_stress_index",
+    "road_length_m",
+    "has_railway",
+    "has_hospital",
+    "is_critical_asset_cell",
+    "rainfall_total_mm",
+    "rainfall_1h_mm",
+    "rainfall_3h_mm",
+    "rainfall_6h_mm",
+    "rainfall_12h_mm",
+    "rainfall_24h_mm",
+    "peak_15min_mm",
+    "peak_1h_mm"
+  ],
+  "threshold": 0.8984069764614104,
+  "risk_level_cutpoints_validation_quantiles": {
+    "0.5": 0.23632290959358215,
+    "0.75": 0.6529022455215454,
+    "0.9": 0.8027734756469727
+  },
+  "target_definition": "flood_label = historical July-2005 waterlogging presence/absence per Phase 3 specification; source label spatial/event provenance still requires independent confirmation",
+  "risk_score_semantics": "Uncalibrated XGBoost ranking score; not a calibrated event probability",
+  "validation_strategy": "Existing 5-region spatial_cv_fold; fold 4 threshold validation; fold 2 test; final serving refit all citywide rows",
+  "validation_metrics": {
+    "pr_auc": 0.07709771233282355,
+    "roc_auc": 0.7058618125849906,
+    "precision": 0.10044642857142858,
+    "recall": 0.052508751458576426,
+    "f1": 0.06896551724137931,
+    "balanced_accuracy": 0.5168983837155444,
+    "confusion_matrix_tn_fp_fn_tp": [
+      [
+        21134,
+        403
+      ],
+      [
+        812,
+        45
+      ]
+    ],
+    "threshold": 0.8984069764614104
+  },
+  "test_metrics": {
+    "pr_auc": 0.1628125101144901,
+    "roc_auc": 0.7840848330393494,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "balanced_accuracy": 0.5,
+    "confusion_matrix_tn_fp_fn_tp": [
+      [
+        6682,
+        0
+      ],
+      [
+        412,
+        0
+      ]
+    ],
+    "threshold": 0.8984069764614104
+  },
+  "training_dataset_sha256": "25f7debef25031922547913fe342d568b71f6a03b2be7723a53657b6a0876893"
+}

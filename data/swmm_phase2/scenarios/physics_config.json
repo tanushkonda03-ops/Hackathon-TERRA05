@@ -1,0 +1,28 @@
+{
+  "flood_state_thresholds_m": {
+    "wet": 0.01,
+    "minor": 0.15,
+    "moderate": 0.3,
+    "severe": 0.6,
+    "extreme": 1.0
+  },
+  "threshold_source": "CONFIGURED_ENGINEERING_THRESHOLD_NOT_CALIBRATED",
+  "surface_depth_required_for_classification": true,
+  "note": "Thresholds remain configurable and are not municipal warning levels. Grid flood state remains unclassified until surface depth is available.",
+  "infrastructure_modes_supported": [
+    "existing"
+  ],
+  "infrastructure_modes_prepared_not_claimed": [
+    "proposal",
+    "existing_plus_proposal"
+  ],
+  "tide_modes_prepared": [
+    "low",
+    "normal",
+    "high",
+    "very_high"
+  ],
+  "tide_hydraulically_applied_modes": [
+    "disabled"
+  ]
+}

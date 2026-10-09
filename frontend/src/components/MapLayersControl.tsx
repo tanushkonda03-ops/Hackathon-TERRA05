@@ -13,6 +13,7 @@ interface MapLayersControlProps {
     historical2019: boolean;
     terrain3D: boolean;
     riskGrid: boolean;
+    scenarioRisk: boolean;
     evacuationRoutes: boolean;
   };
   onToggleLayer: (layerKey: keyof MapLayersControlProps['layers']) => void;
@@ -187,6 +188,7 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
               </span>
               {renderToggle('Simulated Inundation', layers.floodDepth, () => onToggleLayer('floodDepth'))}
               {renderToggle('100m ML Risk Grid', layers.riskGrid, () => onToggleLayer('riskGrid'))}
+              {renderToggle('SWMM + ML Scenario Risk', layers.scenarioRisk, () => onToggleLayer('scenarioRisk'), 'text-rose-700 font-bold')}
               {renderToggle('Uncertainty Boundary (90%)', layers.uncertainty, () => onToggleLayer('uncertainty'), 'text-indigo-600')}
               {renderToggle('Historical Replay (July 2019)', layers.historical2019, () => onToggleLayer('historical2019'), 'text-emerald-600')}
             </div>

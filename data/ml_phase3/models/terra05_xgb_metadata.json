@@ -1,0 +1,148 @@
+{
+  "model_version": "terra05-xgb-v1.0.0",
+  "model_type": "XGBoostClassifier",
+  "best_experiment": "GIS + Rainfall + SWMM",
+  "features": [
+    "elevation_mean",
+    "slope_mean",
+    "flow_accumulation",
+    "flow_accumulation_area_km2",
+    "flow_accumulation_log",
+    "drain_density",
+    "distance_to_drain",
+    "distance_to_water",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "water_fraction",
+    "mangrove_fraction",
+    "building_count",
+    "building_density",
+    "clay_percent",
+    "sand_percent",
+    "silt_percent",
+    "infiltration_proxy",
+    "topographic_wetness_index",
+    "drain_capacity_proxy_m2",
+    "drainage_stress_index",
+    "road_length_m",
+    "has_railway",
+    "has_hospital",
+    "is_critical_asset_cell",
+    "rainfall_total_mm",
+    "rainfall_1h_mm",
+    "rainfall_3h_mm",
+    "rainfall_6h_mm",
+    "rainfall_12h_mm",
+    "rainfall_24h_mm",
+    "peak_15min_mm",
+    "peak_1h_mm",
+    "swmm_nearest_node_depth_proxy_m",
+    "swmm_node_flooding_m3",
+    "swmm_peak_conduit_flow_m3s",
+    "swmm_peak_conduit_velocity_m_s",
+    "swmm_subcatchment_runoff_mm",
+    "swmm_surface_runoff_mm"
+  ],
+  "target_definition": "flood_label = historical July-2005 waterlogging presence/absence per Phase 3 specification; source label spatial/event provenance still requires independent confirmation",
+  "training_dataset_sha256": "919c6e85fac42c5e7c938b6e6e6533824b6aa942d704ab04f723b4335efb6782",
+  "feature_schema_sha256": "bdc25dc202be905ba88f6f17b91edd4524334d0d091ec513f11416ad28e878d1",
+  "training_date": "2026-10-09",
+  "random_seed": 42,
+  "python_version": "3.12.10",
+  "scikit_learn_version": "1.9.1",
+  "xgboost_version": "3.4.1",
+  "swmm_model_version": "terra05-swmm-v1.0.0",
+  "swmm_input_sha256": "dd0be4c9e78ca8b669233fef15f0a33705ad441deccdeab454d8f3a528ec81d5",
+  "rainfall_source": "IMD 3-hour E001 observations; Phase 2B 15-minute SWMM profile is reconstructed",
+  "validation_strategy": "Deterministic three-way GroupShuffleSplit over 2 km EPSG:32643 spatial blocks within the 1,516 physics-supported Ward L cells; only E001 once per grid_id",
+  "spatial_groups": {
+    "train": [
+      "137_1054",
+      "138_1053",
+      "138_1057",
+      "139_1054",
+      "139_1055",
+      "139_1057",
+      "139_1058"
+    ],
+    "validation": [
+      "137_1053",
+      "138_1054",
+      "138_1055"
+    ],
+    "test": [
+      "138_1056",
+      "138_1058",
+      "139_1056"
+    ]
+  },
+  "split_counts": {
+    "train": {
+      "cells": 463,
+      "positive": 37
+    },
+    "validation": {
+      "cells": 626,
+      "positive": 181
+    },
+    "test": {
+      "cells": 427,
+      "positive": 62
+    }
+  },
+  "parameters": {
+    "n_estimators": 320,
+    "max_depth": 3,
+    "learning_rate": 0.04
+  },
+  "scale_pos_weight_train_only": 11.513513513513514,
+  "selected_threshold": 0.0012947609648108482,
+  "threshold_rule": "Validation F1 maximum among thresholds with precision >= 0.10; fallback to max F1",
+  "serving_model": "terra05_xgb_v1.json",
+  "evaluation_model": "terra05_xgb_v1_evaluation.json",
+  "serving_refit": "All supported-domain rows after test evaluation; test metrics refer to the train+validation model frozen before full refit",
+  "risk_score_semantics": "Uncalibrated XGBoost ranking score; not a calibrated event probability",
+  "risk_level_cutpoints_validation_quantiles": {
+    "0.5": 0.03680255636572838,
+    "0.75": 0.17817534506320953,
+    "0.9": 0.689217209815979
+  },
+  "validation_metrics": {
+    "pr_auc": 0.3467880606831918,
+    "roc_auc": 0.5452728288534359,
+    "precision": 0.29526916802610115,
+    "recall": 1.0,
+    "f1": 0.45591939546599497,
+    "balanced_accuracy": 0.5146067415730337,
+    "confusion_matrix_tn_fp_fn_tp": [
+      [
+        13,
+        432
+      ],
+      [
+        0,
+        181
+      ]
+    ],
+    "threshold": 0.0012947609648108482
+  },
+  "test_metrics": {
+    "pr_auc": 0.24080915163595829,
+    "roc_auc": 0.6204153778170571,
+    "precision": 0.14454976303317535,
+    "recall": 0.9838709677419355,
+    "f1": 0.25206611570247933,
+    "balanced_accuracy": 0.49741493592576225,
+    "confusion_matrix_tn_fp_fn_tp": [
+      [
+        4,
+        361
+      ],
+      [
+        1,
+        61
+      ]
+    ],
+    "threshold": 0.0012947609648108482
+  }
+}

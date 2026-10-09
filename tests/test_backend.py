@@ -1,8 +1,5 @@
 import json
-import tempfile
 import unittest
-from dataclasses import replace
-from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -30,7 +27,7 @@ class BackendEndpointTests(unittest.TestCase):
         payload = status.json()
         self.assertTrue(payload["rainfall_catalogue"]["ready"])
         self.assertTrue(payload["geospatial_data"]["ready"])
-        self.assertFalse(payload["swmm_model"]["ready"])
+        self.assertEqual(payload["swmm_model"]["ready"], backend_main.service.swmm_status()["pyswmm_available"])
 
     def test_scenarios_match_validated_catalogue(self):
         response = self.client.get("/api/v1/scenarios")
@@ -57,13 +54,20 @@ class BackendEndpointTests(unittest.TestCase):
         response = self.client.post("/api/v1/predict", json={"grid_id": 1, "latitude": 19.1, "longitude": 72.9})
         self.assertEqual(response.status_code, 422)
 
-    def test_predict_reports_unavailable_model_without_fabricating_score(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            missing_settings = replace(self.original_service.settings, model_path=Path(temp_dir) / "missing.joblib")
-            backend_main.service = BackendDataService(missing_settings)
+    def test_predict_reports_unavailable_phase3_model_without_fabricating_score(self):
+        original_ml_service = backend_main.phase3_ml_service
+
+        class UnavailablePhase3Model:
+            def predict(self, grid_id, scenario_id="historical_2005"):
+                raise ImportError("model artifact unavailable")
+
+        try:
+            backend_main.phase3_ml_service = UnavailablePhase3Model()
             response = self.client.post("/api/v1/predict", json={"grid_id": 1})
             self.assertEqual(response.status_code, 503)
             self.assertEqual(response.json()["detail"]["error"], "susceptibility_model_unavailable")
+        finally:
+            backend_main.phase3_ml_service = original_ml_service
 
 
 if __name__ == "__main__":

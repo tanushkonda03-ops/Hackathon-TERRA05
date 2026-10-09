@@ -63,80 +63,6 @@ class BackendDataService:
             })
         return result
 
-    @cached_property
-    def feature_table(self):
-        import pandas as pd
-        return pd.read_csv(self.settings.ml_features_path)
-
-    @cached_property
-    def model(self):
-        import joblib
-        return joblib.load(self.settings.model_path)
-
-    def model_prediction(self, grid_id: int) -> tuple[float, dict[str, Any]]:
-        import pandas as pd
-
-        table = self.feature_table
-        matches = table[table["grid_id"] == grid_id]
-        if matches.empty:
-            raise LookupError(f"No ML feature row exists for grid_id {grid_id}")
-        model = self.model
-        feature_names = list(getattr(model, "feature_names_in_", []))
-        if not feature_names:
-            raise RuntimeError("Saved model does not expose feature_names_in_")
-        missing = [name for name in feature_names if name not in matches.columns]
-        if missing:
-            raise RuntimeError(f"Required model features are unavailable: {missing}")
-        row = matches.iloc[[0]]
-        score = float(model.predict_proba(row[feature_names])[0, 1])
-        return score, {"grid_id": int(row.iloc[0]["grid_id"]), "ward": str(row.iloc[0]["ward"])}
-
-    @cached_property
-    def validation_summary(self) -> dict[str, Any]:
-        metrics_path = self.settings.root / "outputs" / "reports" / "ward_flood_susceptibility_tuned_metrics.json"
-        holdout_path = self.settings.root / "outputs" / "reports" / "ward_flood_susceptibility_tuned_holdout.csv"
-        if not metrics_path.is_file() or not holdout_path.is_file():
-            raise FileNotFoundError("Computed susceptibility validation artifacts are unavailable")
-
-        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
-        confusion = metrics.get("test_confusion_matrix")
-        if not isinstance(confusion, list) or len(confusion) != 2:
-            raise ValueError("Validation report has no 2x2 confusion matrix")
-
-        true_negative, false_positive = (int(value) for value in confusion[0])
-        false_negative, true_positive = (int(value) for value in confusion[1])
-        return {
-            "source": "outputs/reports/ward_flood_susceptibility_tuned_metrics.json",
-            "dataset": "Spatial holdout test fold 2",
-            "model": metrics["model"],
-            "threshold": metrics["selected_threshold"],
-            "metrics": {
-                "roc_auc": metrics["test_roc_auc"] * 100,
-                "average_precision": metrics["test_average_precision"] * 100,
-                "iou": (
-                    true_positive / (true_positive + false_positive + false_negative) * 100
-                    if true_positive + false_positive + false_negative
-                    else 0
-                ),
-                "precision": metrics["test_precision"] * 100,
-                "recall": metrics["test_recall"] * 100,
-                "f1_score": metrics["test_f1"] * 100,
-                "balanced_accuracy": metrics["test_balanced_accuracy"] * 100,
-            },
-            "confusion": {
-                "true_negative": true_negative,
-                "false_positive": false_positive,
-                "false_negative": false_negative,
-                "true_positive": true_positive,
-                "test_cells": true_negative + false_positive + false_negative + true_positive,
-            },
-            "limitations": [
-                "This is historical spatial susceptibility validation, not event-specific hydraulic validation.",
-                "Labels come from historical flood-polygon overlap and do not provide observed water depths.",
-                "The untouched geographic test fold is reported separately from threshold selection.",
-            ],
-        }
-
     def grid_id_for_coordinates(self, latitude: float, longitude: float) -> int:
         try:
             import geopandas as gpd
@@ -218,15 +144,18 @@ class BackendDataService:
             if swmm_stat.get("pyswmm_available")
             else "PySWMM is not installed"
         )
+        phase1_model = self.settings.root / "data" / "swmm_phase1" / "models" / "terra05_wardL_2005.inp"
+        phase3_model = self.settings.root / "data" / "ml_phase3" / "models" / "terra05_xgb_v1.json"
+        real_swmm_ready = phase1_model.is_file() and swmm_stat.get("pyswmm_available", False)
         return {
             "api": "ready",
-            "model": component(self.settings.model_path, "Saved susceptibility model artifact available; load occurs on first prediction"),
+            "model": component(phase3_model, "TERRA05 Phase 3 physics-informed XGBoost artifact; load occurs on first prediction"),
             "rainfall_catalogue": component(self.settings.rainfall_catalog_path, "Validated rainfall catalogue available"),
             "geospatial_data": component(self.settings.risk_grid_path, "100 m flood grid GeoJSON available"),
             "swmm_model": {
-                "ready": False,
-                "path": swmm_stat.get("benchmark_model_path"),
-                "detail": swmm_detail,
+                "ready": real_swmm_ready,
+                "path": str(phase1_model) if real_swmm_ready else swmm_stat.get("benchmark_model_path"),
+                "detail": "Ward L/Mithi pilot and completed baseline are available; hydraulically unvalidated and not citywide" if real_swmm_ready else swmm_detail,
             },
         }
 
@@ -278,7 +207,6 @@ class BackendDataService:
 
         if include_recession:
             interval_minutes = int(metadata.get("interval_minutes", 15))
-            recession_steps = 480  # Up to 120 hours; the engine stops early once clear.
             rainfall_end_index = len(intervals)
             intervals = [
                 *intervals,
@@ -289,7 +217,7 @@ class BackendDataService:
                         "rainfall_15min_mm": 0.0,
                         "intensity_mm_per_hr": 0.0,
                     }
-                    for index in range(recession_steps)
+                    for index in range(480)
                 ],
             ]
 
@@ -341,98 +269,20 @@ class BackendDataService:
             target_desc = f"ward '{ward}'" if ward else f"bbox {bbox}" if bbox else "default corridor (Ward L)"
             raise LookupError(f"No spatial grid cells found for {target_desc}")
 
-        tide_factor = {"normal": 1.0, "high": 0.75, "extreme": 0.5}.get(tide_level, 1.0)
         engine = SurfaceRunoffEngine(
             features=features,
             scenario_intervals=intervals,
             scenario_id=scenario_id,
             scenario_metadata=scenario_info,
             routing_enabled=routing_enabled,
-            drainage_capacity_mm_hr=drainage_capacity_mm_hr * tide_factor,
+            drainage_capacity_mm_hr=drainage_capacity_mm_hr,
             max_timesteps=max_timesteps,
             stop_when_clear=include_recession,
         )
         result = engine.run()
-
-        # The physical simulation is the event forecast. The historical model
-        # adds context, but is not treated as an event probability.
-        feature_table = self.feature_table
-        try:
-            model = self.model
-            feature_names = list(getattr(model, "feature_names_in_", []))
-        except (ImportError, OSError, RuntimeError, ValueError) as exc:
-            LOGGER.warning("Historical susceptibility context unavailable for event run: %s", exc)
-            model = None
-            feature_names = []
-        feature_rows = feature_table.set_index("grid_id")
-        grid_ids = [cell["grid_id"] for cell in result["cells"]]
-        available_ids = [grid_id for grid_id in grid_ids if grid_id in feature_rows.index]
-        historical_scores: dict[int, float] = {}
-        if model is not None and feature_names and available_ids:
-            model_input = feature_rows.loc[available_ids, feature_names]
-            probabilities = model.predict_proba(model_input)[:, 1]
-            historical_scores = {
-                int(grid_id): float(score)
-                for grid_id, score in zip(available_ids, probabilities)
-            }
-
-        for cell in result["cells"]:
-            depths = cell["depth_by_timestep"]
-            peak_depth = float(cell["max_depth_m"])
-            wet_steps = sum(depth >= 0.05 for depth in depths)
-            persistence = wet_steps / max(1, len(depths))
-            physical_score = min(1.0, 0.7 * min(peak_depth / 0.5, 1.0) + 0.3 * persistence)
-            historical_score = historical_scores.get(int(cell["grid_id"]), 0.0)
-            feature_row = feature_rows.loc[cell["grid_id"]] if cell["grid_id"] in feature_rows.index else None
-            critical_score = 1.0 if feature_row is not None and float(feature_row.get("is_critical_asset_cell", 0)) > 0 else 0.0
-            hybrid_score = min(1.0, 0.7 * physical_score + 0.2 * historical_score + 0.1 * critical_score)
-            uncertainty_score = min(
-                0.6,
-                max(
-                    0.15,
-                    0.20
-                    + 0.35 * abs(physical_score - historical_score)
-                    + 0.10 * (1.0 - persistence)
-                    + (0.10 if not historical_scores else 0.0),
-                ),
-            )
-            interval_half_width = uncertainty_score / 2.0
-            cell["historical_susceptibility"] = round(historical_score, 4)
-            cell["physical_event_score"] = round(physical_score, 4)
-            cell["hybrid_event_risk_score"] = round(hybrid_score, 4)
-            cell["event_inundated"] = peak_depth >= 0.05
-            cell["wet_fraction_of_steps"] = round(persistence, 4)
-            cell["risk_tier"] = (
-                "SEVERE" if hybrid_score >= 0.75 else
-                "HIGH" if hybrid_score >= 0.5 else
-                "MODERATE" if hybrid_score >= 0.25 else
-                "LOW"
-            )
-            cell["uncertainty_score"] = round(uncertainty_score, 4)
-            cell["risk_interval"] = (
-                round(max(0.0, hybrid_score - interval_half_width), 4),
-                round(min(1.0, hybrid_score + interval_half_width), 4),
-            )
-
-        result["event_forecast"] = {
-            "target": "event inundation and water-depth estimate",
-            "forecast_source": "time-stepped 2D surface-runoff simulation",
-            "hybrid_context": "historical susceptibility plus critical-asset exposure",
-            "score_semantics": "hybrid event-risk score, not a calibrated probability",
-            "risk_tier_thresholds": {"LOW": 0.25, "MODERATE": 0.5, "HIGH": 0.75, "SEVERE": 1.0},
-            "event_id": scenario_id,
-            "tide_level": tide_level,
-            "uncertainty": {
-                "available": True,
-                "label": "Decision-support uncertainty range",
-                "method": "Proxy width from physical-versus-historical disagreement, wet-duration, and calibration status",
-                "not_calibrated": True,
-            },
-        }
-        result["provenance"]["event_forecast"] = (
-            "Physics-first event estimate with historical susceptibility context"
-            if historical_scores
-            else "Physics-first event estimate; historical context unavailable"
-        )
-        result["provenance"]["calibration_status"] = "Not calibrated against multiple observed event-depth datasets"
+        result["engine"] = "fast"
+        result["validation_status"] = "ENGINE_EXECUTABLE_HYDRAULICALLY_UNVALIDATED"
+        result["tide_mode_requested"] = tide_level
+        result["tide_mode_applied"] = False
+        result["limitations"].append("Tide is not applied: no verified receiving-water/outfall relationships or boundary-stage series are available.")
         return result

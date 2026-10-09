@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   MapPin, 
@@ -9,16 +9,11 @@ import {
   HelpCircle,
   Clock,
   ArrowRight,
-  Cpu,
-  RefreshCw,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
   Info,
   X
 } from 'lucide-react';
 import { MumbaiLocation, TimelineImpactMetrics } from '../data/locations';
-import { getPrediction, PredictionResponse, SimulationResponse } from '../services/api';
+import { getPhase3MLPrediction, Phase3MLPredictionResponse, SimulationResponse } from '../services/api';
 
 interface IntelligencePanelProps {
   location: MumbaiLocation;
@@ -37,38 +32,24 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
   simStepIndex = 0,
   onClose,
 }) => {
-  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
-  const [predictionLoading, setPredictionLoading] = useState<boolean>(false);
-  const [predictionError, setPredictionError] = useState<string | null>(null);
-  const [showLimitations, setShowLimitations] = useState<boolean>(false);
-
-  const fetchPrediction = useCallback(async (signal?: AbortSignal) => {
-    if (!location?.gridId) {
-      setPrediction(null);
-      return;
-    }
-    setPredictionLoading(true);
-    setPredictionError(null);
-    try {
-      const res = await getPrediction({ grid_id: location.gridId }, signal);
-      setPrediction(res);
-      setPredictionLoading(false);
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
-        console.warn('[TERRA05] Prediction fetch warning:', err);
-        setPredictionError(err.message || 'Model service unavailable');
-        setPredictionLoading(false);
-      }
-    }
-  }, [location?.gridId]);
+  const [phase3Prediction, setPhase3Prediction] = useState<Phase3MLPredictionResponse | null>(null);
+  const [phase3Loading, setPhase3Loading] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!location?.gridId) {
+      setPhase3Prediction(null);
+      return;
+    }
     const controller = new AbortController();
-    fetchPrediction(controller.signal);
-    return () => {
-      controller.abort();
-    };
-  }, [fetchPrediction]);
+    setPhase3Loading(true);
+    getPhase3MLPrediction(location.gridId, controller.signal)
+      .then(setPhase3Prediction)
+      .catch((err: Error) => {
+        if (err.name !== 'AbortError') setPhase3Prediction(null);
+      })
+      .finally(() => { if (!controller.signal.aborted) setPhase3Loading(false); });
+    return () => controller.abort();
+  }, [location?.gridId]);
 
   if (!location) return null;
 
@@ -164,7 +145,7 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
             </span>
             <div className="flex items-center space-x-1.5">
               <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                {prediction?.ward ? `Ward ${prediction.ward}` : location.ward}
+                {phase3Prediction?.ward ? `Ward ${phase3Prediction.ward}` : location.ward}
               </span>
               {onClose && (
                 <button
@@ -212,118 +193,24 @@ export const IntelligencePanel: React.FC<IntelligencePanelProps> = ({
           </div>
         )}
 
-        {/* ML Flood Susceptibility Card (FastAPI Backend Model) */}
-        <div className="p-3 rounded-lg bg-slate-50/80 border border-slate-200 shadow-gis-xs space-y-2">
+        {/* TERRA05 Phase 3 historical-label model; event-specific results come from the scenario panel. */}
+        <div className="p-3 rounded-lg bg-sky-50/80 border border-sky-200 shadow-gis-xs space-y-1.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1.5">
-              <Cpu className="w-3.5 h-3.5 text-sky-700" />
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-700">
-                FLOOD RISK ESTIMATE
-              </span>
-            </div>
-            {predictionLoading ? (
-              <span className="flex items-center space-x-1 text-[9px] font-mono text-sky-600 animate-pulse">
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                <span>QUERYING...</span>
-              </span>
-            ) : prediction ? (
-              <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                ESTIMATE READY
-              </span>
-            ) : predictionError ? (
-              <button
-                onClick={() => fetchPrediction()}
-                className="flex items-center space-x-0.5 text-[9px] font-mono text-rose-600 hover:text-rose-800 underline"
-                title="Retry fetching prediction"
-              >
-                <RefreshCw className="w-2.5 h-2.5" />
-                <span>RETRY</span>
-              </button>
-            ) : (
-              <span className="text-[9px] font-mono text-slate-400">STANDALONE</span>
-            )}
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-sky-800">PHASE 3 WATERLOGGING RISK</span>
+            {phase3Loading ? <span className="text-[9px] font-mono text-sky-600">LOADING</span> : phase3Prediction && <span className="text-[9px] font-mono text-sky-700">{phase3Prediction.prediction_mode.replace('_', ' ').toUpperCase()}</span>}
           </div>
-
-          {predictionLoading ? (
-            <div className="py-2 space-y-1.5 animate-pulse">
-              <div className="h-6 bg-slate-200 rounded w-1/2" />
-              <div className="h-3 bg-slate-200 rounded w-3/4" />
+          {phase3Prediction ? (
+            <div className="flex items-baseline justify-between">
+              <span className="text-xl font-mono font-bold text-slate-900">{phase3Prediction.risk_score.toFixed(3)} <span className="text-[9px] font-normal text-slate-500">risk score</span></span>
+              <span className="text-[9px] font-mono font-bold text-sky-800">{phase3Prediction.risk_level}</span>
             </div>
-          ) : prediction ? (
-            <div>
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <div className="text-2xl font-mono font-bold text-slate-900 tracking-tight">
-                    {prediction.susceptibility_score.toFixed(4)}
-                  </div>
-                  <div className="text-[10px] font-semibold text-slate-700 mt-0.5">
-                    Historical Susceptibility Score
-                  </div>
-                  <div className="text-[9px] font-mono text-slate-500">
-                    Spatial Index · Grid #{prediction.grid_id}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded border inline-block ${
-                    prediction.susceptibility_score >= 0.15
-                      ? 'bg-rose-50 text-rose-700 border-rose-200'
-                      : prediction.susceptibility_score >= 0.05
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>
-                    {prediction.susceptibility_score >= 0.15 ? 'HIGH SUSCEPTIBILITY' : prediction.susceptibility_score >= 0.05 ? 'MODERATE' : 'LOW SUSCEPTIBILITY'}
-                  </span>
-                  <div className="text-[9px] font-mono text-slate-500 mt-1">
-                    Ward {prediction.ward || location.ward}
-                  </div>
-                </div>
-              </div>
-
-              {/* Explicit scientific disclosure banner */}
-              <div className="text-[9px] font-mono text-amber-800 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded mt-2">
-                <strong>Notice:</strong> Historical flood susceptibility score — not a flood probability.
-              </div>
-
-              {/* Model Artifact Tag */}
-              <div className="text-[9px] font-mono text-slate-500 mt-2 pt-1.5 border-t border-slate-200/70 flex items-center justify-between">
-                <span className="truncate max-w-[190px]" title={prediction.model_version}>
-                  Pipeline: {prediction.model_version.replace('.joblib', '')}
-                </span>
-                <button
-                  onClick={() => setShowLimitations(!showLimitations)}
-                  className="text-sky-700 hover:text-sky-900 font-semibold flex items-center space-x-0.5 ml-1"
-                >
-                  <span>{showLimitations ? 'Hide' : 'Info'}</span>
-                  {showLimitations ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
-                </button>
-              </div>
-
-              {/* Collapsible Scientific Limitations & Disclaimers */}
-              {showLimitations && (
-                <div className="mt-2 p-2 bg-white rounded border border-slate-200 text-[9px] font-mono text-slate-600 space-y-1">
-                  <div className="font-bold text-slate-700 text-[10px]">Model Semantics & Bounds:</div>
-                  <div>• {prediction.score_semantics}</div>
-                  {prediction.limitations.map((lim, idx) => (
-                    <div key={idx}>• {lim}</div>
-                  ))}
-                  <div className="text-sky-800 pt-0.5 font-medium border-t border-slate-100">
-                    ℹ️ Hydraulic Engine: 2D diffusive overland runoff & cell accumulation prototype (100m grid, Horton infiltration, depression storage, drainage capacity). Independent from EPA-SWMM.
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-[11px] font-mono text-slate-500 py-1">
-              {predictionError ? (
-                <div className="text-rose-600 flex items-center space-x-1">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span className="text-[10px]">{predictionError}</span>
-                </div>
-              ) : (
-                'Select a location or grid cell to fetch susceptibility prediction.'
-              )}
-            </div>
-          )}
+          ) : <div className="text-[9px] font-mono text-slate-500">Phase 3 model unavailable</div>}
+          <div className="text-[9px] font-mono text-slate-600">
+            {phase3Prediction?.physics_supported ? 'SWMM-supported cell' : 'GIS-only cell · no SWMM coverage'} · {phase3Prediction?.model_version || 'terra05-xgb-v1.0.0'}
+          </div>
+          <div className="text-[9px] font-mono text-amber-800 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
+            Uncalibrated label-ranking score for historical 2005 labels; not a flood probability or new-rainfall forecast. SWMM depth remains a hydraulic proxy.
+          </div>
         </div>
 
         {/* Primary Metrics: Water Depth & Inundated Domain Extent */}

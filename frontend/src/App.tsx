@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapboxMumbai } from './components/MapboxMumbai';
 import { IntelligencePanel } from './components/IntelligencePanel';
 import { LeftSidebar, NavTabId } from './components/LeftSidebar';
 import { MapLayersControl } from './components/MapLayersControl';
 import { DecisionSupportPanel } from './components/DecisionSupportPanel';
 import { CitizenAdvisoryModal } from './components/CitizenAdvisoryModal';
+import { ScenarioPanel } from './components/ScenarioPanel';
+import { ScenarioRiskCell } from './services/api';
 import { MUMBAI_GEO_LOCATIONS, MumbaiLocation, getTimelineImpactMetrics } from './data/locations';
 import { 
   getSystemStatus, 
@@ -40,6 +42,11 @@ export const App: React.FC = () => {
 
   // Live 2D Hydraulic/Runoff Simulation Data
   const [simulationData, setSimulationData] = useState<SimulationResponse | null>(null);
+  const [scenarioRiskMap, setScenarioRiskMap] = useState<ScenarioRiskCell[] | null>(null);
+  const handleScenarioRiskMap = useCallback((map: ScenarioRiskCell[] | null) => {
+    setScenarioRiskMap(map);
+    if (map) setLayers((previous) => ({ ...previous, scenarioRisk: true }));
+  }, []);
   const [isSimulationLoading, setIsSimulationLoading] = useState<boolean>(false);
   const [simulationError, setSimulationError] = useState<string | null>(null);
 
@@ -82,6 +89,7 @@ export const App: React.FC = () => {
     historical2019: false,
     terrain3D: true,
     riskGrid: false, // Off by default: ensures clean flood visualization without wireframe grid lines
+    scenarioRisk: false,
     evacuationRoutes: true, // Safe emergency corridors & high-ground shelters
   });
 
@@ -393,6 +401,7 @@ export const App: React.FC = () => {
                 timelineStep={timelineStep}
                 onClose={() => setActiveTab('map')}
               />
+
             </div>
           ) : (
             /* REALISTIC MUMBAI URBAN FLOOD DIGITAL TWIN VIEWPORT */
@@ -406,10 +415,13 @@ export const App: React.FC = () => {
                 layers={layers}
                 cameraPreset={cameraPreset}
                 simulationData={simulationData}
+                scenarioRiskMap={scenarioRiskMap}
                 simStepIndex={timelineStep}
                 onStatusChange={(st) => setMapStatus(st)}
                 onDiagnosticsUpdate={(d) => setDiagnostics((prev) => ({ ...prev, ...d }))}
               />
+
+              <ScenarioPanel onRiskMapChange={handleScenarioRiskMap} />
 
               {/* Citizen Public Warning Banner when in Citizen Persona Mode */}
               {personaMode === 'CITIZEN' && (
