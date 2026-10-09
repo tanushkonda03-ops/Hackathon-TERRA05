@@ -1,14 +1,13 @@
 import React from 'react';
 import { 
-  Radar, 
+  Map, 
   Activity, 
-  History, 
-  GitFork, 
-  HelpCircle, 
   Layers, 
-  Workflow, 
-  Compass,
-  FileText
+  History, 
+  Compass, 
+  GitFork, 
+  FileText, 
+  Workflow
 } from 'lucide-react';
 
 export type NavTabId = 'overview' | 'simulation' | 'risk' | 'validation' | 'drainage' | 'uncertainty' | 'data' | 'architecture';
@@ -23,30 +22,30 @@ export const NavigationRail: React.FC<NavigationRailProps> = ({
   onSelectTab,
 }) => {
   const items: { id: NavTabId; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'overview', label: 'Overview', icon: Radar },
-    { id: 'simulation', label: 'Simulation', icon: Activity },
-    { id: 'risk', label: 'Risk Zones', icon: Layers },
+    { id: 'overview', label: 'Flood Map', icon: Map },
+    { id: 'simulation', label: 'Simulate', icon: Activity },
+    { id: 'risk', label: 'Hotspots', icon: Layers },
     { id: 'validation', label: '2005 Event', icon: History },
-    { id: 'drainage', label: 'Drainage', icon: Compass },
-    { id: 'uncertainty', label: 'Uncertainty', icon: GitFork },
+    { id: 'drainage', label: 'Drains', icon: Compass },
+    { id: 'uncertainty', label: 'Confidence', icon: GitFork },
     { id: 'data', label: 'Data Layers', icon: FileText },
-    { id: 'architecture', label: 'Architecture', icon: Workflow },
+    { id: 'architecture', label: 'How It Works', icon: Workflow },
   ];
 
   return (
-    <nav className="w-16 h-full bg-white border-r border-gis-border flex flex-col items-center justify-between py-3 z-30 select-none shadow-sm">
+    <nav className="w-18 h-full bg-white border-r border-gis-border flex flex-col items-center justify-between py-2.5 z-30 select-none shadow-xs shrink-0">
       {/* Brand Icon */}
-      <div className="flex flex-col items-center space-y-1">
-        <div className="w-9 h-9 rounded-lg bg-brand-600 text-white font-display font-bold flex items-center justify-center text-sm shadow-md">
+      <div className="flex flex-col items-center space-y-0.5">
+        <div className="w-8 h-8 rounded-lg bg-sky-600 text-white font-display font-bold flex items-center justify-center text-xs shadow-xs">
           T05
         </div>
-        <span className="text-[9px] font-mono font-bold tracking-tight text-gis-muted">
+        <span className="text-[8px] font-mono font-bold tracking-tight text-slate-500">
           MUMBAI
         </span>
       </div>
 
-      {/* Nav Tool Icons Rail */}
-      <div className="flex flex-col space-y-2">
+      {/* Nav Tool Icons Rail with Clear Labels */}
+      <div className="flex flex-col space-y-1.5 w-full px-1">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -55,22 +54,25 @@ export const NavigationRail: React.FC<NavigationRailProps> = ({
               key={item.id}
               onClick={() => onSelectTab(item.id)}
               title={item.label}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+              className={`w-full py-1.5 px-0.5 rounded-lg flex flex-col items-center justify-center transition-all ${
                 isActive
-                  ? 'bg-brand-50 text-brand-600 border border-brand-200 shadow-sm'
-                  : 'text-gis-muted hover:text-gis-text hover:bg-gis-hover'
+                  ? 'bg-sky-50 text-sky-700 border border-sky-200 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-4 h-4 mb-0.5" />
+              <span className="text-[9px] font-semibold text-center leading-tight tracking-tight">
+                {item.label}
+              </span>
             </button>
           );
         })}
       </div>
 
       {/* Operational Badge */}
-      <div className="flex flex-col items-center space-y-1" title="System Operational">
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span className="text-[8px] font-mono text-gis-muted font-bold">ONLINE</span>
+      <div className="flex flex-col items-center space-y-0.5" title="System Operational">
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="text-[7px] font-mono text-slate-400 font-bold">LIVE</span>
       </div>
     </nav>
   );
