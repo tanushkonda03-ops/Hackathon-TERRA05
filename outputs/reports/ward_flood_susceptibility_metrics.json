@@ -1,0 +1,87 @@
+{
+  "model": "RandomForestClassifier",
+  "purpose": "Provisional historical flood-susceptibility baseline",
+  "test_fold": 2,
+  "random_state": 42,
+  "threshold": 0.5,
+  "train_rows": 40664,
+  "test_rows": 7094,
+  "train_positive_count": 1541,
+  "test_positive_count": 412,
+  "feature_columns": [
+    "elevation_mean",
+    "slope_mean",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "water_fraction",
+    "mangrove_fraction",
+    "drain_density",
+    "distance_to_drain",
+    "distance_to_water",
+    "building_count",
+    "building_density",
+    "flow_accumulation",
+    "flow_accumulation_area_km2",
+    "flow_accumulation_log",
+    "clay_percent",
+    "sand_percent",
+    "silt_percent",
+    "soil_class",
+    "infiltration_proxy",
+    "topographic_wetness_index",
+    "drain_capacity_proxy_m2",
+    "drainage_stress_index",
+    "road_length_m",
+    "has_railway",
+    "has_hospital",
+    "is_critical_asset_cell"
+  ],
+  "excluded_columns": [
+    "flood_fraction",
+    "flood_label",
+    "grid_id",
+    "spatial_cv_fold",
+    "ward"
+  ],
+  "roc_auc": 0.7741764935793306,
+  "average_precision": 0.15157666558409005,
+  "balanced_accuracy": 0.4997755163124813,
+  "confusion_matrix_labels_0_1": [
+    [
+      6679,
+      3
+    ],
+    [
+      412,
+      0
+    ]
+  ],
+  "classification_report": {
+    "0": {
+      "precision": 0.9418981807925539,
+      "recall": 0.9995510326249626,
+      "f1-score": 0.9698685834603935,
+      "support": 6682.0
+    },
+    "1": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 412.0
+    },
+    "accuracy": 0.9414998590358049,
+    "macro avg": {
+      "precision": 0.47094909039627697,
+      "recall": 0.4997755163124813,
+      "f1-score": 0.48493429173019675,
+      "support": 7094.0
+    },
+    "weighted avg": {
+      "precision": 0.8871953261990196,
+      "recall": 0.9414998590358049,
+      "f1-score": 0.913541284843861,
+      "support": 7094.0
+    }
+  },
+  "warning": "Preliminary evaluation only. Verify flood-label construction and feature provenance before interpreting these metrics as real-world predictive performance."
+}

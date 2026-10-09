@@ -1,0 +1,47 @@
+{
+  "variant": "without_soil",
+  "features": [
+    "elevation_mean",
+    "slope_mean",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "water_fraction",
+    "mangrove_fraction",
+    "drain_density",
+    "distance_to_drain",
+    "distance_to_water",
+    "building_count",
+    "building_density",
+    "flow_accumulation",
+    "flow_accumulation_area_km2",
+    "flow_accumulation_log",
+    "topographic_wetness_index",
+    "drain_capacity_proxy_m2",
+    "drainage_stress_index",
+    "road_length_m",
+    "has_railway",
+    "has_hospital",
+    "is_critical_asset_cell"
+  ],
+  "threshold_selected_on_fold_4": 0.6250000000000002,
+  "validation_f1": 0.1182053494391717,
+  "test_fold": 2,
+  "test_roc_auc": 0.7885933953847898,
+  "test_average_precision": 0.17090135512659102,
+  "test_precision": 0.1444043321299639,
+  "test_recall": 0.5825242718446602,
+  "test_f1": 0.23143683702989393,
+  "test_balanced_accuracy": 0.684856868038463,
+  "test_confusion_matrix": [
+    [
+      5260,
+      1422
+    ],
+    [
+      172,
+      240
+    ]
+  ],
+  "seconds": 4.87,
+  "warning": "Historical flood-spot susceptibility labels; not event-specific flood forecasting."
+}

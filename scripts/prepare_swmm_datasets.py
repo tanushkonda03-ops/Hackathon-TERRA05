@@ -392,45 +392,87 @@ for start_str, end_str, block_mm in intervals_3h:
 with open(SWMM_OUT_DIR / "timeseries_2005_july26.dat", "w") as f:
     f.write("\n".join(ts_lines) + "\n")
 
-# (B) Design Storm Hyetographs (for Warning Levels: Yellow 25mm/h, Orange 50mm/h, Red 100mm/h, Cloudburst 150mm/h)
+
+# (B) Design Storms: intensity warnings AND total-depth scenarios.
+# Synthetic scenarios only; these are not observed rainfall events.
+# Each value written below is rainfall DEPTH in a 15-minute interval (mm).
+# Peak intensity (mm/hour) = maximum interval depth * 4.
+
 design_storms = {
-    "DESIGN_YELLOW_25MM": {"peak_hr": 25.0, "duration_hr": 3},
-    "DESIGN_ORANGE_50MM": {"peak_hr": 50.0, "duration_hr": 3},
-    "DESIGN_RED_100MM": {"peak_hr": 100.0, "duration_hr": 3},
-    "DESIGN_CLOUDBURST_150MM": {"peak_hr": 150.0, "duration_hr": 3}
+    "DESIGN_YELLOW_25MM": 25.0,
+    "DESIGN_ORANGE_50MM": 50.0,
+    "DESIGN_RED_100MM": 100.0,
+    "DESIGN_CLOUDBURST_150MM": 150.0,
 }
 
-design_ts_lines = [";SWMM Design Storm Hyetographs for Early Warning Levels",
-                   ";Format: Series_Name Date Time Value_mm"]
-
-# Standard Chicago Design Storm distribution (12 quarters = 3 hours)
-unit_dist = np.array([0.03, 0.05, 0.08, 0.12, 0.18, 0.24, 0.14, 0.07, 0.04, 0.02, 0.02, 0.01])
+unit_dist = np.array(
+    [0.03, 0.05, 0.08, 0.12, 0.18, 0.24,
+     0.14, 0.07, 0.04, 0.02, 0.02, 0.01],
+    dtype=float,
+)
 unit_dist = unit_dist / unit_dist.sum()
+max_weight = float(unit_dist.max())
 
-for s_name, s_cfg in design_storms.items():
-    tot_mm = s_cfg["peak_hr"] * 2.0  # standard 3-hour storm total
-    t_storm = pd.Timestamp("2026-07-01 00:00")
-    for step_pct in unit_dist:
-        step_val = round(float(tot_mm * step_pct), 3)
-        date_s = t_storm.strftime("%m/%d/%Y")
-        time_s = t_storm.strftime("%H:%M")
-        design_ts_lines.append(f"{s_name} {date_s} {time_s} {step_val}")
+intensity_lines = [
+    "; SYNTHETIC DESIGN SCENARIOS - NOT OBSERVED RAINFALL",
+    "; IDs retain legacy names; numbers represent PEAK INTENSITY in mm/hour",
+    "; Format: Series_Name Date Time Interval_Depth_mm",
+]
+
+depth_lines = [
+    "; SYNTHETIC 3-HOUR TOTAL-DEPTH SCENARIOS - NOT OBSERVED RAINFALL",
+    "; IDs specify target total depth in mm over 3 hours",
+    "; Format: Series_Name Date Time Interval_Depth_mm",
+]
+
+scenario_start = pd.Timestamp("2026-07-01 00:00")
+
+def write_scenario(series_id, total_depth_mm, output_lines):
+    scenario_time = scenario_start
+    interval_depths = total_depth_mm * unit_dist
+
+    for interval_depth in interval_depths:
+        value_mm = round(float(interval_depth), 6)
+        date_str = scenario_time.strftime("%m/%d/%Y")
+        time_str = scenario_time.strftime("%H:%M")
+        output_lines.append(
+            f"{series_id} {date_str} {time_str} {value_mm}"
+        )
+
         hyetograph_records.append({
-            "timeseries_id": s_name,
-            "datetime": t_storm.strftime("%Y-%m-%d %H:%M:%S"),
-            "rainfall_15min_mm": step_val,
-            "intensity_mm_per_hr": round(step_val * 4.0, 2)
+            "timeseries_id": series_id,
+            "datetime": scenario_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "rainfall_15min_mm": value_mm,
+            "intensity_mm_per_hr": round(value_mm * 4.0, 6),
         })
-        t_storm += pd.Timedelta(minutes=15)
+        scenario_time += pd.Timedelta(minutes=15)
 
-with open(SWMM_OUT_DIR / "timeseries_design_storms.dat", "w") as f:
-    f.write("\n".join(design_ts_lines) + "\n")
+# A. Peak-intensity scenarios: exact target peak in mm/hour.
+for series_id, target_peak_mmhr in design_storms.items():
+    total_depth_mm = target_peak_mmhr / (4.0 * max_weight)
+    write_scenario(series_id, total_depth_mm, intensity_lines)
 
-pd.DataFrame(hyetograph_records).to_csv(SWMM_OUT_DIR / "swmm_rainfall_catalog.csv", index=False)
-print(f"Saved SWMM rainfall files -> {SWMM_OUT_DIR / 'timeseries_2005_july26.dat'}")
-print(f"Saved design storm files -> {SWMM_OUT_DIR / 'timeseries_design_storms.dat'}")
+# B. Total-depth scenarios: exact target total over 3 hours.
+for target_depth_mm in (25.0, 50.0, 100.0, 150.0):
+    series_id = f"DEPTH_{int(target_depth_mm)}MM_3H"
+    write_scenario(series_id, target_depth_mm, depth_lines)
 
-# ---------------------------------------------------------------------------
+with open(SWMM_OUT_DIR / "timeseries_design_storms.dat", "w",
+          encoding="utf-8") as f:
+    f.write("\n".join(intensity_lines) + "\n")
+
+with open(SWMM_OUT_DIR / "timeseries_depth_scenarios.dat", "w",
+          encoding="utf-8") as f:
+    f.write("\n".join(depth_lines) + "\n")
+
+pd.DataFrame(hyetograph_records).to_csv(
+    SWMM_OUT_DIR / "swmm_rainfall_catalog.csv", index=False
+)
+
+print("Saved intensity scenarios:", SWMM_OUT_DIR / "timeseries_design_storms.dat")
+print("Saved total-depth scenarios:", SWMM_OUT_DIR / "timeseries_depth_scenarios.dat")
+print("Updated rainfall catalogue:", SWMM_OUT_DIR / "swmm_rainfall_catalog.csv")
+
 # 6. EXTRACT PILOT SAMPLE CITY AREA (WARD L - KURLA / KALINA / MITHI CORRIDOR)
 # ---------------------------------------------------------------------------
 print("\n[6/6] Extracting Pilot Sample City Area (Ward L - Kurla/Kalina/Mithi corridor)...")

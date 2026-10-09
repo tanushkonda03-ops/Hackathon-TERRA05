@@ -1,0 +1,120 @@
+{
+  "generated_at_utc": "2026-10-09T00:52:00Z",
+  "interval_minutes": 15,
+  "scenario_duration_hours": 3,
+  "units": {
+    "rainfall_15min_mm": "mm depth per interval",
+    "intensity_mm_per_hr": "mm/hour interval-average"
+  },
+  "profile": [
+    0.03,
+    0.05,
+    0.08,
+    0.12,
+    0.18,
+    0.24,
+    0.14,
+    0.07,
+    0.04,
+    0.02,
+    0.02,
+    0.01
+  ],
+  "source_data_limitations": "TS_2005_JULY26 is a synthetic temporal disaggregation of 3-hour source totals; its 15-minute values are not observed measurements.",
+  "scenarios": {
+    "TS_2005_JULY26": {
+      "family": "historical_representation",
+      "classification": "source-derived temporal reconstruction",
+      "records": 108
+    },
+    "DESIGN_YELLOW_25MM": {
+      "family": "peak_intensity",
+      "classification": "synthetic design scenario",
+      "target_peak_intensity_mm_per_hr": 25.0,
+      "records": 12
+    },
+    "DESIGN_ORANGE_50MM": {
+      "family": "peak_intensity",
+      "classification": "synthetic design scenario",
+      "target_peak_intensity_mm_per_hr": 50.0,
+      "records": 12
+    },
+    "DESIGN_RED_100MM": {
+      "family": "peak_intensity",
+      "classification": "synthetic design scenario",
+      "target_peak_intensity_mm_per_hr": 100.0,
+      "records": 12
+    },
+    "DESIGN_CLOUDBURST_150MM": {
+      "family": "peak_intensity",
+      "classification": "synthetic design scenario",
+      "target_peak_intensity_mm_per_hr": 150.0,
+      "records": 12
+    },
+    "DEPTH_25MM_3H": {
+      "family": "total_depth",
+      "classification": "synthetic design scenario",
+      "target_total_depth_mm": 25.0,
+      "records": 12
+    },
+    "DEPTH_50MM_3H": {
+      "family": "total_depth",
+      "classification": "synthetic design scenario",
+      "target_total_depth_mm": 50.0,
+      "records": 12
+    },
+    "DEPTH_100MM_3H": {
+      "family": "total_depth",
+      "classification": "synthetic design scenario",
+      "target_total_depth_mm": 100.0,
+      "records": 12
+    },
+    "DEPTH_150MM_3H": {
+      "family": "total_depth",
+      "classification": "synthetic design scenario",
+      "target_total_depth_mm": 150.0,
+      "records": 12
+    }
+  },
+  "validation": {
+    "record_count": 204,
+    "historical_total_mm": 944.1999999999997,
+    "profile_sum": 1.0,
+    "peak_scenarios": {
+      "DESIGN_YELLOW_25MM": {
+        "peak_intensity_mm_per_hr": 25.0,
+        "target_peak_intensity_mm_per_hr": 25.0
+      },
+      "DESIGN_ORANGE_50MM": {
+        "peak_intensity_mm_per_hr": 50.0,
+        "target_peak_intensity_mm_per_hr": 50.0
+      },
+      "DESIGN_RED_100MM": {
+        "peak_intensity_mm_per_hr": 100.0,
+        "target_peak_intensity_mm_per_hr": 100.0
+      },
+      "DESIGN_CLOUDBURST_150MM": {
+        "peak_intensity_mm_per_hr": 150.0,
+        "target_peak_intensity_mm_per_hr": 150.0
+      }
+    },
+    "depth_scenarios": {
+      "DEPTH_25MM_3H": {
+        "total_depth_mm": 25.0,
+        "target_total_depth_mm": 25.0
+      },
+      "DEPTH_50MM_3H": {
+        "total_depth_mm": 50.0,
+        "target_total_depth_mm": 50.0
+      },
+      "DEPTH_100MM_3H": {
+        "total_depth_mm": 100.0,
+        "target_total_depth_mm": 100.0
+      },
+      "DEPTH_150MM_3H": {
+        "total_depth_mm": 150.0,
+        "target_total_depth_mm": 150.0
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "model": "HistGradientBoosting",
+  "sklearn_version": "1.9.1",
+  "numeric_features": [
+    "elevation_mean",
+    "slope_mean",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "water_fraction",
+    "mangrove_fraction",
+    "drain_density",
+    "distance_to_drain",
+    "distance_to_water",
+    "building_count",
+    "building_density",
+    "flow_accumulation",
+    "flow_accumulation_area_km2",
+    "flow_accumulation_log",
+    "clay_percent",
+    "sand_percent",
+    "silt_percent",
+    "infiltration_proxy",
+    "topographic_wetness_index",
+    "drain_capacity_proxy_m2",
+    "drainage_stress_index",
+    "road_length_m",
+    "has_railway",
+    "has_hospital",
+    "is_critical_asset_cell"
+  ],
+  "threshold": 0.49999999999999994,
+  "threshold_selection_fold": 4,
+  "test_fold": 2,
+  "validation_f1": 0.11685540784506811,
+  "test_roc_auc": 0.790855304643979,
+  "test_average_precision": 0.16666629473687453,
+  "test_precision": 0.12921810699588476,
+  "test_recall": 0.7621359223300971,
+  "test_f1": 0.22097114707952145,
+  "test_balanced_accuracy": 0.7227321335685206,
+  "test_confusion_matrix": [
+    [
+      4566,
+      2116
+    ],
+    [
+      98,
+      314
+    ]
+  ],
+  "fit_seconds_including_validation_and_final_fit": 5.54,
+  "warning": "Provisional spatial susceptibility evaluation. Labels are derived from historical flood-spot overlap, not event-specific flood observations. Threshold selection uses fold 4; final metrics use fold 2."
+}

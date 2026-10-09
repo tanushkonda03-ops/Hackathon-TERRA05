@@ -1,0 +1,58 @@
+{
+  "model": "RandomForestClassifier",
+  "numeric_features": [
+    "elevation_mean",
+    "slope_mean",
+    "built_up_fraction",
+    "vegetation_fraction",
+    "water_fraction",
+    "mangrove_fraction",
+    "drain_density",
+    "distance_to_drain",
+    "distance_to_water",
+    "building_count",
+    "building_density",
+    "flow_accumulation",
+    "flow_accumulation_area_km2",
+    "flow_accumulation_log",
+    "clay_percent",
+    "sand_percent",
+    "silt_percent",
+    "infiltration_proxy",
+    "topographic_wetness_index",
+    "drain_capacity_proxy_m2",
+    "drainage_stress_index",
+    "road_length_m",
+    "has_railway",
+    "has_hospital",
+    "is_critical_asset_cell"
+  ],
+  "excluded_columns": [
+    "flood_fraction",
+    "flood_label",
+    "grid_id",
+    "spatial_cv_fold",
+    "ward"
+  ],
+  "threshold_selection_fold": 4,
+  "test_fold": 2,
+  "selected_threshold": 0.15,
+  "validation_f1": 0.12877895563407932,
+  "test_roc_auc": 0.7736979219639489,
+  "test_average_precision": 0.15648685236281223,
+  "test_precision": 0.16952573158425832,
+  "test_recall": 0.4077669902912621,
+  "test_f1": 0.23948681397006416,
+  "test_balanced_accuracy": 0.6423001368696658,
+  "test_confusion_matrix": [
+    [
+      5859,
+      823
+    ],
+    [
+      244,
+      168
+    ]
+  ],
+  "warning": "Provisional susceptibility model; label provenance still needs verification."
+}
