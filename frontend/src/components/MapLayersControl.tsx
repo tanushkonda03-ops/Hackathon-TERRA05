@@ -75,6 +75,15 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
                   <span className="text-emerald-600">✓</span>
                   <span>3D Building Extrusions</span>
                 </div>
+
+                <div className="border-t border-slate-100 pt-2">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">MAP LEGEND</span>
+                  <div className="space-y-1 text-[11px] text-slate-600">
+                    <div className="flex items-center gap-2"><span className="w-5 border-t-2 border-cyan-600 border-dashed" /> Drainage network</div>
+                    <div className="flex items-center gap-2"><span className="w-5 border-t-2 border-amber-600" /> High drainage load</div>
+                    <div className="flex items-center gap-2"><span className="w-5 border-t-2 border-red-600" /> Overloaded / overflow</div>
+                  </div>
+                </div>
                 <div className="flex items-center space-x-1.5">
                   <span className="text-emerald-600">✓</span>
                   <span>Mithi River Natural Channel</span>

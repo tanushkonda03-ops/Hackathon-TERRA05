@@ -191,6 +191,7 @@ class BackendDataService:
         bbox: tuple[float, float, float, float] | None = None,
         routing_enabled: bool = True,
         drainage_capacity_mm_hr: float = 25.0,
+        tide_level: str = "normal",
         max_timesteps: int | None = None,
         custom_duration_hours: float | None = None,
         custom_total_depth_mm: float | None = None,
@@ -276,13 +277,14 @@ class BackendDataService:
             target_desc = f"ward '{ward}'" if ward else f"bbox {bbox}" if bbox else "default corridor (Ward L)"
             raise LookupError(f"No spatial grid cells found for {target_desc}")
 
+        tide_factor = {"normal": 1.0, "high": 0.75, "extreme": 0.5}.get(tide_level, 1.0)
         engine = SurfaceRunoffEngine(
             features=features,
             scenario_intervals=intervals,
             scenario_id=scenario_id,
             scenario_metadata=scenario_info,
             routing_enabled=routing_enabled,
-            drainage_capacity_mm_hr=drainage_capacity_mm_hr,
+            drainage_capacity_mm_hr=drainage_capacity_mm_hr * tide_factor,
             max_timesteps=max_timesteps,
         )
         return engine.run()

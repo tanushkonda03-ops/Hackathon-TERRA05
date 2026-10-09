@@ -109,6 +109,7 @@ export interface SimulationRequest {
   bbox?: [number, number, number, number] | null;
   routing_enabled?: boolean;
   drainage_capacity_mm_hr?: number;
+  tide_level?: 'normal' | 'high' | 'extreme';
   max_timesteps?: number | null;
   custom_duration_hours?: number | null;
   custom_total_depth_mm?: number | null;

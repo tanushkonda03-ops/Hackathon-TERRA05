@@ -13,7 +13,9 @@ Set `TERRA05_ROOT` when running from another directory. Optional configuration v
 - `GET /health` reports API, model artifact, rainfall catalogue, geospatial data, and SWMM readiness.
 - `GET /api/v1/system-status` reports the same components independently.
 - `GET /api/v1/scenarios` returns the nine validated rainfall scenarios and their interval records.
+- `POST /api/v1/simulation/run` runs a rainfall scenario with optional custom duration/total depth and `tide_level` (`normal`, `high`, or `extreme`). Higher tide reduces effective drainage capacity to represent coastal backwater.
 - `POST /api/v1/predict` accepts either `{ "grid_id": 1 }` or WGS84 `{ "latitude": ..., "longitude": ... }`. It returns an uncalibrated historical susceptibility score from the saved scikit-learn pipeline.
+- `GET /api/v1/drainage-network` returns the full municipal drainage GeoJSON used by the map.
 - `GET /api/v1/risk-map?limit=100&offset=0` returns paginated features from the verified 100 m grid. Bounding-box values use the source grid CRS, EPSG:32643.
 
 The prediction endpoint is historical spatial susceptibility, not a calibrated probability, event-specific forecast, real-time warning, water-depth prediction, or inundation extent. The repository has no EPA-SWMM `.inp` model, so hydraulic simulation remains unavailable and is reported explicitly by status endpoints.

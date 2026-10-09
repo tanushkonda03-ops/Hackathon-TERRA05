@@ -7,6 +7,7 @@ import { HistoricalValidationView } from './components/HistoricalValidationView'
 import { DataLayersView } from './components/DataLayersView';
 import { ArchitectureView } from './components/ArchitectureView';
 import { HowItWorksModal } from './components/HowItWorksModal';
+import { DecisionSupportPanel } from './components/DecisionSupportPanel';
 import { MUMBAI_GEO_LOCATIONS, MumbaiLocation, getTimelineImpactMetrics } from './data/locations';
 import { 
   getSystemStatus, 
@@ -48,6 +49,7 @@ export const App: React.FC = () => {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('DESIGN_RED_100MM');
   const [customDurationHours, setCustomDurationHours] = useState<number>(24);
   const [customTotalDepthMm, setCustomTotalDepthMm] = useState<number>(100);
+  const [tideLevel, setTideLevel] = useState<'normal' | 'high' | 'extreme'>('normal');
 
   // Live 2D Hydraulic/Runoff Simulation Data
   const [simulationData, setSimulationData] = useState<SimulationResponse | null>(null);
@@ -76,6 +78,7 @@ export const App: React.FC = () => {
   const [showDevDiagnostics, setShowDevDiagnostics] = useState<boolean>(false);
   const [showDisclaimer, setShowDisclaimer] = useState<boolean>(false);
   const [showHowItWorks, setShowHowItWorks] = useState<boolean>(false);
+  const [showDecisionSupport, setShowDecisionSupport] = useState<boolean>(false);
 
   // Structured GIS layer states
   const [layers, setLayers] = useState({
@@ -136,9 +139,11 @@ export const App: React.FC = () => {
           max_timesteps?: number;
           custom_duration_hours?: number;
           custom_total_depth_mm?: number;
+          tide_level?: 'normal' | 'high' | 'extreme';
         } = {
           scenario_id: selectedScenarioId,
           ward: cleanWard,
+          tide_level: tideLevel,
         };
         if (selectedScenarioId === 'CUSTOM') {
           reqPayload.custom_duration_hours = customDurationHours;
@@ -178,7 +183,7 @@ export const App: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedScenarioId, selectedLocation?.id, selectedLocation?.ward, customDurationHours, customTotalDepthMm]);
+  }, [selectedScenarioId, selectedLocation?.id, selectedLocation?.ward, customDurationHours, customTotalDepthMm, tideLevel]);
 
   const maxSteps = simulationData?.timesteps?.length ? simulationData.timesteps.length - 1 : 6;
 
@@ -331,6 +336,14 @@ export const App: React.FC = () => {
           >
             <Info className="w-3 h-3" />
             <span className="hidden md:inline">HOW TO USE</span>
+          </button>
+
+          <button
+            onClick={() => setShowDecisionSupport(true)}
+            className="flex items-center space-x-1 text-xs font-semibold text-rose-800 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded transition-colors"
+          >
+            <Activity className="w-3 h-3" />
+            <span className="hidden md:inline">RESPONSE PLAN</span>
           </button>
 
           {/* Dev Diagnostics Toggle */}
@@ -566,6 +579,18 @@ export const App: React.FC = () => {
                           </span>
                         </div>
                       )}
+                      <label className="flex items-center gap-1 text-[11px] text-slate-600 whitespace-nowrap">
+                        Tide
+                        <select
+                          value={tideLevel}
+                          onChange={(event) => setTideLevel(event.target.value as 'normal' | 'high' | 'extreme')}
+                          className="rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900"
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="high">High</option>
+                          <option value="extreme">Extreme</option>
+                        </select>
+                      </label>
                     </div>
 
                     {/* Play / Pause / Reset Controls */}
@@ -766,6 +791,16 @@ export const App: React.FC = () => {
       )}
 
       {showHowItWorks && <HowItWorksModal onClose={() => setShowHowItWorks(false)} />}
+      {showDecisionSupport && (
+        <DecisionSupportPanel
+          rainfall={selectedScenarioId === 'CUSTOM' ? customTotalDepthMm : rainfall * 3}
+          durationHours={selectedScenarioId === 'CUSTOM' ? customDurationHours : 3}
+          tideLevel={tideLevel}
+          simulationData={simulationData}
+          timelineMetrics={timelineMetrics}
+          onClose={() => setShowDecisionSupport(false)}
+        />
+      )}
     </div>
   );
 };

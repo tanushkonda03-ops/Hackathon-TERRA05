@@ -76,6 +76,7 @@ class SimulationRequest(BaseModel):
     bbox: tuple[float, float, float, float] | None = Field(default=None, description="Optional bounding box (minx, miny, maxx, maxy) in EPSG:32643")
     routing_enabled: bool = Field(default=True, description="Enable 2D terrain diffusive overland routing between adjacent cells")
     drainage_capacity_mm_hr: float = Field(default=25.0, ge=0.0, le=200.0, description="Base municipal stormwater drainage extraction rate (mm/hr)")
+    tide_level: str = Field(default="normal", pattern="^(normal|high|extreme)$", description="Coastal tide/backwater condition")
     max_timesteps: int | None = Field(default=None, gt=0, le=200, description="Optional cap on number of timesteps")
     custom_duration_hours: float | None = Field(default=None, gt=0, le=168, description="Custom rainfall duration in hours")
     custom_total_depth_mm: float | None = Field(default=None, gt=0, le=5000, description="Total custom rainfall depth in millimetres")

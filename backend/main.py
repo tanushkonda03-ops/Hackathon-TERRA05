@@ -132,6 +132,7 @@ def run_simulation(request: SimulationRequest) -> dict:
             bbox=request.bbox,
             routing_enabled=request.routing_enabled,
             drainage_capacity_mm_hr=request.drainage_capacity_mm_hr,
+            tide_level=request.tide_level,
             max_timesteps=request.max_timesteps,
             custom_duration_hours=request.custom_duration_hours,
             custom_total_depth_mm=request.custom_total_depth_mm,
