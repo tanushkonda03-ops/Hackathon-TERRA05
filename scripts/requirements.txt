@@ -16,4 +16,4 @@ httpx
 pytest
 joblib
 scikit-learn==1.9.1
-xgboost==3.4.1
+xgboost==3.2.0
