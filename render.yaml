@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: terra05-api
+    runtime: python
+    plan: free
+    region: singapore
+    branch: roshan
+    buildCommand: pip install -r scripts/requirements.txt
+    startCommand: python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: TERRA05_CORS_ORIGINS
+        fromService:
+          type: web
+          name: terra05-web
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: terra05-web
+    runtime: static
+    branch: roshan
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: terra05-api
+          envVarKey: RENDER_EXTERNAL_URL
