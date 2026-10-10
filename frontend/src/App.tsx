@@ -88,7 +88,7 @@ export const App: React.FC = () => {
     floodSpots: true,
     drainage: true,
     runoffFlow: false,
-    roadsExposure: false,
+    roadsExposure: true,
     criticalInfra: false,
     floodDepth: true,
     terrain3D: true,

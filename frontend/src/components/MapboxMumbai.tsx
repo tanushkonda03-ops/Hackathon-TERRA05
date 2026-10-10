@@ -4,17 +4,25 @@ import { Map as MapLibreMap, NavigationControl, ScaleControl, GeoJSONSource } fr
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { FeatureCollection, LineString, Feature } from 'geojson';
-import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, getLocationCatchmentBounds, getTimelineImpactMetrics } from '../data/locations';
+import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, getLocationCatchmentBounds } from '../data/locations';
 import { 
+  MITHI_RIVER_GEOJSON,
   RUNOFF_FLOW_PATHS_GEOJSON,
   MUMBAI_MAJOR_ROADS_GEOJSON,
   CRITICAL_INFRASTRUCTURE_GEOJSON,
   MUMBAI_EVACUATION_CORRIDORS_GEOJSON,
   MUMBAI_MUNICIPAL_SHELTERS_GEOJSON,
 } from '../data/mumbaiGeojson';
-import { getDrainageNetwork, getFloodSpots, getCompleteRiskMap, convertBounds4326To32643, transformRiskMapToGeoJSON4326, SimulationResponse, simulationDataToGeoJSON } from '../services/api';
+import { getBundledDrainageNetwork, getFloodSpots, getCompleteRiskMap, convertBounds4326To32643, transformRiskMapToGeoJSON4326, SimulationResponse, simulationDataToGeoJSON } from '../services/api';
 import { ChevronDown } from 'lucide-react';
 import { buildDownstreamTrace } from '../utils/drainageTrace';
+
+interface DrainageFlowPath {
+  coordinates: [number, number][];
+  cumulativeMeters: number[];
+  totalLengthMeters: number;
+  phase: number;
+}
 
 // Configure MapLibre Web Worker for Vite
 maplibregl.setWorkerUrl(workerUrl);
@@ -71,6 +79,9 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   const fullDrainageNetworkRef = useRef<FeatureCollection | null>(null);
+  const drainageFlowPathsRef = useRef<DrainageFlowPath[]>([]);
+  const drainageFlowEnabledRef = useRef(false);
+  const drainageFlowColorRef = useRef('#06B6D4');
   const [hoveredFeature, setHoveredFeature] = useState<{
     x: number;
     y: number;
@@ -82,6 +93,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     isSimCell?: boolean;
     isSWD?: boolean;
     isInsideFocusArea?: boolean;
+    swdStatus?: string;
     swdWidth?: number;
     swdHeight?: number;
     swdLength?: number;
@@ -337,6 +349,38 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           });
         }
 
+        // Pabitra's Mithi River line, drawn beneath SWD conduits and above the simulation surface.
+        if (!map.getSource('mithi-river-src')) {
+          map.addSource('mithi-river-src', {
+            type: 'geojson',
+            data: MITHI_RIVER_GEOJSON,
+          });
+
+          map.addLayer({
+            id: 'mithi-river-casing',
+            type: 'line',
+            source: 'mithi-river-src',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#0369A1',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 7, 16, 17],
+              'line-opacity': 0.9,
+            },
+          });
+
+          map.addLayer({
+            id: 'mithi-river-core',
+            type: 'line',
+            source: 'mithi-river-src',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#38BDF8',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 16, 12],
+              'line-opacity': 1.0,
+            },
+          });
+        }
+
         // --- LAYER 5: SURFACE RUNOFF OVERLAND FLOW PATHS ---
         if (!map.getSource('runoff-flow-src')) {
           map.addSource('runoff-flow-src', {
@@ -363,7 +407,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         }
 
         // --- LAYER 6: BMC STORMWATER DRAINAGE (SWD) NETWORK (Rendered Above Water & Roads) ---
-        // 6A: Existing municipal conduits only. Proposal assets are excluded by the backend default.
+        // Existing and proposed GIS pipes are both shown; only existing conduits enter hydraulic styling.
         if (!map.getSource('bmc-drainage-src')) {
           map.addSource('bmc-drainage-src', {
             type: 'geojson',
@@ -374,6 +418,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
             id: 'bmc-drainage-casing',
             type: 'line',
             source: 'bmc-drainage-src',
+            filter: ['==', ['get', 'USER_TEXT2'], 'Existing'],
             layout: {
               'line-join': 'round',
               'line-cap': 'round',
@@ -399,6 +444,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
             id: 'bmc-drainage-layer',
             type: 'line',
             source: 'bmc-drainage-src',
+            filter: ['==', ['get', 'USER_TEXT2'], 'Existing'],
             layout: {
               'line-join': 'round',
               'line-cap': 'round',
@@ -417,6 +463,24 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
                 19, 5.5
               ],
               'line-opacity': selectedLocation ? 0.40 : 0.75,
+            },
+          });
+
+          map.addLayer({
+            id: 'bmc-drainage-proposed-layer',
+            type: 'line',
+            source: 'bmc-drainage-src',
+            filter: ['==', ['get', 'USER_TEXT2'], 'Proposal'],
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+              visibility: layers.drainage ? 'visible' : 'none',
+            },
+            paint: {
+              'line-color': '#D97706',
+              'line-width': ['interpolate', ['exponential', 1.3], ['zoom'], 11, 0.7, 13, 1.2, 15, 1.8, 17, 2.6, 19, 3.4],
+              'line-dasharray': [2, 2],
+              'line-opacity': 0.68,
             },
           });
         }
@@ -521,6 +585,24 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
                 19, 7.0
               ],
               'line-opacity': 0.95,
+            },
+          });
+
+          map.addSource('bmc-drainage-flow-points-src', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          });
+          map.addLayer({
+            id: 'bmc-drainage-flow-points',
+            type: 'circle',
+            source: 'bmc-drainage-flow-points-src',
+            layout: { visibility: layers.drainage ? 'visible' : 'none' },
+            paint: {
+              'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 1.7, 15, 2.5, 19, 3.4],
+              'circle-color': ['get', 'color'],
+              'circle-opacity': 0.98,
+              'circle-stroke-color': 'rgba(255, 255, 255, 0.8)',
+              'circle-stroke-width': 0.7,
             },
           });
         }
@@ -738,6 +820,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
               invertElevation: typeof props?.US_INVERT === 'number' ? props.US_INVERT : undefined,
               isSWD: true,
               isInsideFocusArea: true,
+              swdStatus: 'Existing municipal asset',
             });
           }
         });
@@ -747,7 +830,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           setHoveredFeature(null);
         });
 
-        // SWD Baseline Network Hover
+        // Existing and proposed SWD inventory inspection
         map.on('mousemove', 'bmc-drainage-layer', (e) => {
           if (e.features && e.features[0]) {
             const props = e.features[0].properties;
@@ -762,11 +845,35 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
               invertElevation: typeof props?.US_INVERT === 'number' ? props.US_INVERT : undefined,
               isSWD: true,
               isInsideFocusArea: false,
+              swdStatus: 'Existing municipal asset',
             });
           }
         });
 
         map.on('mouseleave', 'bmc-drainage-layer', () => {
+          map.getCanvas().style.cursor = '';
+          setHoveredFeature(null);
+        });
+
+        map.on('mousemove', 'bmc-drainage-proposed-layer', (e) => {
+          if (e.features && e.features[0]) {
+            const props = e.features[0].properties;
+            map.getCanvas().style.cursor = 'pointer';
+            setHoveredFeature({
+              x: e.point.x,
+              y: e.point.y,
+              name: `Proposed SWD conduit ${props?.US_NODE_ID ? `#${props.US_NODE_ID} → #${props.DS_NODE_ID}` : ''}`,
+              swdWidth: typeof props?.CONDUIT_WI === 'number' ? props.CONDUIT_WI : undefined,
+              swdHeight: typeof props?.CONDUIT_HE === 'number' ? props.CONDUIT_HE : undefined,
+              swdLength: typeof props?.CONDUIT_LE === 'number' ? props.CONDUIT_LE : undefined,
+              isSWD: true,
+              isInsideFocusArea: false,
+              swdStatus: 'Proposed · excluded from simulation',
+            });
+          }
+        });
+
+        map.on('mouseleave', 'bmc-drainage-proposed-layer', () => {
           map.getCanvas().style.cursor = '';
           setHoveredFeature(null);
         });
@@ -985,11 +1092,13 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     const net = network || fullDrainageNetworkRef.current;
     if (!net || !net.features || net.features.length === 0) {
       activeSrc.setData({ type: 'FeatureCollection', features: [] });
+      drainageFlowPathsRef.current = [];
       return;
     }
 
     if (!location) {
       activeSrc.setData({ type: 'FeatureCollection', features: [] });
+      drainageFlowPathsRef.current = [];
       return;
     }
 
@@ -998,6 +1107,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
 
     if (bounds) {
       localizedFeatures = net.features.filter((feat) => {
+        if (String(feat.properties?.USER_TEXT2 ?? '').trim().toLowerCase() !== 'existing') return false;
         if (!feat.geometry) return false;
         if (feat.geometry.type === 'LineString') {
           const coords = feat.geometry.coordinates;
@@ -1022,17 +1132,73 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       features: localizedFeatures,
     });
 
+    // Build tracer paths only from the backend conduits selected for this locality.
+    const flowCandidates = localizedFeatures.flatMap((feature, featureIndex) => {
+      if (!feature.geometry) return [];
+      const geometry = feature.geometry;
+      const lines: [number, number][][] = geometry.type === 'LineString'
+        ? [geometry.coordinates as [number, number][]]
+        : geometry.type === 'MultiLineString'
+          ? geometry.coordinates as [number, number][][]
+          : [];
+
+      return lines.map((coordinates, lineIndex) => {
+        if (coordinates.length < 2) return null;
+        const cumulativeMeters = [0];
+        for (let index = 1; index < coordinates.length; index += 1) {
+          const [lngA, latA] = coordinates[index - 1];
+          const [lngB, latB] = coordinates[index];
+          const meanLatitude = ((latA + latB) / 2) * Math.PI / 180;
+          const dx = (lngB - lngA) * 111_320 * Math.cos(meanLatitude);
+          const dy = (latB - latA) * 110_540;
+          cumulativeMeters.push(cumulativeMeters[index - 1] + Math.hypot(dx, dy));
+        }
+        const totalLengthMeters = cumulativeMeters[cumulativeMeters.length - 1];
+        if (!Number.isFinite(totalLengthMeters) || totalLengthMeters <= 0) return null;
+        const nodeId = String(feature.properties?.US_NODE_ID ?? `${featureIndex}-${lineIndex}`);
+        const seed = Array.from(nodeId).reduce((value, character) => (value * 31 + character.charCodeAt(0)) % 997, 7);
+        return { coordinates, cumulativeMeters, totalLengthMeters, phase: seed / 997 };
+      }).filter((path): path is DrainageFlowPath => path !== null);
+    });
+    const flowStride = Math.max(1, Math.ceil(flowCandidates.length / 240));
+    drainageFlowPathsRef.current = flowCandidates.filter((_, index) => index % flowStride === 0).slice(0, 240);
+
     if (map.getLayer('bmc-drainage-active-layer')) {
-      const stress = getTimelineImpactMetrics(rainfall, timelineStep).drainStressState;
-      const stressColors: Record<string, { color: string; width: number }> = {
-        OPTIMAL: { color: '#06B6D4', width: 2.8 },
-        LOADING: { color: '#FACC15', width: 3.2 },
-        'HIGH LOAD': { color: '#F59E0B', width: 3.8 },
-        OVERLOADED: { color: '#F97316', width: 4.4 },
-        'SURCHARGING OVERFLOW': { color: '#EF4444', width: 5.2 },
-      };
-      const style = stressColors[stress] || stressColors.OPTIMAL;
+      let style = { color: '#06B6D4', width: 2.8 };
+      const timestepIndex = Math.min(
+        Math.max(0, simStepIndex ?? timelineStep),
+        Math.max(0, (simulationData?.timesteps.length || 1) - 1),
+      );
+      const current = simulationData?.timesteps[timestepIndex];
+      const previous = simulationData?.timesteps[timestepIndex - 1];
+      drainageFlowEnabledRef.current = Boolean(current && current.drainage_removed_volume_m3 > 0);
+
+      if (current) {
+        const storagePeak = Math.max(1, ...simulationData.timesteps.map((step) => step.surface_storage_volume_m3));
+        const storageShare = current.surface_storage_volume_m3 / storagePeak;
+        const storageRising = previous
+          ? current.surface_storage_volume_m3 > previous.surface_storage_volume_m3
+          : current.surface_storage_volume_m3 > 0;
+        if (current.rainfall_intensity_mm_per_hr <= 0) {
+          style = current.drainage_removed_volume_m3 > 0
+            ? { color: '#0284C7', width: 3.2 }
+            : { color: '#06B6D4', width: 2.8 };
+        } else if (storageRising) {
+          style = storageShare >= 0.68
+            ? { color: '#EF4444', width: 5.2 }
+            : storageShare >= 0.34
+              ? { color: '#F97316', width: 4.4 }
+              : { color: '#FACC15', width: 3.2 };
+        } else {
+          style = storageShare >= 0.68
+            ? { color: '#F97316', width: 4.4 }
+            : storageShare >= 0.28
+              ? { color: '#FACC15', width: 3.2 }
+              : { color: '#06B6D4', width: 2.8 };
+        }
+      }
       const activeWidth = style.width;
+      drainageFlowColorRef.current = style.color;
 
       // Use one color per rainfall step so the whole selected pipe shifts together.
       map.setPaintProperty('bmc-drainage-active-layer', 'line-color', style.color);
@@ -1056,20 +1222,22 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     }
   };
 
-  // Load the current (Existing) municipal network; do not substitute a hand-drawn demo if unavailable.
+  // Load Pabitra's full municipal SWD inventory bundled with the frontend build.
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const source = mapRef.current.getSource('bmc-drainage-src') as GeoJSONSource | undefined;
     if (!source) return;
 
     const controller = new AbortController();
-    getDrainageNetwork(controller.signal)
+    getBundledDrainageNetwork(controller.signal)
       .then((network) => {
         if (!network.features?.length) throw new Error('The existing municipal drainage layer is empty');
         fullDrainageNetworkRef.current = network;
         source.setData(network);
         updateActiveDrainage(network, selectedLocation);
-        onDiagnosticsUpdate?.({ drainageNetwork: `AVAILABLE · ${network.features.length} existing conduits` });
+        const existingCount = network.features.filter((feature) => String(feature.properties?.USER_TEXT2 ?? '').trim().toLowerCase() === 'existing').length;
+        const proposedCount = network.features.length - existingCount;
+        onDiagnosticsUpdate?.({ drainageNetwork: `AVAILABLE · ${existingCount} existing + ${proposedCount} proposed conduits` });
         setDrainageNetworkLoaded(true);
       })
       .catch((error: unknown) => {
@@ -1191,7 +1359,60 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     updateActiveDrainage(fullDrainageNetworkRef.current, selectedLocation);
-  }, [selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, mapLoaded, rainfall, timelineStep]);
+  }, [selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, mapLoaded, rainfall, timelineStep, simulationData, simStepIndex]);
+
+  // Animate small same-color tracers along real selected conduit geometries only while the
+  // backend timestep reports drainage removal. They visualize network activity, not measured
+  // conduit-by-conduit velocity or direction.
+  useEffect(() => {
+    if (!mapLoaded || !layers.drainage || !selectedLocation || !mapRef.current) return;
+    const map = mapRef.current;
+    const source = map.getSource('bmc-drainage-flow-points-src') as GeoJSONSource | undefined;
+    if (!source) return;
+    let frame = 0;
+    let lastUpdate = 0;
+    let hasParticles = false;
+
+    const animate = (now: number) => {
+      if (!mapRef.current || !map.getLayer('bmc-drainage-flow-points')) return;
+      if (now - lastUpdate >= 66) {
+        if (drainageFlowEnabledRef.current) {
+          const features = drainageFlowPathsRef.current.map((path, index) => {
+            const progress = (now / 7_500 + path.phase) % 1;
+            const distance = progress * path.totalLengthMeters;
+            let segment = 1;
+            while (segment < path.cumulativeMeters.length - 1 && path.cumulativeMeters[segment] < distance) segment += 1;
+            const startDistance = path.cumulativeMeters[segment - 1];
+            const endDistance = path.cumulativeMeters[segment];
+            const fraction = endDistance > startDistance ? (distance - startDistance) / (endDistance - startDistance) : 0;
+            const start = path.coordinates[segment - 1];
+            const end = path.coordinates[segment];
+            return {
+              type: 'Feature' as const,
+              properties: { color: drainageFlowColorRef.current, particle: index },
+              geometry: {
+                type: 'Point' as const,
+                coordinates: [start[0] + (end[0] - start[0]) * fraction, start[1] + (end[1] - start[1]) * fraction],
+              },
+            };
+          });
+          source.setData({ type: 'FeatureCollection', features });
+          hasParticles = features.length > 0;
+        } else if (hasParticles) {
+          source.setData({ type: 'FeatureCollection', features: [] });
+          hasParticles = false;
+        }
+        lastUpdate = now;
+      }
+      frame = window.requestAnimationFrame(animate);
+    };
+
+    frame = window.requestAnimationFrame(animate);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      source.setData({ type: 'FeatureCollection', features: [] });
+    };
+  }, [mapLoaded, layers.drainage, selectedLocation?.id]);
 
   // 3B. Update 2D Computational Hydrodynamic Simulation Water Layer GeoJSON
   useEffect(() => {
@@ -1246,8 +1467,10 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
 
     setVisibility('bmc-drainage-casing', layers.drainage);
     setVisibility('bmc-drainage-layer', layers.drainage);
+    setVisibility('bmc-drainage-proposed-layer', layers.drainage);
     setVisibility('bmc-drainage-active-casing', layers.drainage);
     setVisibility('bmc-drainage-active-layer', layers.drainage);
+    setVisibility('bmc-drainage-flow-points', layers.drainage);
     setVisibility('runoff-flow-layer', layers.runoffFlow);
     setVisibility('mumbai-roads-layer', layers.roadsExposure);
     setVisibility('critical-infra-layer', layers.criticalInfra);
@@ -1443,6 +1666,12 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
                     : 'Municipal Baseline'}
                 </span>
               </div>
+              {hoveredFeature.swdStatus && (
+                <div className="flex justify-between gap-2 text-slate-500">
+                  <span>Asset status:</span>
+                  <span className="text-right font-semibold text-slate-800">{hoveredFeature.swdStatus}</span>
+                </div>
+              )}
               {hoveredFeature.swdWidth && (
                 <div className="flex justify-between text-slate-500">
                   <span>Conduit Size:</span>
@@ -1469,7 +1698,9 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
               )}
               <div className="text-[9.5px] text-slate-500 pt-0.5 border-t border-slate-100 space-y-0.5">
                 <div>
-                  {hoveredFeature.isInsideFocusArea
+                  {hoveredFeature.swdStatus?.startsWith('Proposed')
+                    ? 'Proposed drainage alignment · excluded from the current backend simulation'
+                    : hoveredFeature.isInsideFocusArea
                     ? 'Existing conduit within selected area · conduit-level hydraulic status unavailable'
                     : (selectedLocation
                         ? 'Municipal Baseline Infrastructure (Outside Selected Basin)'

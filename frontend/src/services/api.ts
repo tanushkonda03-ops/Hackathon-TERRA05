@@ -466,6 +466,17 @@ export async function getDrainageNetwork(
   return fetchJson<GeoJSON.FeatureCollection>('/api/v1/drainage-network', { signal });
 }
 
+export async function getBundledDrainageNetwork(
+  signal?: AbortSignal
+): Promise<GeoJSON.FeatureCollection> {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/drainage-network.geojson`, {
+    signal,
+    headers: { Accept: 'application/geo+json, application/json' },
+  });
+  if (!response.ok) throw new Error(`Could not load municipal SWD GeoJSON (${response.status})`);
+  return response.json() as Promise<GeoJSON.FeatureCollection>;
+}
+
 export async function getFloodSpots(signal?: AbortSignal): Promise<GeoJSON.FeatureCollection> {
   return fetchJson<GeoJSON.FeatureCollection>('/api/v1/flood-spots', { signal });
 }
