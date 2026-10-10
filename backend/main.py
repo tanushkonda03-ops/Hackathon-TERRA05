@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.responses import FileResponse
@@ -33,6 +33,7 @@ from .swmm_physics import SwmmPhysicsService, SwmmScenario
 from .ml_service import Phase3MLService
 from .schemas import MLPhase3PredictRequest
 from .scenario_service import ScenarioService
+from .live_weather import get_mumbai_observations
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 LOGGER = logging.getLogger(__name__)
@@ -70,6 +71,12 @@ def health() -> dict:
 @app.get("/api/v1/system-status", response_model=SystemStatusResponse)
 def system_status() -> dict:
     return service.status()
+
+
+@app.get("/api/v1/live-weather")
+def live_weather() -> dict:
+    """Latest reported rainfall at Mumbai IMD stations; this is not a forecast."""
+    return get_mumbai_observations()
 
 
 @app.get("/api/v1/validation/susceptibility")
@@ -210,11 +217,30 @@ def run_simulation(request: SimulationRequest) -> dict:
 
 
 @app.get("/api/v1/drainage-network")
-def get_drainage_network() -> dict:
+def get_drainage_network(status: Literal["existing", "all"] = "existing") -> dict:
+    """Return the BMC drain inventory; current infrastructure is the safe default."""
     try:
-        return service.drainage_network
+        network = service.drainage_network
+        if status == "all":
+            return network
+        return {
+            **network,
+            "features": [
+                feature for feature in network.get("features", [])
+                if str(feature.get("properties", {}).get("USER_TEXT2", "")).strip().lower() == "existing"
+            ],
+        }
     except (OSError, ValueError, KeyError) as exc:
         raise unavailable("drainage_data", exc) from exc
+
+
+@app.get("/api/v1/flood-spots")
+def get_flood_spots() -> dict:
+    """Clean BMC flood-prone locations, not a live inundation layer."""
+    try:
+        return service.flood_spots
+    except (OSError, ValueError, KeyError) as exc:
+        raise unavailable("flood_spots", exc) from exc
 
 
 @app.get("/api/v1/swmm/status", response_model=SwmmStatusResponse)

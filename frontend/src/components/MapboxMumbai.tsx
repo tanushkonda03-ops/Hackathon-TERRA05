@@ -4,21 +4,17 @@ import { Map as MapLibreMap, NavigationControl, ScaleControl, GeoJSONSource } fr
 import 'maplibre-gl/dist/maplibre-gl.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import type { FeatureCollection, LineString, Feature } from 'geojson';
-import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, TimelineImpactMetrics, getLocationCatchmentBounds } from '../data/locations';
+import { MumbaiLocation, MUMBAI_GEO_LOCATIONS, getLocationCatchmentBounds, getTimelineImpactMetrics } from '../data/locations';
 import { 
-  MITHI_RIVER_GEOJSON, 
-  BMC_DRAINAGE_GEOJSON, 
   RUNOFF_FLOW_PATHS_GEOJSON,
   MUMBAI_MAJOR_ROADS_GEOJSON,
   CRITICAL_INFRASTRUCTURE_GEOJSON,
-  BMC_FLOOD_SPOTS_GEOJSON, 
-  HISTORICAL_2019_GEOJSON, 
   MUMBAI_EVACUATION_CORRIDORS_GEOJSON,
   MUMBAI_MUNICIPAL_SHELTERS_GEOJSON,
-  getRealisticFloodPolygonsGeoJSON 
 } from '../data/mumbaiGeojson';
-import { getDrainageNetwork, getRiskMap, transformRiskMapToGeoJSON4326, SimulationResponse, ScenarioRiskCell, simulationDataToGeoJSON } from '../services/api';
+import { getDrainageNetwork, getFloodSpots, getCompleteRiskMap, convertBounds4326To32643, transformRiskMapToGeoJSON4326, SimulationResponse, simulationDataToGeoJSON } from '../services/api';
 import { ChevronDown } from 'lucide-react';
+import { buildDownstreamTrace } from '../utils/drainageTrace';
 
 // Configure MapLibre Web Worker for Vite
 maplibregl.setWorkerUrl(workerUrl);
@@ -26,7 +22,6 @@ maplibregl.setWorkerUrl(workerUrl);
 interface MapboxMumbaiProps {
   rainfall: number;
   timelineStep: number; // 0 to 6 (T00 to T06) or sim timestep
-  timelineMetrics: TimelineImpactMetrics;
   selectedLocation: MumbaiLocation | null;
   onSelectLocation: (loc: MumbaiLocation) => void;
   layers: {
@@ -36,17 +31,15 @@ interface MapboxMumbaiProps {
     roadsExposure: boolean;
     criticalInfra: boolean;
     floodDepth: boolean;
-    uncertainty: boolean;
-    historical2019: boolean;
     terrain3D: boolean;
     riskGrid: boolean;
-    scenarioRisk: boolean;
     evacuationRoutes?: boolean;
   };
   cameraPreset: '3D' | 'TOP' | 'RESET';
   simulationData?: SimulationResponse | null;
-  scenarioRiskMap?: ScenarioRiskCell[] | null;
   simStepIndex?: number;
+  drainageTraceRequest?: number;
+  onDrainageTraceResult?: (message: string | null) => void;
   interventions?: {
     mobilePumps: boolean;
     tidalGates: boolean;
@@ -58,14 +51,14 @@ interface MapboxMumbaiProps {
 export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   rainfall,
   timelineStep,
-  timelineMetrics,
   selectedLocation,
   onSelectLocation,
   layers,
   cameraPreset,
   simulationData,
-  scenarioRiskMap,
   simStepIndex,
+  drainageTraceRequest = 0,
+  onDrainageTraceResult,
   interventions,
   onStatusChange,
   onDiagnosticsUpdate,
@@ -74,11 +67,10 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
   const mapRef = useRef<MapLibreMap | null>(null);
   const rainCanvasRef = useRef<HTMLCanvasElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [riskGridLoaded, setRiskGridLoaded] = useState(false);
+  const [drainageNetworkLoaded, setDrainageNetworkLoaded] = useState(false);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   const fullDrainageNetworkRef = useRef<FeatureCollection | null>(null);
-  const riskGridGeometryRef = useRef<Feature[]>([]);
   const [hoveredFeature, setHoveredFeature] = useState<{
     x: number;
     y: number;
@@ -230,37 +222,6 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           });
         }
 
-        if (!map.getSource('terra05-scenario-risk-src')) {
-          map.addSource('terra05-scenario-risk-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-          map.addLayer({ id: 'terra05-scenario-risk-fill', type: 'fill', source: 'terra05-scenario-risk-src',
-            layout: { visibility: layers.scenarioRisk ? 'visible' : 'none' },
-            paint: { 'fill-color': ['interpolate', ['linear'], ['coalesce', ['get', 'scenario_risk_score'], 0],
-              0, '#22C55E', 0.25, '#EAB308', 0.5, '#F97316', 0.75, '#EF4444', 1, '#7F1D1D'], 'fill-opacity': 0.56 } });
-          map.addLayer({ id: 'terra05-scenario-risk-line', type: 'line', source: 'terra05-scenario-risk-src',
-            layout: { visibility: layers.scenarioRisk ? 'visible' : 'none' },
-            paint: { 'line-color': '#7F1D1D', 'line-width': 0.6, 'line-opacity': 0.55 } });
-        }
-
-        // 1B: Historical July 2019 Benchmark Replay
-        if (!map.getSource('historical-2019-src')) {
-          map.addSource('historical-2019-src', {
-            type: 'geojson',
-            data: HISTORICAL_2019_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'historical-2019-layer',
-            type: 'fill',
-            source: 'historical-2019-src',
-            layout: { visibility: layers.historical2019 ? 'visible' : 'none' },
-            paint: {
-              'fill-color': '#10B981',
-              'fill-opacity': 0.25,
-              'fill-outline-color': '#059669',
-            },
-          });
-        }
-
         // --- LAYER 2: MAJOR ROAD ARTERIALS BASELINE ---
         if (!map.getSource('mumbai-roads-src')) {
           map.addSource('mumbai-roads-src', {
@@ -286,72 +247,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           });
         }
 
-        // --- LAYER 3: FLOOD WATER SURFACE & 2D HYDRODYNAMIC SIMULATION CELLS ---
-        // 3A: Realistic Flood Water Surface (Smooth Geographic Basin Inundation)
-        if (!map.getSource('terra05-flood-src')) {
-          map.addSource('terra05-flood-src', {
-            type: 'geojson',
-            data: getRealisticFloodPolygonsGeoJSON(rainfall, timelineStep, layers.uncertainty),
-          });
-
-          map.addLayer({
-            id: 'terra05-flood-layer',
-            type: 'fill',
-            source: 'terra05-flood-src',
-            filter: ['==', ['get', 'layerType'], 'CORE_WATER'],
-            paint: {
-              'fill-color': [
-                'interpolate',
-                ['linear'],
-                ['get', 'depth'],
-                0.0,  '#BAE6FD',
-                0.15, '#38BDF8',
-                0.30, '#0284C7',
-                0.60, '#0369A1',
-                1.0,  '#0C4A6E'
-              ],
-              'fill-opacity': [
-                'interpolate',
-                ['linear'],
-                ['get', 'depth'],
-                0.0,  0.35,
-                0.30, 0.55,
-                1.0,  0.75
-              ],
-              'fill-outline-color': '#0284C7',
-            },
-          });
-
-          map.addLayer({
-            id: 'terra05-water-edge-layer',
-            type: 'line',
-            source: 'terra05-flood-src',
-            filter: ['==', ['get', 'layerType'], 'CORE_WATER'],
-            paint: {
-              'line-color': '#0284C7',
-              'line-width': 1.5,
-              'line-opacity': 0.8,
-            },
-          });
-
-          map.addLayer({
-            id: 'terra05-uncertainty-layer',
-            type: 'line',
-            source: 'terra05-flood-src',
-            filter: ['==', ['get', 'layerType'], 'UNCERTAINTY_BOUND'],
-            layout: {
-              visibility: layers.uncertainty ? 'visible' : 'none',
-            },
-            paint: {
-              'line-color': '#6366F1',
-              'line-width': 2.0,
-              'line-dasharray': [4, 3],
-              'line-opacity': 0.70,
-            },
-          });
-        }
-
-        // 3B: 2D Fluid Dynamic Water Inundation (Seamless WebGL continuous surface)
+        // Simulated inundation is drawn only from the backend simulation response.
         if (!map.getSource('terra05-sim-water-src')) {
           map.addSource('terra05-sim-water-src', {
             type: 'geojson',
@@ -441,38 +337,6 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           });
         }
 
-        // --- LAYER 4: MITHI RIVER NATURAL CHANNEL (Primary Landmark) ---
-        if (!map.getSource('mithi-river-src')) {
-          map.addSource('mithi-river-src', {
-            type: 'geojson',
-            data: MITHI_RIVER_GEOJSON,
-          });
-
-          map.addLayer({
-            id: 'mithi-river-casing',
-            type: 'line',
-            source: 'mithi-river-src',
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: {
-              'line-color': '#0369A1',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 7, 16, 17],
-              'line-opacity': 0.9,
-            },
-          });
-
-          map.addLayer({
-            id: 'mithi-river-core',
-            type: 'line',
-            source: 'mithi-river-src',
-            layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: {
-              'line-color': '#38BDF8',
-              'line-width': ['interpolate', ['linear'], ['zoom'], 12, 4, 16, 12],
-              'line-opacity': 1.0,
-            },
-          });
-        }
-
         // --- LAYER 5: SURFACE RUNOFF OVERLAND FLOW PATHS ---
         if (!map.getSource('runoff-flow-src')) {
           map.addSource('runoff-flow-src', {
@@ -499,11 +363,11 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         }
 
         // --- LAYER 6: BMC STORMWATER DRAINAGE (SWD) NETWORK (Rendered Above Water & Roads) ---
-        // 6A: Municipal Baseline Physical Network Casing & Core (All 34,711 Conduits Across Mumbai)
+        // 6A: Existing municipal conduits only. Proposal assets are excluded by the backend default.
         if (!map.getSource('bmc-drainage-src')) {
           map.addSource('bmc-drainage-src', {
             type: 'geojson',
-            data: BMC_DRAINAGE_GEOJSON,
+            data: { type: 'FeatureCollection', features: [] },
           });
 
           map.addLayer({
@@ -557,11 +421,57 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           });
         }
 
+        if (!map.getSource('drainage-trace-src')) {
+          map.addSource('drainage-trace-src', {
+            type: 'geojson',
+            lineMetrics: true,
+            data: { type: 'FeatureCollection', features: [] },
+          });
+          map.addLayer({
+            id: 'drainage-trace-casing',
+            type: 'line',
+            source: 'drainage-trace-src',
+            filter: ['==', ['get', 'kind'], 'route'],
+            paint: { 'line-color': '#FFFFFF', 'line-width': 8, 'line-opacity': 0.95 },
+          });
+          map.addLayer({
+            id: 'drainage-trace-line',
+            type: 'line',
+            source: 'drainage-trace-src',
+            filter: ['==', ['get', 'kind'], 'route'],
+            paint: {
+              'line-gradient': ['interpolate', ['linear'], ['line-progress'], 0, '#0EA5E9', 1, '#7C3AED'],
+              'line-width': 4.5,
+              'line-opacity': 1,
+            },
+          });
+          map.addLayer({
+            id: 'drainage-trace-connector',
+            type: 'line',
+            source: 'drainage-trace-src',
+            filter: ['==', ['get', 'kind'], 'connector'],
+            paint: { 'line-color': '#F59E0B', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.9 },
+          });
+          map.addLayer({
+            id: 'drainage-trace-points',
+            type: 'circle',
+            source: 'drainage-trace-src',
+            filter: ['in', ['get', 'kind'], ['literal', ['origin', 'network-end']]],
+            paint: {
+              'circle-radius': ['case', ['==', ['get', 'kind'], 'origin'], 6, 5],
+              'circle-color': ['case', ['==', ['get', 'kind'], 'origin'], '#F59E0B', '#7C3AED'],
+              'circle-stroke-color': '#FFFFFF',
+              'circle-stroke-width': 2,
+            },
+          });
+        }
+
         // 6B: Location-Specific Focus & Active Hydraulic Flow Layer
         if (!map.getSource('bmc-drainage-active-src')) {
           map.addSource('bmc-drainage-active-src', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] },
+            lineMetrics: true,
           });
 
           map.addLayer({
@@ -649,20 +559,18 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         if (!map.getSource('bmc-spots-src')) {
           map.addSource('bmc-spots-src', {
             type: 'geojson',
-            data: BMC_FLOOD_SPOTS_GEOJSON,
+            data: { type: 'FeatureCollection', features: [] },
           });
 
           map.addLayer({
             id: 'bmc-spots-layer',
-            type: 'circle',
+            type: 'fill',
             source: 'bmc-spots-src',
             layout: { visibility: layers.floodSpots ? 'visible' : 'none' },
             paint: {
-              'circle-radius': 5.5,
-              'circle-color': '#B91C1C',
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#FFFFFF',
-              'circle-opacity': 0.9,
+              'fill-color': '#B91C1C',
+              'fill-opacity': 0.20,
+              'fill-outline-color': '#991B1B',
             },
           });
         }
@@ -742,24 +650,6 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
             },
           });
         }
-
-        // Hover Raycasting
-        map.on('mousemove', 'terra05-flood-layer', (e) => {
-          if (e.features && e.features[0]) {
-            const props = e.features[0].properties;
-            setHoveredFeature({
-              x: e.point.x,
-              y: e.point.y,
-              name: props?.name || 'Inundation Basin',
-              depth: props?.depth,
-              elevation: props?.elevationM,
-            });
-          }
-        });
-
-        map.on('mouseleave', 'terra05-flood-layer', () => {
-          setHoveredFeature(null);
-        });
 
         // 2D Computational Simulation Water Inundation hover and inspect handlers
         map.on('mousemove', 'terra05-sim-water-interact-layer', (e) => {
@@ -937,28 +827,27 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
       console.info('[TERRA05][MAP] LOAD EVENT FIRED');
       setMapLoaded(true);
       onStatusChange?.('ONLINE');
-      onDiagnosticsUpdate?.((prev: any) => ({
-        ...prev,
+      onDiagnosticsUpdate?.({
         mapLoaded: true,
         styleLoaded: true,
-      }));
+        drainageNetwork: 'LOADING',
+        floodSpots: 'LOADING',
+        riskGrid: 'NOT LOADED',
+      });
       setupLayers();
 
-      // Load 100m risk grid from backend around Mithi catchment corridor
-      getRiskMap({ minx: 273000, miny: 2106000, maxx: 281000, maxy: 2114000, limit: 350 })
-        .then((data) => {
-          if (!mapRef.current) return;
-          const geojson = transformRiskMapToGeoJSON4326(data);
-          riskGridGeometryRef.current = geojson.features;
-          setRiskGridLoaded(true);
-          const src = mapRef.current.getSource('terra05-risk-grid-src') as GeoJSONSource;
-          if (src) {
-            src.setData(geojson);
-            console.info(`[TERRA05] 100m Risk Grid loaded: ${geojson.features.length} cells`);
-          }
+      getFloodSpots()
+        .then((spots) => {
+          if (!mapRef.current || !spots.features?.length) throw new Error('No flood-prone locations returned');
+          const src = mapRef.current.getSource('bmc-spots-src') as GeoJSONSource | undefined;
+          src?.setData(spots);
+          onDiagnosticsUpdate?.({ floodSpots: `AVAILABLE · ${spots.features.length} locations` });
         })
         .catch((err) => {
-          console.warn('[TERRA05] Risk grid load notice:', err.message);
+          console.warn('[TERRA05][FLOOD SPOTS] Municipal flood-prone locations unavailable:', err);
+          const src = mapRef.current?.getSource('bmc-spots-src') as GeoJSONSource | undefined;
+          src?.setData({ type: 'FeatureCollection', features: [] });
+          onDiagnosticsUpdate?.({ floodSpots: 'UNAVAILABLE' });
         });
     });
 
@@ -1064,21 +953,12 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     };
   }, [rainfall, timelineStep]);
 
-  // 3. Update Dynamic Flood Layer GeoJSON and Network Stress Colors (STABLE: Zero style resets)
+  // Keep mapped conduits neutral until conduit-specific hydraulic outputs exist.
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const map = mapRef.current;
 
     try {
-      // A. Update Water Inundation Polygon Geometry via persistent source setData
-      const floodSource = map.getSource('terra05-flood-src') as GeoJSONSource;
-      if (floodSource) {
-        const effectiveRainfall = (interventions?.mobilePumps ? rainfall * 0.70 : rainfall) * (interventions?.tidalGates ? 0.85 : 1.0);
-        const updatedGeoJSON = getRealisticFloodPolygonsGeoJSON(effectiveRainfall, timelineStep, layers.uncertainty);
-        floodSource.setData(updatedGeoJSON);
-      }
-
-      // B. Baseline Municipal Drainage Network Display (Solid physical conduits across Mumbai)
       if (map.getLayer('bmc-drainage-layer')) {
         map.setPaintProperty('bmc-drainage-layer', 'line-color', '#0891B2');
         map.setPaintProperty('bmc-drainage-layer', 'line-opacity', selectedLocation ? 0.40 : 0.75);
@@ -1087,21 +967,12 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         map.setPaintProperty('bmc-drainage-casing', 'line-opacity', selectedLocation ? 0.20 : 0.40);
       }
 
-      // C. Dynamically Update Road Inundation Colors
-      if (map.getLayer('mumbai-roads-layer')) {
-        let roadColor = '#64748B'; // Normal
-        if (timelineStep === 2) roadColor = '#D97706'; // At Risk (Amber)
-        else if (timelineStep === 3) roadColor = '#EA580C'; // Partially Flooded (Orange)
-        else if (timelineStep >= 4) roadColor = '#E11D48'; // Impassable / Submerged Corridor (Rose Hazard)
-
-        map.setPaintProperty('mumbai-roads-layer', 'line-color', roadColor);
-      }
     } catch (updateErr) {
-      console.error('[TERRA05][SIMULATION UPDATE ERROR]', updateErr);
+      console.error('[TERRA05][MAP INPUT STYLE ERROR]', updateErr);
     }
-  }, [rainfall, timelineStep, layers.uncertainty, timelineMetrics, mapLoaded, selectedLocation, interventions?.mobilePumps, interventions?.tidalGates]);
+  }, [mapLoaded, selectedLocation]);
 
-  // Helper to update location-specific active SWD features and dynamic hydraulic stress styling
+  // Highlight local conduits and restore rainfall-responsive hydraulic color progression.
   const updateActiveDrainage = (
     network: FeatureCollection | null,
     location: MumbaiLocation | null
@@ -1111,8 +982,11 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     const activeSrc = map.getSource('bmc-drainage-active-src') as GeoJSONSource | undefined;
     if (!activeSrc) return;
 
-    const net = network || fullDrainageNetworkRef.current || BMC_DRAINAGE_GEOJSON;
-    if (!net || !net.features || net.features.length === 0) return;
+    const net = network || fullDrainageNetworkRef.current;
+    if (!net || !net.features || net.features.length === 0) {
+      activeSrc.setData({ type: 'FeatureCollection', features: [] });
+      return;
+    }
 
     if (!location) {
       activeSrc.setData({ type: 'FeatureCollection', features: [] });
@@ -1149,41 +1023,19 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     });
 
     if (map.getLayer('bmc-drainage-active-layer')) {
-      let activeColor = '#06B6D4'; // Focus network highlighted in clean cyan (Standby)
-      let activeWidth = 2.4;
+      const stress = getTimelineImpactMetrics(rainfall, timelineStep).drainStressState;
+      const stressColors: Record<string, { color: string; width: number }> = {
+        OPTIMAL: { color: '#06B6D4', width: 2.8 },
+        LOADING: { color: '#FACC15', width: 3.2 },
+        'HIGH LOAD': { color: '#F59E0B', width: 3.8 },
+        OVERLOADED: { color: '#F97316', width: 4.4 },
+        'SURCHARGING OVERFLOW': { color: '#EF4444', width: 5.2 },
+      };
+      const style = stressColors[stress] || stressColors.OPTIMAL;
+      const activeWidth = style.width;
 
-      // Evaluate effective drainage stress relieved by municipal interventions
-      let effectiveStress = timelineMetrics.drainStressState;
-      if (interventions?.mobilePumps && effectiveStress === 'SURCHARGING OVERFLOW') {
-        effectiveStress = 'HIGH LOAD';
-      }
-      if (interventions?.mobilePumps && interventions?.tidalGates) {
-        if (effectiveStress === 'HIGH LOAD') effectiveStress = 'LOADING';
-        else if (effectiveStress === 'LOADING') effectiveStress = 'OPTIMAL';
-      }
-
-      if (timelineStep === 0 && rainfall === 0) {
-        // Standby baseline: dry weather readiness, distinct from flowing/stressed conduits
-        activeColor = '#06B6D4';
-        activeWidth = 2.4;
-      } else if (timelineStep === 1 || effectiveStress === 'OPTIMAL') {
-        activeColor = '#0284C7'; // Inflow / Gravity Conveyance
-        activeWidth = 2.8;
-      } else if (effectiveStress === 'LOADING') {
-        activeColor = '#0284C7';
-        activeWidth = 3.2;
-      } else if (effectiveStress === 'HIGH LOAD') {
-        activeColor = '#D97706'; // Amber (Stressed)
-        activeWidth = 3.8;
-      } else if (effectiveStress === 'OVERLOADED') {
-        activeColor = '#EA580C'; // Orange-Red
-        activeWidth = 4.4;
-      } else if (effectiveStress === 'SURCHARGING OVERFLOW') {
-        activeColor = '#DC2626'; // Red (Surcharging)
-        activeWidth = 5.2;
-      }
-
-      map.setPaintProperty('bmc-drainage-active-layer', 'line-color', activeColor);
+      // Use one color per rainfall step so the whole selected pipe shifts together.
+      map.setPaintProperty('bmc-drainage-active-layer', 'line-color', style.color);
       map.setPaintProperty('bmc-drainage-active-layer', 'line-width', [
         'interpolate', ['exponential', 1.3], ['zoom'],
         11, activeWidth * 0.7,
@@ -1204,7 +1056,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     }
   };
 
-  // Replace the small demo drainage sketch with the full municipal network when the API is available.
+  // Load the current (Existing) municipal network; do not substitute a hand-drawn demo if unavailable.
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     const source = mapRef.current.getSource('bmc-drainage-src') as GeoJSONSource | undefined;
@@ -1213,28 +1065,133 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     const controller = new AbortController();
     getDrainageNetwork(controller.signal)
       .then((network) => {
-        if (network.features?.length) {
-          fullDrainageNetworkRef.current = network;
-          source.setData(network);
-          updateActiveDrainage(network, selectedLocation);
-        }
+        if (!network.features?.length) throw new Error('The existing municipal drainage layer is empty');
+        fullDrainageNetworkRef.current = network;
+        source.setData(network);
+        updateActiveDrainage(network, selectedLocation);
+        onDiagnosticsUpdate?.({ drainageNetwork: `AVAILABLE · ${network.features.length} existing conduits` });
+        setDrainageNetworkLoaded(true);
       })
       .catch((error: unknown) => {
         if ((error as { name?: string })?.name !== 'AbortError') {
-          console.warn('[TERRA05][DRAINAGE] Full network unavailable; using demo network:', error);
-          fullDrainageNetworkRef.current = BMC_DRAINAGE_GEOJSON;
-          updateActiveDrainage(BMC_DRAINAGE_GEOJSON, selectedLocation);
+          console.warn('[TERRA05][DRAINAGE] Existing municipal network unavailable:', error);
+          fullDrainageNetworkRef.current = null;
+          source.setData({ type: 'FeatureCollection', features: [] });
+          updateActiveDrainage(null, selectedLocation);
+          onDiagnosticsUpdate?.({ drainageNetwork: 'UNAVAILABLE' });
+          setDrainageNetworkLoaded(true);
         }
       });
 
     return () => controller.abort();
   }, [mapLoaded]);
 
-  // Update localized SWD layer when selectedLocation, timelineStep, stress state, or interventions change
+  // Fetch every historical flood-label grid cell in the current view, rather than an arbitrary first page.
+  useEffect(() => {
+    if (!mapLoaded || !layers.riskGrid || !mapRef.current) return;
+    const map = mapRef.current;
+    let debounceTimer: number | undefined;
+    let controller: AbortController | null = null;
+
+    const loadVisibleGrid = () => {
+      if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(async () => {
+        controller?.abort();
+        const requestController = new AbortController();
+        controller = requestController;
+        try {
+          const bounds = map.getBounds();
+          const projectedBounds = convertBounds4326To32643(
+            bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth(),
+          );
+          onDiagnosticsUpdate?.({ riskGrid: 'LOADING' });
+          const data = await getCompleteRiskMap({ ...projectedBounds, signal: requestController.signal });
+          if (!mapRef.current || requestController.signal.aborted) return;
+          const geojson = transformRiskMapToGeoJSON4326(data);
+          const src = mapRef.current.getSource('terra05-risk-grid-src') as GeoJSONSource | undefined;
+          src?.setData(geojson);
+          onDiagnosticsUpdate?.({ riskGrid: `AVAILABLE · ${geojson.features.length} historical cells` });
+          console.info(`[TERRA05] Complete visible historical flood grid loaded: ${geojson.features.length} cells`);
+        } catch (error) {
+          if ((error as { name?: string })?.name !== 'AbortError' && !requestController.signal.aborted) {
+            console.warn('[TERRA05][RISK GRID] Visible historical flood grid unavailable:', error);
+            onDiagnosticsUpdate?.({ riskGrid: 'UNAVAILABLE' });
+          }
+        }
+      }, 250);
+    };
+
+    map.on('moveend', loadVisibleGrid);
+    loadVisibleGrid();
+    return () => {
+      map.off('moveend', loadVisibleGrid);
+      if (debounceTimer !== undefined) window.clearTimeout(debounceTimer);
+      controller?.abort();
+    };
+  }, [mapLoaded, layers.riskGrid]);
+
+  // Trace from the selected locality to its nearest mapped conduit, then follow downstream node IDs.
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const source = mapRef.current.getSource('drainage-trace-src') as GeoJSONSource | undefined;
+    if (!source) return;
+    if (!drainageTraceRequest) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      onDrainageTraceResult?.(null);
+      return;
+    }
+    if (!selectedLocation) {
+      onDrainageTraceResult?.('Select an area before tracing its drainage network.');
+      return;
+    }
+    if (!drainageNetworkLoaded) {
+      onDrainageTraceResult?.('Loading the drainage network…');
+      return;
+    }
+
+    const network = fullDrainageNetworkRef.current;
+    if (!network) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      onDrainageTraceResult?.('Existing municipal drainage data is unavailable. Reconnect the backend before tracing.');
+      return;
+    }
+    const trace = network ? buildDownstreamTrace(network, [selectedLocation.lng, selectedLocation.lat]) : null;
+    if (!trace) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      onDrainageTraceResult?.('No connected, node-linked drain found within 1.5 km of this area.');
+      return;
+    }
+
+    source.setData(trace.data);
+    ['drainage-trace-casing', 'drainage-trace-line', 'drainage-trace-connector', 'drainage-trace-points'].forEach((layerId) => {
+      if (mapRef.current?.getLayer(layerId)) mapRef.current.moveLayer(layerId);
+    });
+    const points = trace.data.features.flatMap((feature) => {
+      if (feature.geometry.type === 'Point') return [feature.geometry.coordinates as [number, number]];
+      if (feature.geometry.type === 'LineString') return feature.geometry.coordinates as [number, number][];
+      return [];
+    });
+    const bounds = points.reduce<[number, number, number, number]>(
+      (value, point) => [
+        Math.min(value[0], point[0]), Math.min(value[1], point[1]),
+        Math.max(value[2], point[0]), Math.max(value[3], point[1]),
+      ],
+      [Infinity, Infinity, -Infinity, -Infinity],
+    );
+    mapRef.current.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], {
+      padding: { top: 90, right: 90, bottom: 90, left: 90 }, maxZoom: 15, duration: 700,
+    });
+    const lengthKm = (trace.totalLengthM / 1_000).toFixed(2);
+    onDrainageTraceResult?.(
+      `Nearest drain ${Math.round(trace.nearestDistanceM)} m away · ${trace.conduitCount} connected conduits · ${lengthKm} km to network end ${trace.terminalNode}${trace.truncated ? ' (trace capped)' : ''}. Network end is not confirmed as an outfall; no catchment boundary or surface-flow connection is available.`,
+    );
+  }, [drainageTraceRequest, drainageNetworkLoaded, mapLoaded, selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, onDrainageTraceResult]);
+
+  // Update the selected location highlight when the focus point changes.
   useEffect(() => {
     if (!mapLoaded || !mapRef.current) return;
     updateActiveDrainage(fullDrainageNetworkRef.current, selectedLocation);
-  }, [selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, timelineStep, timelineMetrics.drainStressState, mapLoaded, interventions?.mobilePumps, interventions?.tidalGates]);
+  }, [selectedLocation?.id, selectedLocation?.lat, selectedLocation?.lng, mapLoaded, rainfall, timelineStep]);
 
   // 3B. Update 2D Computational Hydrodynamic Simulation Water Layer GeoJSON
   useEffect(() => {
@@ -1252,14 +1209,6 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         );
         const geojson = simulationDataToGeoJSON(simulationData, step);
         simSrc.setData(geojson);
-
-        // When real computational simulation is active, hide schematic polygon layer
-        if (map.getLayer('terra05-flood-layer')) {
-          map.setLayoutProperty('terra05-flood-layer', 'visibility', 'none');
-        }
-        if (map.getLayer('terra05-water-edge-layer')) {
-          map.setLayoutProperty('terra05-water-edge-layer', 'visibility', 'none');
-        }
         if (map.getLayer('terra05-sim-water-layer')) {
           map.setLayoutProperty('terra05-sim-water-layer', 'visibility', layers.floodDepth ? 'visible' : 'none');
         }
@@ -1267,14 +1216,7 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
           map.setLayoutProperty('terra05-sim-water-interact-layer', 'visibility', layers.floodDepth ? 'visible' : 'none');
         }
       } else {
-        // Clear sim layer, restore schematic polygon if floodDepth layer is active
         simSrc.setData({ type: 'FeatureCollection', features: [] });
-        if (map.getLayer('terra05-flood-layer')) {
-          map.setLayoutProperty('terra05-flood-layer', 'visibility', layers.floodDepth ? 'visible' : 'none');
-        }
-        if (map.getLayer('terra05-water-edge-layer')) {
-          map.setLayoutProperty('terra05-water-edge-layer', 'visibility', layers.floodDepth ? 'visible' : 'none');
-        }
         if (map.getLayer('terra05-sim-water-layer')) {
           map.setLayoutProperty('terra05-sim-water-layer', 'visibility', 'none');
         }
@@ -1312,66 +1254,14 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
     setVisibility('bmc-spots-layer', layers.floodSpots);
     setVisibility('terra05-sim-water-layer', layers.floodDepth && Boolean(simulationData));
     setVisibility('terra05-sim-water-interact-layer', layers.floodDepth && Boolean(simulationData));
-    setVisibility('terra05-flood-layer', layers.floodDepth && !simulationData);
-    setVisibility('terra05-water-edge-layer', layers.floodDepth && !simulationData);
-    setVisibility('terra05-uncertainty-layer', layers.uncertainty);
-    setVisibility('historical-2019-layer', layers.historical2019);
     setVisibility('terra05-risk-grid-fill', layers.riskGrid);
     setVisibility('terra05-risk-grid-line', layers.riskGrid);
-    setVisibility('terra05-scenario-risk-fill', layers.scenarioRisk);
-    setVisibility('terra05-scenario-risk-line', layers.scenarioRisk);
     const evacVisible = layers.evacuationRoutes !== false;
     setVisibility('evacuation-corridors-casing', evacVisible);
     setVisibility('evacuation-corridors-line', evacVisible);
     setVisibility('evacuation-shelters-pulse', evacVisible);
     setVisibility('evacuation-shelters-point', evacVisible);
   }, [layers, mapLoaded, simulationData]);
-
-  useEffect(() => {
-    const source = mapRef.current?.getSource('terra05-scenario-risk-src') as GeoJSONSource | undefined;
-    if (!source) return;
-    if (!scenarioRiskMap?.length) {
-      source.setData({ type: 'FeatureCollection', features: [] });
-      return;
-    }
-    const byGrid = new Map(scenarioRiskMap.map((cell) => [cell.grid_id, cell]));
-    const features = riskGridGeometryRef.current.map((feature) => {
-      const properties = feature.properties as Record<string, unknown> | null;
-      const cell = byGrid.get(Number(properties?.grid_id));
-      return cell ? { ...feature, properties: { ...properties, scenario_risk_score: cell.risk_score,
-        scenario_risk_level: cell.risk_level, scenario_prediction_mode: cell.prediction_mode,
-        scenario_physics_supported: cell.physics_supported } } as Feature : null;
-    }).filter((feature): feature is Feature => feature !== null);
-    source.setData({ type: 'FeatureCollection', features });
-    console.info(`[TERRA05] Scenario risk geometry joined: ${features.length}/${riskGridGeometryRef.current.length} cells`);
-    // Keep the scenario result above advisory and demo overlays so its legend matches the visible map.
-    const map = mapRef.current;
-    if (map?.getLayer('terra05-scenario-risk-fill')) map.moveLayer('terra05-scenario-risk-fill');
-    if (map?.getLayer('terra05-scenario-risk-line')) map.moveLayer('terra05-scenario-risk-line');
-    if (map && features.length) {
-      const positions: number[][] = [];
-      const collectPositions = (coords: unknown): void => {
-        if (!Array.isArray(coords)) return;
-        if (typeof coords[0] === 'number' && typeof coords[1] === 'number') positions.push(coords as number[]);
-        else coords.forEach(collectPositions);
-      };
-      const collectGeometryPositions = (geometry: Feature['geometry']): void => {
-        if ('coordinates' in geometry) collectPositions(geometry.coordinates);
-        else geometry.geometries.forEach(collectGeometryPositions);
-      };
-      features.forEach((feature) => collectGeometryPositions(feature.geometry));
-      if (positions.length) {
-        const bounds = positions.reduce(
-          (value, point) => [
-            Math.min(value[0], point[0]), Math.min(value[1], point[1]),
-            Math.max(value[2], point[0]), Math.max(value[3], point[1]),
-          ],
-          [Infinity, Infinity, -Infinity, -Infinity],
-        );
-        map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], { padding: 60, maxZoom: 12, duration: 700 });
-      }
-    }
-  }, [scenarioRiskMap, mapLoaded, riskGridLoaded]);
 
   // 5. Smooth camera flyTo when a user explicitly selects a focus area
   const flyToLocation = (loc: MumbaiLocation) => {
@@ -1499,14 +1389,16 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
         <div className="pointer-events-auto flex items-center">
           <div className="bg-white/95 backdrop-blur-md border border-gis-border rounded-xl shadow-gis px-3 py-1.5 flex items-center space-x-2 text-xs font-mono">
             <span className={`w-2 h-2 rounded-full shrink-0 ${
+              !simulationData ? 'bg-slate-400' :
               timelineStep === 0 ? 'bg-slate-400' :
               timelineStep === 4 ? 'bg-rose-600 animate-pulse' :
               timelineStep > 4 ? 'bg-amber-500' : 'bg-sky-600'
             }`} />
             <span className="font-bold text-slate-900 text-[11px] truncate max-w-[130px] sm:max-w-none">
-              {timelineStep === 4 ? 'PEAK INUNDATION' :
+              {!simulationData ? 'NO SIMULATION OUTPUT' :
+               timelineStep === 4 ? 'SIMULATION PEAK' :
                timelineStep > 4 ? 'RECESSION PHASE' :
-               timelineStep === 0 ? 'SCENARIO STANDBY' : 'WATER PROPAGATION'}
+               timelineStep === 0 ? 'SCENARIO STANDBY' : 'SIMULATION TIMELINE'}
             </span>
             <span className="text-slate-300 font-normal">|</span>
             <span className="text-slate-600 text-[11px]">{rainfall} mm/hr</span>
@@ -1578,18 +1470,11 @@ export const MapboxMumbai: React.FC<MapboxMumbaiProps> = ({
               <div className="text-[9.5px] text-slate-500 pt-0.5 border-t border-slate-100 space-y-0.5">
                 <div>
                   {hoveredFeature.isInsideFocusArea
-                    ? (timelineStep === 0 && rainfall === 0
-                        ? 'Focus Area Network (Standby / Normal Gravity Readiness)'
-                        : `Simulated Hydraulic Response: ${timelineMetrics.drainStressState}`)
+                    ? 'Existing conduit within selected area · conduit-level hydraulic status unavailable'
                     : (selectedLocation
                         ? 'Municipal Baseline Infrastructure (Outside Selected Basin)'
                         : 'Municipal Baseline SWD Network (Citywide)')}
                 </div>
-                {hoveredFeature.isInsideFocusArea && (interventions?.mobilePumps || interventions?.tidalGates) && (
-                  <div className="text-emerald-700 font-bold">
-                    ✓ Countermeasure: Dewatering Relief Flow Active
-                  </div>
-                )}
               </div>
             </div>
           ) : hoveredFeature.isEvacCorridor ? (

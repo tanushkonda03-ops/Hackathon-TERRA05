@@ -18,7 +18,12 @@ class Settings:
         root = Path(os.getenv("TERRA05_ROOT", Path(__file__).resolve().parents[1])).resolve()
         origins = tuple(
             origin.strip()
-            for origin in os.getenv("TERRA05_CORS_ORIGINS", "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:3000").split(",")
+            for origin in os.getenv(
+                "TERRA05_CORS_ORIGINS",
+                "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,"
+                "http://localhost:5175,http://127.0.0.1:5175,http://localhost:5176,http://127.0.0.1:5176,"
+                "http://localhost:5177,http://127.0.0.1:5177",
+            ).split(",")
             if origin.strip()
         )
         return cls(

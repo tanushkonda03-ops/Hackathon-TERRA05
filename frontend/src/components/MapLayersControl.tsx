@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Layers, ChevronDown, Check, Eye, EyeOff } from 'lucide-react';
+import { Layers, ChevronDown, Check, Eye, EyeOff, Route, X } from 'lucide-react';
 
 interface MapLayersControlProps {
   layers: {
@@ -9,15 +9,15 @@ interface MapLayersControlProps {
     roadsExposure: boolean;
     criticalInfra: boolean;
     floodDepth: boolean;
-    uncertainty: boolean;
-    historical2019: boolean;
     terrain3D: boolean;
     riskGrid: boolean;
-    scenarioRisk: boolean;
     evacuationRoutes: boolean;
   };
   onToggleLayer: (layerKey: keyof MapLayersControlProps['layers']) => void;
   onCameraPreset: (preset: '3D' | 'TOP' | 'RESET') => void;
+  onTraceDrainage: () => void;
+  onClearDrainageTrace: () => void;
+  drainageTraceStatus: string | null;
   className?: string;
 }
 
@@ -25,6 +25,9 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
   layers,
   onToggleLayer,
   onCameraPreset,
+  onTraceDrainage,
+  onClearDrainageTrace,
+  drainageTraceStatus,
   className,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -142,7 +145,7 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
                 </div>
                 <div className="flex items-center space-x-2 py-1 px-2 rounded-lg bg-slate-50 border border-slate-100">
                   <span className="text-sky-600 font-bold">✓</span>
-                  <span className="text-slate-700">Mithi River Natural Channel</span>
+                  <span className="text-slate-700">Waterways from basemap</span>
                 </div>
               </div>
             </div>
@@ -154,21 +157,18 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
               </span>
               <div className="space-y-1.5 text-[11px] text-slate-600 bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 font-sans">
                 <div className="flex items-center gap-2">
-                  <span className="w-4 border-t-2 border-cyan-600" />
-                  <span>Drainage network</span>
+                  <span className="w-5 h-[3px] rounded bg-cyan-500" />
+                  <span>Selected drainage · rainfall response</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-4 border-t-2 border-amber-600" />
-                  <span>High drainage load</span>
+                  <span className="h-3 w-3 rounded-sm border border-rose-800 bg-rose-700/30" />
+                  <span>Recorded flood-prone locations</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-4 border-t-2 border-rose-600" />
-                  <span>Overloaded / overflow</span>
+                  <span className="h-3 w-3 rounded-sm border border-sky-700 bg-sky-500/30" />
+                  <span>Backend simulation output</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-4 border-t-2 border-emerald-600" />
-                  <span>Elevated Evac Corridor</span>
-                </div>
+                <div className="text-[10px] leading-relaxed text-slate-500">Selected area pipes change together: cyan → yellow → orange → red as timeline load rises, then reverse as it falls. Scenario-wide indicator; conduit-level measurements are unavailable.</div>
               </div>
             </div>
 
@@ -178,7 +178,24 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
                 HYDROLOGY
               </span>
               {renderToggle('Stormwater Drains (SWD)', layers.drainage, () => onToggleLayer('drainage'))}
-              {renderToggle('Runoff Flow Vectors', layers.runoffFlow, () => onToggleLayer('runoffFlow'))}
+              {renderToggle('Illustrative runoff paths', layers.runoffFlow, () => onToggleLayer('runoffFlow'))}
+              <button
+                onClick={onTraceDrainage}
+                className="w-full flex items-center gap-2 rounded-lg border border-sky-100 bg-sky-50/70 px-2 py-2 text-left text-xs text-sky-900 hover:bg-sky-100 transition-colors"
+              >
+                <Route className="h-3.5 w-3.5 shrink-0" />
+                <span>Trace downstream from selected area</span>
+              </button>
+              {drainageTraceStatus && (
+                <div className="rounded-lg border border-slate-200 bg-white p-2 text-[10px] leading-relaxed text-slate-600">
+                  <div className="flex items-start justify-between gap-2">
+                    <span>{drainageTraceStatus}</span>
+                    <button onClick={onClearDrainageTrace} title="Clear drainage trace" aria-label="Clear drainage trace" className="shrink-0 rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* GROUP 3: FLOOD MODEL */}
@@ -187,10 +204,7 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
                 FLOOD MODEL
               </span>
               {renderToggle('Simulated Inundation', layers.floodDepth, () => onToggleLayer('floodDepth'))}
-              {renderToggle('100m ML Risk Grid', layers.riskGrid, () => onToggleLayer('riskGrid'))}
-              {renderToggle('SWMM + ML Scenario Risk', layers.scenarioRisk, () => onToggleLayer('scenarioRisk'), 'text-rose-700 font-bold')}
-              {renderToggle('Uncertainty Boundary (90%)', layers.uncertainty, () => onToggleLayer('uncertainty'), 'text-indigo-600')}
-              {renderToggle('Historical Replay (July 2019)', layers.historical2019, () => onToggleLayer('historical2019'), 'text-emerald-600')}
+              {renderToggle('Historical flood-label grid (100 m)', layers.riskGrid, () => onToggleLayer('riskGrid'))}
             </div>
 
             {/* GROUP 4: URBAN IMPACT */}
@@ -198,10 +212,11 @@ export const MapLayersControl: React.FC<MapLayersControlProps> = ({
               <span className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
                 URBAN IMPACT & EVACUATION
               </span>
-              {renderToggle('🚑 Evac Corridors & Shelters', layers.evacuationRoutes, () => onToggleLayer('evacuationRoutes'), 'text-emerald-700 font-bold')}
-              {renderToggle('Arterial Road Submergence', layers.roadsExposure, () => onToggleLayer('roadsExposure'), 'text-amber-700')}
-              {renderToggle('Critical Infrastructure', layers.criticalInfra, () => onToggleLayer('criticalInfra'))}
-              {renderToggle('BMC Chronic Flood Spots', layers.floodSpots, () => onToggleLayer('floodSpots'), 'text-rose-600')}
+              {renderToggle('Illustrative routes & shelters', layers.evacuationRoutes, () => onToggleLayer('evacuationRoutes'), 'text-emerald-700 font-bold')}
+              {renderToggle('Illustrative roads', layers.roadsExposure, () => onToggleLayer('roadsExposure'), 'text-amber-700')}
+              {renderToggle('Illustrative response sites', layers.criticalInfra, () => onToggleLayer('criticalInfra'))}
+              {renderToggle('BMC flood-prone locations', layers.floodSpots, () => onToggleLayer('floodSpots'), 'text-rose-600')}
+              <div className="px-2 text-[9px] leading-relaxed text-slate-500">Illustrative layers are not verified operational data.</div>
             </div>
           </div>
         )}

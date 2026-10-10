@@ -1,24 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapboxMumbai } from './components/MapboxMumbai';
 import { IntelligencePanel } from './components/IntelligencePanel';
 import { LeftSidebar, NavTabId } from './components/LeftSidebar';
 import { MapLayersControl } from './components/MapLayersControl';
 import { DecisionSupportPanel } from './components/DecisionSupportPanel';
 import { CitizenAdvisoryModal } from './components/CitizenAdvisoryModal';
-import { ScenarioPanel } from './components/ScenarioPanel';
-import { ScenarioRiskCell } from './services/api';
 import { MUMBAI_GEO_LOCATIONS, MumbaiLocation, getTimelineImpactMetrics } from './data/locations';
 import { 
   getSystemStatus, 
   getScenarios, 
+  getLiveWeather,
   runSimulation,
   SystemStatusResponse, 
   ScenarioResponse,
+  LiveWeatherResponse,
   SimulationResponse,
 } from './services/api';
 import { 
   MapPin, 
-  ChevronLeft
+  ChevronLeft,
+  ChevronDown,
+  CloudRain,
+  Database,
+  X,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -35,6 +39,8 @@ export const App: React.FC = () => {
   const [systemStatus, setSystemStatus] = useState<SystemStatusResponse | null>(null);
   const [backendScenarios, setBackendScenarios] = useState<ScenarioResponse[]>([]);
   const [backendStatus, setBackendStatus] = useState<'CONNECTING' | 'READY' | 'DEGRADED' | 'OFFLINE'>('CONNECTING');
+  const [isDataPanelOpen, setIsDataPanelOpen] = useState(false);
+  const [liveWeather, setLiveWeather] = useState<LiveWeatherResponse | null>(null);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('DESIGN_RED_100MM');
   const [customDurationHours, setCustomDurationHours] = useState<number>(24);
   const [customTotalDepthMm, setCustomTotalDepthMm] = useState<number>(100);
@@ -42,11 +48,6 @@ export const App: React.FC = () => {
 
   // Live 2D Hydraulic/Runoff Simulation Data
   const [simulationData, setSimulationData] = useState<SimulationResponse | null>(null);
-  const [scenarioRiskMap, setScenarioRiskMap] = useState<ScenarioRiskCell[] | null>(null);
-  const handleScenarioRiskMap = useCallback((map: ScenarioRiskCell[] | null) => {
-    setScenarioRiskMap(map);
-    if (map) setLayers((previous) => ({ ...previous, scenarioRisk: true }));
-  }, []);
   const [isSimulationLoading, setIsSimulationLoading] = useState<boolean>(false);
   const [simulationError, setSimulationError] = useState<string | null>(null);
 
@@ -71,8 +72,13 @@ export const App: React.FC = () => {
     styleLoaded: false,
     mapLoaded: false,
     buildings3D: true,
+    drainageNetwork: 'LOADING',
+    floodSpots: 'LOADING',
+    riskGrid: 'NOT LOADED',
   });
   const [showCitizenModal, setShowCitizenModal] = useState<boolean>(false);
+  const [drainageTraceRequest, setDrainageTraceRequest] = useState(0);
+  const [drainageTraceStatus, setDrainageTraceStatus] = useState<string | null>(null);
 
   // Dual Persona Mode: EOC Authority Command vs Citizen Public Warning
   const [personaMode, setPersonaMode] = useState<'EOC' | 'CITIZEN'>('EOC');
@@ -81,16 +87,13 @@ export const App: React.FC = () => {
   const [layers, setLayers] = useState({
     floodSpots: true,
     drainage: true,
-    runoffFlow: true,
-    roadsExposure: false, // Off by default so schematic lines don't slice across terrain
-    criticalInfra: true,
+    runoffFlow: false,
+    roadsExposure: false,
+    criticalInfra: false,
     floodDepth: true,
-    uncertainty: false,
-    historical2019: false,
     terrain3D: true,
-    riskGrid: false, // Off by default: ensures clean flood visualization without wireframe grid lines
-    scenarioRisk: false,
-    evacuationRoutes: true, // Safe emergency corridors & high-ground shelters
+    riskGrid: false,
+    evacuationRoutes: false,
   });
 
   // Calculate dynamic timeline metrics (truthful physics, no pump fudge factors)
@@ -124,6 +127,25 @@ export const App: React.FC = () => {
     initBackend();
     return () => {
       isMounted = false;
+    };
+  }, []);
+
+  // Refresh the public IMD station feed in the background; this stays separate from model rainfall inputs.
+  useEffect(() => {
+    let isMounted = true;
+    const refreshLiveWeather = async () => {
+      try {
+        const result = await getLiveWeather();
+        if (isMounted) setLiveWeather(result);
+      } catch {
+        if (isMounted) setLiveWeather(null);
+      }
+    };
+    refreshLiveWeather();
+    const timer = window.setInterval(refreshLiveWeather, 10 * 60 * 1000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(timer);
     };
   }, []);
 
@@ -260,6 +282,19 @@ export const App: React.FC = () => {
     max_water_depth_m: Number(rawSimStepMetrics.max_water_depth_m.toFixed(2)),
     inundated_area_km2: Number(rawSimStepMetrics.inundated_area_km2.toFixed(2)),
   } : null;
+  const rainfallSeries = simulationData?.timesteps || [];
+  const rainfallPeak = Math.max(1, ...rainfallSeries.map((step) => step.rainfall_intensity_mm_per_hr));
+  const displayedScenarioId = simulationData?.scenario_id || selectedScenarioId;
+  const activeRainfallScenario = backendScenarios.find((scenario) =>
+    scenario.timeseries_id === displayedScenarioId,
+  );
+  const rainfallSourceLabel = displayedScenarioId === 'CUSTOM'
+    ? 'User-entered rainfall profile'
+    : activeRainfallScenario?.classification.toLowerCase().includes('historical')
+      ? 'Historical rainfall reconstruction'
+      : activeRainfallScenario?.classification.toLowerCase().includes('synthetic')
+        ? 'Synthetic design rainfall'
+        : 'Selected model scenario';
 
   return (
     <div className="w-screen h-screen flex flex-col bg-gis-bg text-slate-900 overflow-hidden font-sans select-none">
@@ -299,7 +334,7 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2.5">
+        <div className="relative flex items-center space-x-2.5">
           {/* Mithi River Hydraulic Status (Header Placement) */}
           <div 
             className="flex items-center space-x-2 text-xs font-mono px-2.5 py-1 rounded-lg border border-sky-200 bg-sky-50 shadow-gis-xs"
@@ -315,6 +350,109 @@ export const App: React.FC = () => {
                 {timelineMetrics.mithiRiverStatus}
               </strong>
             </span>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setIsDataPanelOpen((open) => !open)}
+              aria-expanded={isDataPanelOpen}
+              aria-label="Open rainfall and data status"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-[10px] font-mono font-bold text-slate-700 shadow-gis-xs hover:border-sky-400 hover:text-sky-800"
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${backendStatus === 'READY' && mapStatus === 'ONLINE' ? 'bg-emerald-500' : backendStatus === 'OFFLINE' || mapStatus === 'ERROR' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+              <CloudRain className="h-3.5 w-3.5 text-sky-700" />
+              <span className="hidden md:inline">DATA</span>
+              <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${isDataPanelOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isDataPanelOpen && (
+              <section aria-label="Rainfall and model data status" className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-1.5rem))] rounded-xl border border-slate-200 bg-white p-3.5 font-mono text-[11px] text-slate-700 shadow-float">
+                <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2 font-bold text-slate-900"><Database className="h-4 w-4 text-sky-700" /> INPUTS & MODEL STATUS</div>
+                  <button onClick={() => setIsDataPanelOpen(false)} aria-label="Close data status" className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-3.5 w-3.5" /></button>
+                </div>
+
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-slate-500">Rainfall profile</span>
+                  <span className="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800">{rainfallSourceLabel}</span>
+                </div>
+                <div className="mb-1 flex items-center justify-between text-[10px] text-slate-500">
+                  <span>Model input · mm/hr</span>
+                  <span>{simulationData ? `${simulationData.duration_hours.toFixed(1)} h` : isSimulationLoading ? 'Loading…' : 'Unavailable'}</span>
+                </div>
+                {rainfallSeries.length > 0 ? (
+                  <div role="img" aria-label="Rainfall model input over the simulation timeline" className="flex h-14 items-end gap-[2px] rounded-md bg-slate-50 px-1.5 py-1">
+                    {rainfallSeries.map((step, index) => (
+                      <div
+                        key={`${step.step_index}-${index}`}
+                        title={`T+${step.elapsed_minutes} min · ${step.rainfall_intensity_mm_per_hr.toFixed(1)} mm/hr`}
+                        className={`min-w-0 flex-1 rounded-t-[2px] ${index === timelineStep ? 'bg-sky-800' : 'bg-sky-300'}`}
+                        style={{ height: `${Math.max(4, (step.rainfall_intensity_mm_per_hr / rainfallPeak) * 100)}%` }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-14 items-center justify-center rounded-md bg-slate-50 text-[10px] text-slate-400">Rainfall profile appears when simulation data loads</div>
+                )}
+                <div className="mt-1 flex justify-between text-[9px] text-slate-400"><span>Start</span><span>Selected timeline step highlighted</span><span>End</span></div>
+
+                <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50/70 p-2.5 text-[10px] leading-relaxed text-slate-700">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="font-bold text-slate-800">IMD STATION RAINFALL</span>
+                    {liveWeather?.status === 'available' && <span className={`text-[9px] ${liveWeather.stations.some((station) => station.stale) ? 'font-semibold text-amber-700' : 'text-emerald-700'}`}>
+                      {liveWeather.stations.some((station) => station.stale) ? 'STALE REPORTS' : 'RECENT REPORTS'}
+                    </span>}
+                  </div>
+                  {liveWeather?.status === 'available' && liveWeather.stations.length > 0 ? (
+                    <>
+                      <div className="space-y-1.5">
+                        {liveWeather.stations.map((station) => (
+                          <div key={station.station_id} className="flex items-center justify-between gap-2">
+                            <span className="truncate">{station.name}</span>
+                            <span className="shrink-0 font-semibold text-slate-900">
+                              {station.rainfall_mm === null ? '—' : `${station.rainfall_mm.toFixed(1)} mm`}
+                              {station.age_minutes !== null && <span className={`ml-1 font-normal ${station.stale ? 'text-amber-700' : 'text-slate-500'}`}>· {station.age_minutes < 60 ? `${station.age_minutes}m` : `${Math.floor(station.age_minutes / 60)}h ago`}</span>}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-1.5 border-t border-sky-100 pt-1.5 text-[9px] text-slate-500">
+                        Periodic station reports. Amount covers the reported interval; not used as the simulation input. Forecast feed is not connected.
+                      </div>
+                      <a href={liveWeather.source_url} target="_blank" rel="noreferrer" className="mt-1 inline-block font-semibold text-sky-800 underline decoration-sky-300 underline-offset-2">
+                        Source: {liveWeather.source}
+                      </a>
+                    </>
+                  ) : (
+                    <div className="text-slate-600">{liveWeather?.message || 'Connecting to the public IMD station feed…'} Forecast feed is not connected.</div>
+                  )}
+                </div>
+
+                <div className="mt-2 text-[9px] leading-relaxed text-slate-500">
+                  Simulation chart uses the selected historical or synthetic rainfall profile; live station reports remain observational context.
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-1.5">
+                  {[
+                    ['Backend API', systemStatus?.api === 'ready' ? 'Connected' : backendStatus],
+                    ['Map', mapStatus === 'ONLINE' ? 'Loaded' : mapStatus],
+                    ['Rainfall catalogue', systemStatus?.rainfall_catalogue.ready ? 'Available' : 'Unavailable'],
+                    ['Historical 100 m grid', systemStatus?.geospatial_data.ready ? 'Available' : 'Unavailable'],
+                    ['Existing drainage', diagnostics.drainageNetwork],
+                    ['BMC flood-prone locations', diagnostics.floodSpots],
+                    ['Visible historical grid', diagnostics.riskGrid],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-md bg-slate-50 px-2 py-1.5">
+                      <div className="text-[9px] uppercase text-slate-400">{label}</div>
+                      <div className="font-semibold text-slate-700">{value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 rounded-md border border-slate-200 px-2 py-1.5 text-[10px] leading-relaxed text-slate-600">
+                  <span className="font-bold text-slate-800">SWMM pilot: </span>
+                  {systemStatus?.swmm_model.detail || (systemStatus?.swmm_model.ready ? 'Available' : 'Status unavailable')}
+                </div>
+              </section>
+            )}
           </div>
 
           {/* Persona Switch: Authority EOC vs Citizen Public Advisory */}
@@ -409,19 +547,17 @@ export const App: React.FC = () => {
               <MapboxMumbai
                 rainfall={rainfall}
                 timelineStep={timelineStep}
-                timelineMetrics={timelineMetrics}
                 selectedLocation={selectedLocation}
                 onSelectLocation={(loc) => setSelectedLocation(loc)}
                 layers={layers}
                 cameraPreset={cameraPreset}
                 simulationData={simulationData}
-                scenarioRiskMap={scenarioRiskMap}
                 simStepIndex={timelineStep}
+                drainageTraceRequest={drainageTraceRequest}
+                onDrainageTraceResult={setDrainageTraceStatus}
                 onStatusChange={(st) => setMapStatus(st)}
                 onDiagnosticsUpdate={(d) => setDiagnostics((prev) => ({ ...prev, ...d }))}
               />
-
-              <ScenarioPanel onRiskMapChange={handleScenarioRiskMap} />
 
               {/* Citizen Public Warning Banner when in Citizen Persona Mode */}
               {personaMode === 'CITIZEN' && (
@@ -452,6 +588,15 @@ export const App: React.FC = () => {
               <MapLayersControl
                 layers={layers}
                 onToggleLayer={handleToggleLayer}
+                onTraceDrainage={() => {
+                  setDrainageTraceStatus('Tracing from selected area…');
+                  setDrainageTraceRequest((request) => request + 1);
+                }}
+                onClearDrainageTrace={() => {
+                  setDrainageTraceRequest(0);
+                  setDrainageTraceStatus(null);
+                }}
+                drainageTraceStatus={drainageTraceStatus}
                 onCameraPreset={(preset) => setCameraPreset(preset)}
                 className={`absolute top-3.5 ${isIntelligencePanelOpen ? 'right-4 sm:right-[356px]' : 'right-4'} z-20 select-none flex items-start space-x-2 transition-[right] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none`}
               />

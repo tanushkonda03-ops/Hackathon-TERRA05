@@ -34,16 +34,13 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ isOpen, onClos
 
         <div className="text-xs text-slate-300 space-y-3 font-sans leading-relaxed">
           <p>
-            The flood predictions, risk scores, water-depth values, uncertainty ranges, alerts, and validation metrics currently displayed in this interface are <strong className="text-amber-300">mock/demo values created for frontend prototyping and visualization purposes only</strong>.
+            The map uses the BMC drainage inventory (existing conduits only) and cleaned BMC flood-prone locations. The 100 m grid shows historical flood labels, not a forecast. IMD station rainfall is periodic and may be stale; it is shown for context and does not feed the simulation automatically.
           </p>
           <p>
-            This prototype is <strong className="text-rose-400">not connected to live BMC, IMD, sensor, satellite, or production ML systems</strong> and must not be used for real-world flood warnings, emergency response, evacuation decisions, or municipal planning.
+            Risk values for the selected localities and the illustrative response layers are not authoritative. Drainage geometry, terrain, and model inputs still require source and engineering validation. Do not use this prototype for real-world flood warnings, emergency response, evacuation decisions, or municipal planning.
           </p>
           <p>
-            The displayed 3D flood simulation is a <strong className="text-cyan-300">visual representation of the proposed system workflow</strong>, not a validated hydrodynamic simulation.
-          </p>
-          <p>
-            In the final implementation, these values will be generated from verified geospatial datasets, rainfall observations/forecasts, trained prediction models, calibrated uncertainty estimation, and historical flood-event validation.
+            Simulated inundation is displayed only when backend simulation output is available. The hydraulic model and its thresholds have not been validated for operational use.
           </p>
         </div>
 

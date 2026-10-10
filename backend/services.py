@@ -37,6 +37,11 @@ class BackendDataService:
         drainage_path = self.settings.root / "data" / "processed" / "bmc_storm_water_drains_working.geojson"
         return json.loads(drainage_path.read_text(encoding="utf-8"))
 
+    @cached_property
+    def flood_spots(self) -> dict[str, Any]:
+        flood_spots_path = self.settings.root / "data" / "processed" / "bmc_flooding_spots_clean.geojson"
+        return json.loads(flood_spots_path.read_text(encoding="utf-8"))
+
     def scenarios(self) -> list[dict[str, Any]]:
         metadata = self.rainfall_metadata
         grouped: dict[str, list[dict[str, Any]]] = {}

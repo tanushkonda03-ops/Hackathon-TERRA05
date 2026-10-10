@@ -25,6 +25,30 @@ export interface SystemStatusResponse {
   swmm_model: ComponentStatus;
 }
 
+export interface LiveWeatherStation {
+  station_id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  rainfall_mm: number | null;
+  rainfall_period_start: string | null;
+  rainfall_period_end: string | null;
+  observation_time: string | null;
+  age_minutes: number | null;
+  stale: boolean;
+}
+
+export interface LiveWeatherResponse {
+  status: 'available' | 'unavailable';
+  source: string;
+  source_url: string;
+  fetched_at: string;
+  rainfall_forecast: 'not_connected';
+  rainfall_units?: string;
+  stations: LiveWeatherStation[];
+  message: string;
+}
+
 export interface HealthResponse {
   status: 'ok' | 'degraded';
   components: SystemStatusResponse;
@@ -363,6 +387,10 @@ export async function getSystemStatus(signal?: AbortSignal): Promise<SystemStatu
   return fetchJson<SystemStatusResponse>('/api/v1/system-status', { signal });
 }
 
+export async function getLiveWeather(signal?: AbortSignal): Promise<LiveWeatherResponse> {
+  return fetchJson<LiveWeatherResponse>('/api/v1/live-weather', { signal });
+}
+
 export async function getScenarios(signal?: AbortSignal): Promise<ScenarioResponse[]> {
   return fetchJson<ScenarioResponse[]>('/api/v1/scenarios', { signal });
 }
@@ -381,6 +409,19 @@ export async function getRiskMap(params: RiskMapParams = {}): Promise<RiskMapRes
   return fetchJson<RiskMapResponse>(`/api/v1/risk-map${qs ? `?${qs}` : ''}`, {
     signal: params.signal,
   });
+}
+
+export async function getCompleteRiskMap(params: Omit<RiskMapParams, 'offset' | 'limit'> = {}): Promise<RiskMapResponse> {
+  const pageSize = 500;
+  const firstPage = await getRiskMap({ ...params, offset: 0, limit: pageSize });
+  const features = [...firstPage.features];
+  let nextOffset = firstPage.next_offset;
+  while (nextOffset !== null) {
+    const page = await getRiskMap({ ...params, offset: nextOffset, limit: pageSize });
+    features.push(...page.features);
+    nextOffset = page.next_offset;
+  }
+  return { ...firstPage, features, returned: features.length, next_offset: null };
 }
 
 export async function getPrediction(
@@ -423,4 +464,8 @@ export async function getDrainageNetwork(
   signal?: AbortSignal
 ): Promise<GeoJSON.FeatureCollection> {
   return fetchJson<GeoJSON.FeatureCollection>('/api/v1/drainage-network', { signal });
+}
+
+export async function getFloodSpots(signal?: AbortSignal): Promise<GeoJSON.FeatureCollection> {
+  return fetchJson<GeoJSON.FeatureCollection>('/api/v1/flood-spots', { signal });
 }
